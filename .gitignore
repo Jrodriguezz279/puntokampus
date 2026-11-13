@@ -1,0 +1,31 @@
+# Servidor Laravel
+servidor/.env
+servidor/vendor/
+servidor/storage/logs/
+servidor/storage/app/private/
+servidor/storage/app/public/
+servidor/bootstrap/cache/
+servidor/.phpunit.cache/
+servidor/public/hot
+servidor/public/storage
+
+# App Flutter
+app/.dart_tool/
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/pubspec.lock
+
+# General
+.DS_Store
+Thumbs.db
+*.key
+*.pem
+*.p12
+*.pfx
+*.log
+.idea/
+.vscode/
+*.swp
+*~
