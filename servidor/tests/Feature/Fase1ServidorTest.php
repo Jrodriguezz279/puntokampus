@@ -78,5 +78,19 @@ class Fase1ServidorTest extends TestCase
         ]);
         $this->assertFalse($usuarioNormal->canAccessPanel(new \Filament\Panel()));
     }
+
+    public function test_login_filament_con_correo_y_password(): void
+    {
+        \Livewire\Livewire::test(\App\Filament\Pages\Auth\Login::class)
+            ->fillForm([
+                'email' => 'admin@utb.edu.ec',
+                'password' => 'PuntoKampus2026!',
+            ])
+            ->call('authenticate')
+            ->assertHasNoFormErrors()
+            ->assertRedirect(\Filament\Pages\Dashboard::getUrl());
+
+        $this->assertAuthenticatedAs(Usuario::where('correo', 'admin@utb.edu.ec')->first());
+    }
 }
 
