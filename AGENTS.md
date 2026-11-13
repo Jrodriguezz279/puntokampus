@@ -32,3 +32,4 @@ comunidad universitaria. Requisitos completos en docs/PRD-MAESTRO.md. Léelo ant
 12. Si una instrucción mía contradice el PRD, avísame antes de seguir.
 13. Si dudas de una versión de Laravel, Filament o Flutter, consulta la documentación oficial en vez de suponer.
 14. Commits pequeños en español con formato "H05: crear tienda" o "F2: tablas y migraciones".
+

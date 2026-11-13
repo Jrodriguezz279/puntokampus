@@ -20,3 +20,4 @@ _(vacío — se irá llenando a medida que avance el desarrollo)_
 - **Publicación en Google Play:** el APK por ahora se instala directo (parte 11).
 - **Reverificación automática por periodo académico:** el PRD menciona que cada periodo se reverifica el correo institucional, pero en el tramo 1 solo se fuerza nuevo código (ambigüedad A8).
 - **Límite de pedidos en plan gratis:** el campo `limite_pedidos_gratis` queda listo pero desactivado (R19 / parte 5).
+
