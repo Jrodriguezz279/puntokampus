@@ -61,3 +61,4 @@ class PurgarComprobantesTest extends TestCase
         $this->assertNotNull($solicitudVieja->foto_borrada_en);
     }
 }
+

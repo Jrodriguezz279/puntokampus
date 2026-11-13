@@ -33,3 +33,4 @@ class SolicitarPremiumRequest extends FormRequest
         ];
     }
 }
+

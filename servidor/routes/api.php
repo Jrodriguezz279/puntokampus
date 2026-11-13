@@ -40,6 +40,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/salir', [AuthController::class, 'salir']);
         Route::get('/yo', [YoController::class, 'show']);
         Route::put('/yo', [YoController::class, 'update']);
+        Route::post('/yo/codigo-borrado', [YoController::class, 'solicitarCodigoBorrado']);
+        Route::delete('/yo', [YoController::class, 'borrarCuenta']);
 
         // Mi Tienda (R6, R10)
         Route::get('/mi-tienda', [MiTiendaController::class, 'show']);

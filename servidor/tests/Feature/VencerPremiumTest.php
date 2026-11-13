@@ -62,3 +62,4 @@ class VencerPremiumTest extends TestCase
         $this->assertEquals('premium', $tiendaVigente->plan);
     }
 }
+

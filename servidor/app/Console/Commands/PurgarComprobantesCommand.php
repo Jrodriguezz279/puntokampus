@@ -39,3 +39,4 @@ class PurgarComprobantesCommand extends Command
         return Command::SUCCESS;
     }
 }
+

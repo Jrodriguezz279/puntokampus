@@ -27,3 +27,4 @@ class VencerPremiumCommand extends Command
         return Command::SUCCESS;
     }
 }
+

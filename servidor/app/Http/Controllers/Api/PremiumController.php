@@ -80,3 +80,4 @@ class PremiumController extends Controller
             ->setStatusCode(201);
     }
 }
+

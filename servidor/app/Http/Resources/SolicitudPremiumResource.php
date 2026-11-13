@@ -22,3 +22,4 @@ class SolicitudPremiumResource extends JsonResource
         ];
     }
 }
+

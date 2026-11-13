@@ -91,3 +91,4 @@ class BajaTiendaReporteTest extends TestCase
         $this->assertEquals('entregado', $pedidoEntregado->estado);
     }
 }
+

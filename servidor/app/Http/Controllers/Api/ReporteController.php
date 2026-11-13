@@ -53,3 +53,4 @@ class ReporteController extends Controller
         ], 201);
     }
 }
+

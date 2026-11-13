@@ -39,3 +39,4 @@ class CrearReporteRequest extends FormRequest
         ];
     }
 }
+
