@@ -50,9 +50,9 @@ Route::prefix('app')->group(function () {
     });
 });
 
-// Atajo histórico de prueba
-Route::get('/demo', [DemoController::class, 'index']);
-Route::post('/demo/producto', [DemoController::class, 'agregarProducto']);
-Route::post('/demo/pedidos/{codigo}/entregado', [DemoController::class, 'entregarPedido']);
-Route::post('/demo/simular-pedido', [DemoController::class, 'simularPedido']);
+// Atajo para cerrar sesión de estudiante e ir al login de Administrador
+Route::get('/admin-login', function () {
+    \Illuminate\Support\Facades\Auth::logout();
+    return redirect('/admin/login');
+});
 
