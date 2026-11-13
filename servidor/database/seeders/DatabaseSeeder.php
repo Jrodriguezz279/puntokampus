@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             PuntoEntregaSeeder::class,
             ConfiguracionSeeder::class,
             AdminSeeder::class,
+            DemoSeeder::class,
         ]);
     }
 }

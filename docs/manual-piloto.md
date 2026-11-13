@@ -1,5 +1,14 @@
 # Manual del Piloto — PuntoKampus UTB
 
+> ⚠️ **AVISO PARA EL EQUIPO DE DESARROLLO Y REVISORES:**
+> **¿Tienes que usar esta guía ahora mismo? NO.**
+> Este documento es un **entregable formal requerido por el PRD (Fase 7)** diseñado exclusivamente para cuando el proyecto se despliegue en internet y se ejecute la **prueba de campo con los 10 estudiantes reales de la UTB** (5 vendedores y 5 compradores).
+> 
+> 👉 **Si eres del grupo de desarrollo y acabas de clonar el repositorio:**
+> **Dirígete al [README.md principal](../README.md)** donde tienes la guía de instalación local, cómo levantar el servidor y los usuarios de prueba ya creados (`admin@utb.edu.ec`, `carlos.vendedor@est.utb.edu.ec`, `maria.compradora@est.utb.edu.ec`).
+
+---
+
 ¡Bienvenido/a a la prueba piloto de **PuntoKampus**, el marketplace universitario de la **Universidad Técnica de Babahoyo (UTB)**!
 
 Este manual rápido está diseñado para los **10 comercios y compradores piloto** que nos ayudarán a validar la plataforma en el campus.
