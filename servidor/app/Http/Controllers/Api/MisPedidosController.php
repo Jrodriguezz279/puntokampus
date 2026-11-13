@@ -70,3 +70,4 @@ class MisPedidosController extends Controller
         return new PedidoResource($pedido);
     }
 }
+

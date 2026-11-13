@@ -19,3 +19,4 @@ class PedidoItemResource extends JsonResource
         ];
     }
 }
+

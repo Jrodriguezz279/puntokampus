@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\MiProductoController;
 use App\Http\Controllers\Api\MisPedidosController;
 use App\Http\Controllers\Api\MiTiendaController;
 use App\Http\Controllers\Api\PedidoController;
+use App\Http\Controllers\Api\PremiumController;
+use App\Http\Controllers\Api\ReporteController;
 use App\Http\Controllers\Api\TiendaPedidosController;
 use App\Http\Controllers\Api\VitrinaController;
 use App\Http\Controllers\Api\YoController;
@@ -46,6 +48,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/mi-tienda/logo', [MiTiendaController::class, 'subirLogo']);
         Route::post('/mi-tienda/portada', [MiTiendaController::class, 'subirPortada']);
 
+        // Solicitudes Premium de Mi Tienda (H20, R21)
+        Route::get('/mi-tienda/premium', [PremiumController::class, 'show']);
+        Route::post('/mi-tienda/premium', [PremiumController::class, 'store']);
+
         // Productos de Mi Tienda (R7, H07, H08)
         Route::get('/mi-tienda/productos', [MiProductoController::class, 'index']);
         Route::post('/mi-tienda/productos', [MiProductoController::class, 'store']);
@@ -66,5 +72,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/mi-tienda/pedidos', [TiendaPedidosController::class, 'index']);
         Route::put('/mi-tienda/pedidos/{codigo}/entregado', [TiendaPedidosController::class, 'entregar']);
         Route::put('/mi-tienda/pedidos/{codigo}/cancelar', [TiendaPedidosController::class, 'cancelar']);
+
+        // Reportes de Tiendas (H19, R20)
+        Route::post('/tiendas/{id}/reportes', [ReporteController::class, 'store']);
     });
 });

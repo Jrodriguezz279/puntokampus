@@ -88,3 +88,4 @@ class VencerPedidosTest extends TestCase
         $this->assertEquals('entregado', $pedidoEntregado->estado);
     }
 }
+

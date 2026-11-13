@@ -42,3 +42,4 @@ class CrearPedidoRequest extends FormRequest
         ];
     }
 }
+

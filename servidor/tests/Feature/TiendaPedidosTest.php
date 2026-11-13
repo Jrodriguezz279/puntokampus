@@ -156,3 +156,4 @@ class TiendaPedidosTest extends TestCase
         $response->assertStatus(404);
     }
 }
+

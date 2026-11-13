@@ -109,3 +109,4 @@ class TiendaPedidosController extends Controller
         return new PedidoResource($pedido);
     }
 }
+
