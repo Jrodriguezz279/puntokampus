@@ -118,3 +118,4 @@ crontab -e
 # Respaldar todos los días a las 02:00 UTC
 0 2 * * * pg_dump -U puntokampus_user -h 127.0.0.1 puntokampus | gzip > /backups/puntokampus_$(date +\%F).sql.gz
 ```
+

@@ -31,3 +31,4 @@ class Categoria extends Model
             ->orWhere('categoria_2_id', $this->id);
     }
 }
+

@@ -77,3 +77,4 @@ class Tienda extends Model
         return $this->hasMany(SolicitudPremium::class, 'tienda_id');
     }
 }
+

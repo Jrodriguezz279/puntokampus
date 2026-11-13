@@ -28,3 +28,4 @@ class CodigoAcceso extends Model
         ];
     }
 }
+

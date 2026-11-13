@@ -29,3 +29,4 @@ class ProductoFoto extends Model
         return $this->belongsTo(Producto::class, 'producto_id');
     }
 }
+

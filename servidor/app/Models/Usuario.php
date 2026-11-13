@@ -68,3 +68,4 @@ class Usuario extends Authenticatable implements FilamentUser
         return $this->hasMany(Reporte::class, 'reportado_por');
     }
 }
+

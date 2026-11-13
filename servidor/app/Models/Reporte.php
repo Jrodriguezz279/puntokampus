@@ -44,3 +44,4 @@ class Reporte extends Model
         return $this->belongsTo(Usuario::class, 'revisado_por');
     }
 }
+

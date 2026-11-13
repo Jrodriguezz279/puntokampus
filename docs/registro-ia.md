@@ -7,4 +7,5 @@ Una fila por sesión de trabajo. Llenar al terminar cada fase.
 |---|---|---|---|---|
 | 2026-11-12 | Agente | Antigravity + Claude Sonnet 4.6 (Thinking) | F0: leer PRD, crear estructura de repositorio y validar entorno | Verificar que la estructura de carpetas y archivos es correcta, completa y coincide con el PRD |
 | 2026-11-12 | Agente | Antigravity + Gemini 3.8 Flash | F1: instalación de Laravel, Sanctum, Filament, PostgreSQL, 12 migraciones, modelos, seeders y endpoint /api/v1/salud | Verificación de tests automáticos en verde contra PostgreSQL real, validación de unaccent y aislamiento Filament |
+| 2026-11-13 | Agente | Antigravity + Gemini 3.8 Flash | F2: Backend de autenticación sin contraseña (código 6 dígitos, throttling, UTB domain validator, Sanctum tokens, R1–R5, H01–H03) | 20 pruebas automáticas en verde en Feature tests, validación de rate limiting, 5 intentos máximos y revocación de tokens |
 

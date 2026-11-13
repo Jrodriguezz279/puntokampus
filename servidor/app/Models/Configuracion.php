@@ -33,3 +33,4 @@ class Configuracion extends Model
         ];
     }
 }
+

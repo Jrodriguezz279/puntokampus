@@ -39,3 +39,4 @@ class Producto extends Model
         return $this->hasMany(ProductoFoto::class, 'producto_id')->orderBy('orden');
     }
 }
+

@@ -36,3 +36,4 @@ class PuntoEntrega extends Model
         return $this->hasMany(Pedido::class, 'punto_entrega_id');
     }
 }
+
