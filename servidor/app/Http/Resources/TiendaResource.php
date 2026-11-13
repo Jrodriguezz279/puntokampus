@@ -27,3 +27,4 @@ class TiendaResource extends JsonResource
         ];
     }
 }
+

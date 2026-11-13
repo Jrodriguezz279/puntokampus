@@ -183,3 +183,4 @@ class MiProductoTest extends TestCase
         $this->assertEquals('Producto Tienda 1', $productoTienda1->fresh()->nombre);
     }
 }
+

@@ -16,3 +16,4 @@ class ProductoFotoResource extends JsonResource
         ];
     }
 }
+

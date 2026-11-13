@@ -21,3 +21,4 @@ class ProductoResource extends JsonResource
         ];
     }
 }
+

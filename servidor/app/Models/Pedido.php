@@ -28,11 +28,13 @@ class Pedido extends Model
     protected function casts(): array
     {
         return [
-            'hora_entrega' => 'datetime',
-            'total' => 'decimal:2',
+            'hora_entrega'       => 'datetime',
+            'total'              => 'decimal:2',
             'estado_cambiado_en' => 'datetime',
         ];
     }
+
+    // ─── Relaciones ───────────────────────────────────────────────────────────
 
     public function comprador()
     {
@@ -53,5 +55,32 @@ class Pedido extends Model
     {
         return $this->hasMany(PedidoItem::class, 'pedido_id');
     }
-}
 
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    /**
+     * Genera el siguiente código PK-XXXXXX usando el último número secuencial.
+     */
+    public static function generarCodigo(): string
+    {
+        $ultimoId = static::max('id') ?? 0;
+        return 'PK-' . str_pad($ultimoId + 1, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Construye la URL de WhatsApp del vendedor para este pedido.
+     */
+    public function whatsappUrl(): string
+    {
+        $telefono = $this->tienda?->usuario?->whatsapp ?? '';
+        $mensaje  = urlencode("Hola, hice el pedido {$this->codigo} en PuntoKampus");
+        return "https://wa.me/{$telefono}?text={$mensaje}";
+    }
+
+    // ─── Scopes ───────────────────────────────────────────────────────────────
+
+    public function scopePendientes($query)
+    {
+        return $query->where('estado', 'pendiente');
+    }
+}

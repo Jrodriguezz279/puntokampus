@@ -16,3 +16,4 @@ class CategoriaResource extends JsonResource
         ];
     }
 }
+

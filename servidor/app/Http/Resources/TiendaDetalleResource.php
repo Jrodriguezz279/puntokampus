@@ -30,3 +30,4 @@ class TiendaDetalleResource extends JsonResource
         ];
     }
 }
+

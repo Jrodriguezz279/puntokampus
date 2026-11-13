@@ -56,3 +56,4 @@ class GuardarTiendaRequest extends FormRequest
         ];
     }
 }
+

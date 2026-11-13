@@ -136,3 +136,4 @@ class MiProductoController extends Controller
         return response()->noContent();
     }
 }
+

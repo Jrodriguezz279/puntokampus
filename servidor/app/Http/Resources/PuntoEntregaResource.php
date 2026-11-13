@@ -17,3 +17,4 @@ class PuntoEntregaResource extends JsonResource
         ];
     }
 }
+

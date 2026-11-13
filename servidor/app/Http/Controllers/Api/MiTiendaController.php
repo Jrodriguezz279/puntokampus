@@ -192,3 +192,4 @@ class MiTiendaController extends Controller
         ]);
     }
 }
+

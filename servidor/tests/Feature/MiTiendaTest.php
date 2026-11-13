@@ -215,3 +215,4 @@ class MiTiendaTest extends TestCase
         $this->assertNotNull($tienda->fresh()->logo_url);
     }
 }
+

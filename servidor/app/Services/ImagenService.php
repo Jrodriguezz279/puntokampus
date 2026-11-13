@@ -86,3 +86,4 @@ class ImagenService
         return Storage::url($rutaRelativa);
     }
 }
+

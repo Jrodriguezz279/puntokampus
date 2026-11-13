@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\MiProductoController;
+use App\Http\Controllers\Api\MisPedidosController;
 use App\Http\Controllers\Api\MiTiendaController;
+use App\Http\Controllers\Api\PedidoController;
+use App\Http\Controllers\Api\TiendaPedidosController;
 use App\Http\Controllers\Api\VitrinaController;
 use App\Http\Controllers\Api\YoController;
 use Illuminate\Support\Facades\Route;
@@ -50,5 +53,18 @@ Route::prefix('v1')->group(function () {
         Route::delete('/mi-tienda/productos/{id}', [MiProductoController::class, 'destroy']);
         Route::post('/mi-tienda/productos/{id}/fotos', [MiProductoController::class, 'agregarFoto']);
         Route::delete('/mi-tienda/productos/{id}/fotos/{fotoId}', [MiProductoController::class, 'eliminarFoto']);
+
+        // Pedidos (H13, R11, R12, R14, R15)
+        Route::post('/pedidos', [PedidoController::class, 'store']);
+
+        // Mis Pedidos como Comprador (H14, H15, R16)
+        Route::get('/mis-pedidos', [MisPedidosController::class, 'index']);
+        Route::get('/mis-pedidos/{codigo}', [MisPedidosController::class, 'show']);
+        Route::delete('/mis-pedidos/{codigo}', [MisPedidosController::class, 'cancelar']);
+
+        // Pedidos de Mi Tienda como Vendedor (H16, H17, R17)
+        Route::get('/mi-tienda/pedidos', [TiendaPedidosController::class, 'index']);
+        Route::put('/mi-tienda/pedidos/{codigo}/entregado', [TiendaPedidosController::class, 'entregar']);
+        Route::put('/mi-tienda/pedidos/{codigo}/cancelar', [TiendaPedidosController::class, 'cancelar']);
     });
 });

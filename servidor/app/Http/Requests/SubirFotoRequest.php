@@ -27,3 +27,4 @@ class SubirFotoRequest extends FormRequest
         ];
     }
 }
+
