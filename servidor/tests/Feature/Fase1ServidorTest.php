@@ -81,6 +81,8 @@ class Fase1ServidorTest extends TestCase
 
     public function test_login_filament_con_correo_y_password(): void
     {
+        $admin = Usuario::where('correo', 'admin@utb.edu.ec')->first();
+
         \Livewire\Livewire::test(\App\Filament\Pages\Auth\Login::class)
             ->fillForm([
                 'email' => 'admin@utb.edu.ec',
@@ -90,7 +92,12 @@ class Fase1ServidorTest extends TestCase
             ->assertHasNoFormErrors()
             ->assertRedirect(\Filament\Pages\Dashboard::getUrl());
 
-        $this->assertAuthenticatedAs(Usuario::where('correo', 'admin@utb.edu.ec')->first());
+        $this->assertAuthenticatedAs($admin);
+
+        // Comprobar que el Dashboard renderiza correctamente con el nombre del usuario (getFilamentName)
+        \Livewire\Livewire::actingAs($admin)
+            ->test(\Filament\Pages\Dashboard::class)
+            ->assertSuccessful();
     }
 }
 
