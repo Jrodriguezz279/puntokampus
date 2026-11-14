@@ -6,7 +6,7 @@ on:
     paths:
       - 'app/**'
       - '.github/workflows/build-apk.yml'
-  workflow_dispatch: # Permite compilar manualmente con un clic en GitHub
+  workflow_dispatch:
 
 jobs:
   build:
@@ -28,6 +28,11 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
+      - name: 📝 Escribir local.properties con ruta de Flutter
+        working-directory: app/android
+        run: |
+          echo "flutter.sdk=$(dirname $(dirname $(which flutter)))" > local.properties
 
       - name: 📦 Instalar dependencias de Flutter
         working-directory: app
