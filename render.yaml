@@ -1,0 +1,51 @@
+databases:
+  - name: puntokampus-db
+    databaseName: puntokampus
+    user: postgres
+    plan: free
+
+services:
+  - type: web
+    name: puntokampus-app
+    env: docker
+    dockerfilePath: servidor/Dockerfile
+    dockerContext: servidor
+    plan: free
+    healthCheckPath: /api/v1/healthcheck
+    envVars:
+      - key: APP_NAME
+        value: PuntoKampus
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        value: base64:SHTBIKX9glFPQSAx3X4qNLTNd/pbkg+wlmYm1F5tzDU=
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: puntokampus-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: puntokampus-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: puntokampus-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: puntokampus-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: puntokampus-db
+          property: password
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database

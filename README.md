@@ -139,6 +139,21 @@ php artisan test
 
 ---
 
+## 🌐 Despliegue en la Nube con Render (1-Clic)
+
+El repositorio incluye soporte nativo para **Render** mediante Blueprint (`render.yaml`) y contenedor `Dockerfile`:
+
+1. Crea una cuenta en [render.com](https://render.com) (puedes iniciar sesión con tu GitHub).
+2. En tu Dashboard, haz clic en **New +** → **Blueprint**.
+3. Selecciona tu repositorio: `Jrodriguezz279/puntokampus`.
+4. Render detectará automáticamente `render.yaml` y creará:
+   * La base de datos gestionada **PostgreSQL** (`puntokampus-db`).
+   * El servicio web con PHP 8.2 + Apache (`puntokampus-app`).
+   * Las variables de entorno enlazadas.
+5. Haz clic en **Apply**. Render compilará el Dockerfile, ejecutará las migraciones y seeders, y te dará tu URL pública con HTTPS (ej: `https://puntokampus-app.onrender.com`).
+
+---
+
 ## 📁 Estructura del Repositorio
 
 * `/servidor`: Backend Laravel 11/12 con Filament v3, API REST y Vistas Web para Estudiantes (`/app`).
