@@ -29,10 +29,13 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: 📝 Escribir local.properties con ruta de Flutter
-        working-directory: app/android
+      - name: 📱 Generar estructura oficial nativa de Android
+        working-directory: app
         run: |
-          echo "flutter.sdk=$(dirname $(dirname $(which flutter)))" > local.properties
+          cp android/app/src/main/AndroidManifest.xml /tmp/AndroidManifest.xml
+          rm -rf android
+          flutter create --org ec.edu.utb --project-name puntokampus --platforms=android .
+          cp /tmp/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
 
       - name: 📦 Instalar dependencias de Flutter
         working-directory: app
@@ -44,7 +47,7 @@ jobs:
 
       - name: 🔨 Compilar APK Release
         working-directory: app
-        run: flutter build apk --release --android-skip-build-dependency-validation
+        run: flutter build apk --release
 
       - name: 📤 Subir APK como artefacto descargable
         uses: actions/upload-artifact@v4
