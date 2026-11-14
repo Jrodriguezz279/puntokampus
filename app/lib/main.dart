@@ -13,25 +13,23 @@ void main() async {
   final authProvider = AuthProvider();
   await authProvider.inicializar();
 
-  runApp(
-    MultiProvider(
+  runApp(PuntoKampusApp(authProvider: authProvider));
+}
+
+class PuntoKampusApp extends StatelessWidget {
+  final AuthProvider? authProvider;
+  const PuntoKampusApp({super.key, this.authProvider});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
       providers: [
-        ChangeNotifierProvider.value(value: authProvider),
+        ChangeNotifierProvider(create: (_) => authProvider ?? AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => VitrinaProvider()),
         ChangeNotifierProvider(create: (_) => TiendaProvider()),
       ],
-      child: const PuntoKampusApp(),
-    ),
-  );
-}
-
-class PuntoKampusApp extends StatelessWidget {
-  const PuntoKampusApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+      child: MaterialApp(
       title: 'PuntoKampus UTB',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -56,7 +54,7 @@ class PuntoKampusApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: AppColors.surface,
           elevation: 0,
           shape: RoundedRectangleBorder(
@@ -66,6 +64,7 @@ class PuntoKampusApp extends StatelessWidget {
         ),
       ),
       home: const MainNavigationScreen(),
+      ),
     );
   }
 }
