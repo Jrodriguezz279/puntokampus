@@ -32,10 +32,7 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# 4. Configurar Apache para escuchar en el puerto que asigne Render ($PORT, default 80)
-RUN sed -ri -e 's!80!${PORT:-80}!g' /etc/apache2/ports.conf /etc/apache2/sites-available/*.conf
-
-# 5. Instalar Composer
+# 4. Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # 6. Copiar código de la aplicación

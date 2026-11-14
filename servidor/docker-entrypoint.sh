@@ -5,8 +5,8 @@ echo "🚀 Iniciando PuntoKampus en Render..."
 
 # Configurar puerto dinámico de Apache según variable de entorno de Render
 PORT_TO_USE=${PORT:-80}
-sed -ri -e "s!Listen [0-9]+!Listen ${PORT_TO_USE}!g" /etc/apache2/ports.conf
-sed -ri -e "s!<VirtualHost \*:[0-9]+>!<VirtualHost \*:${PORT_TO_USE}>!g" /etc/apache2/sites-available/*.conf
+echo "Listen ${PORT_TO_USE}" > /etc/apache2/ports.conf
+sed -ri -e "s!<VirtualHost \*:.*>!<VirtualHost \*:${PORT_TO_USE}>!g" /etc/apache2/sites-available/*.conf
 
 # Verificar si APP_KEY está definida; si no, generar una
 if [ -z "$APP_KEY" ]; then
