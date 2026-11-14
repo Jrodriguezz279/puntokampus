@@ -167,6 +167,11 @@ El repositorio incluye soporte nativo para **Render** mediante Blueprint (`rende
 ## 📁 Estructura del Repositorio
 
 * `/servidor`: Backend Laravel 11/12 con Filament v3, API REST y Vistas Web para Estudiantes (`/app`).
+* `/app`: Aplicación móvil y cliente universal en **Flutter (Material 3)**:
+  * Conectada directamente a la API en producción en Render (`https://puntokampus-app.onrender.com/api/v1`).
+  * Autenticación segura con tokens Sanctum en `SharedPreferences`.
+  * Navegación oficial de 4 pestañas: **Vitrina**, **Mis pedidos**, **Mi tienda**, **Cuenta**.
+  * Carrito de compras con validación de tienda única y apertura directa de WhatsApp (`url_launcher`).
 * `/docs`: Documentación técnica y académica del proyecto:
   * [`docs/PRD-MAESTRO.md`](docs/PRD-MAESTRO.md): Especificación de requerimientos y reglas de negocio.
   * [`docs/despliegue.md`](docs/despliegue.md): Guía de despliegue para producción (VPS, Nginx, SSL).
