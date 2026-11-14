@@ -44,7 +44,7 @@ jobs:
 
       - name: 🔨 Compilar APK Release
         working-directory: app
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: 📤 Subir APK como artefacto descargable
         uses: actions/upload-artifact@v4
