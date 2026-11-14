@@ -1,7 +1,7 @@
 databases:
   - name: puntokampus-db
     databaseName: puntokampus
-    user: postgres
+    user: puntokampus_user
     plan: free
 
 services:
