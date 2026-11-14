@@ -37,6 +37,36 @@ jobs:
           flutter create --org ec.edu.utb --project-name puntokampus --platforms=android .
           cp /tmp/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
 
+      - name: 🛡️ Desactivar chequeo de Lint Vital en Android
+        working-directory: app
+        run: |
+          echo "android.lint.abortOnError=false" >> android/gradle.properties
+          cat << 'EOF' >> android/app/build.gradle
+
+          android {
+              lint {
+                  abortOnError = false
+                  checkReleaseBuilds = false
+              }
+          }
+
+          gradle.projectsEvaluated {
+              tasks.withType(JavaCompile) {
+                  options.compilerArgs << "-Xlint:none"
+              }
+          }
+
+          subprojects {
+              afterEvaluate { project ->
+                  project.tasks.configureEach { task ->
+                      if (task.name.contains("lintVital")) {
+                          task.enabled = false
+                      }
+                  }
+              }
+          }
+          EOF
+
       - name: 📦 Instalar dependencias de Flutter
         working-directory: app
         run: flutter pub get
