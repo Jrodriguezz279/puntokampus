@@ -42,10 +42,18 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . /var/www/html
 
+# Asegurar carpetas y permisos antes de composer install
+RUN mkdir -p /var/www/html/storage/framework/cache/data \
+             /var/www/html/storage/framework/sessions \
+             /var/www/html/storage/framework/views \
+             /var/www/html/storage/logs \
+             /var/www/html/bootstrap/cache \
+    && chmod -R 777 /var/www/html/storage /var/www/html/bootstrap/cache
+
 # 7. Instalar dependencias de producción de Composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# 8. Permisos de carpetas de almacenamiento y caché
+# 8. Permisos de carpetas de almacenamiento y caché para Apache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
