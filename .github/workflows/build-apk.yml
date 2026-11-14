@@ -18,11 +18,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: ☕ Configurar Java JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'gradle'
 
       - name: 🐦 Configurar Flutter SDK
         uses: subosito/flutter-action@v2
@@ -31,19 +30,16 @@ jobs:
           cache: true
 
       - name: 📦 Instalar dependencias de Flutter
-        run: |
-          cd app
-          flutter pub get
+        working-directory: app
+        run: flutter pub get
 
       - name: 🧪 Ejecutar pruebas automáticas
-        run: |
-          cd app
-          flutter test
+        working-directory: app
+        run: flutter test
 
       - name: 🔨 Compilar APK Release
-        run: |
-          cd app
-          flutter build apk --release
+        working-directory: app
+        run: flutter build apk --release
 
       - name: 📤 Subir APK como artefacto descargable
         uses: actions/upload-artifact@v4
