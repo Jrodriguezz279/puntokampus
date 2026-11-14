@@ -22,6 +22,14 @@ Route::prefix('v1')->group(function () {
             'hora' => now()->toIso8601String(),
         ]);
     });
+    Route::get('/healthcheck', function () {
+        return response()->json([
+            'estado' => 'ok',
+            'version' => '1.0',
+            'entorno' => config('app.env'),
+            'hora' => now()->toIso8601String(),
+        ]);
+    });
 
     // Rutas públicas de Autenticación (R1, R2, R3)
     Route::post('/auth/codigo', [AuthController::class, 'solicitarCodigo']);
