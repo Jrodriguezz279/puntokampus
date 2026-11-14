@@ -1,6 +1,16 @@
 # 🎓 PuntoKampus — Marketplace Universitario UTB
 
+[![Desplegado en Render](https://img.shields.io/badge/Render-Live-brightgreen?logo=render)](https://puntokampus-app.onrender.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2-blue?logo=php)](https://php.net)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://postgresql.org)
+[![Tests](https://img.shields.io/badge/Tests-82%20passing-success)](servidor)
+
 Sistema de comercio electrónico para estudiantes emprendedores de la **Universidad Técnica de Babahoyo (UTB)**. Permite a los estudiantes vender y comprar productos dentro del campus, coordinando puntos de entrega y pedidos vía WhatsApp, con autenticación sin contraseñas mediante correo institucional (`@utb.edu.ec`).
+
+🌐 **Enlace público en producción:** [https://puntokampus-app.onrender.com](https://puntokampus-app.onrender.com)  
+📱 **Portal Web de Estudiantes:** [https://puntokampus-app.onrender.com/app](https://puntokampus-app.onrender.com/app)  
+🛡️ **Panel de Administración:** [https://puntokampus-app.onrender.com/admin-login](https://puntokampus-app.onrender.com/admin-login)  
+📡 **API Base para Flutter:** `https://puntokampus-app.onrender.com/api/v1`
 
 ---
 
