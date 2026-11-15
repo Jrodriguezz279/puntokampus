@@ -298,9 +298,9 @@ class _CodigoScreenState extends State<CodigoScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.12),
+                  color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
                 ),
                 child: Row(
                   children: [
@@ -309,7 +309,7 @@ class _CodigoScreenState extends State<CodigoScreen> {
                     const Expanded(
                       child: Text(
                         'Código demo de evaluación: 123456',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.text),
                       ),
                     ),
                     TextButton(
