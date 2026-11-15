@@ -164,12 +164,25 @@
                 @endif
             </div>
 
-            @if ($tienda->usuario->whatsapp)
-                <a href="https://wa.me/{{ $tienda->usuario->whatsapp }}" target="_blank"
-                   class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; margin-top: 0.25rem;">
-                    💬 Contactar por WhatsApp
-                </a>
-            @endif
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.4rem;">
+                @if ($tienda->usuario->whatsapp)
+                    <a href="https://wa.me/{{ $tienda->usuario->whatsapp }}" target="_blank"
+                       class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                        💬 Contactar por WhatsApp
+                    </a>
+                @endif
+                @auth
+                    @if (Auth::id() !== $tienda->usuario_id)
+                        <button type="button" onclick="abrirReporte()" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; color: #dc2626; border-color: #fecaca;">
+                            🚩 Reportar tienda
+                        </button>
+                    @endif
+                @else
+                    <a href="/app/login" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; color: var(--text-muted);">
+                        🚩 Reportar tienda
+                    </a>
+                @endauth
+            </div>
         </div>
     </div>
 
@@ -243,7 +256,10 @@
                 <div class="form-group">
                     <label for="hora_entrega">Día y Hora de Entrega</label>
                     <input type="datetime-local" id="hora_entrega" name="hora_entrega" class="form-control" required
+                           min="{{ date('Y-m-d\TH:i', strtotime('+30 minutes')) }}"
+                           max="{{ date('Y-m-d\TH:i', strtotime('+7 days')) }}"
                            value="{{ date('Y-m-d\TH:i', strtotime('+1 hour')) }}">
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Elige entre 30 minutos a partir de ahora y hasta 7 días posteriores.</span>
                 </div>
 
                 <div class="form-group">
@@ -272,6 +288,44 @@
         </div>
     </div>
 
+    <!-- Modal Reportar Tienda (P19) -->
+    <div id="modalReporte" class="modal-overlay" onclick="if(event.target===this) cerrarReporte()">
+        <div class="modal-sheet" style="max-width: 500px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="font-size:1.15rem; font-weight:700; color:#dc2626; margin:0;">🚩 Reportar tienda</h3>
+                <button type="button" onclick="cerrarReporte()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+            </div>
+
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                Tu reporte es anónimo para el vendedor y será revisado por el equipo de moderación en un plazo de 24 horas.
+            </p>
+
+            <form method="POST" action="/app/tienda/{{ $tienda->slug }}/reportar">
+                @csrf
+                <div class="form-group">
+                    <label for="motivo">Motivo del reporte</label>
+                    <select name="motivo" id="motivo" class="form-control" required onchange="toggleDetalleReporte()">
+                        <option value="">Selecciona un motivo...</option>
+                        <option value="prohibido">Producto o servicio prohibido / no permitido</option>
+                        <option value="no_entrego">No entregó el pedido acordado</option>
+                        <option value="informacion_falsa">Información falsa o engañosa</option>
+                        <option value="trato_inadecuado">Trato inadecuado o irrespetuoso</option>
+                        <option value="otro">Otro motivo (especificar)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="grupoDetalleReporte">
+                    <label for="detalle">Detalle adicional</label>
+                    <textarea name="detalle" id="detalle" rows="3" class="form-control" maxlength="300" placeholder="Describe brevemente lo ocurrido (mín. 10 caracteres si eliges 'Otro')..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="background:#dc2626; border-color:#b91c1c; width:100%;">
+                    Enviar Reporte a Moderación
+                </button>
+            </form>
+        </div>
+    </div>
+
 @endsection
 
 @section('scripts')
@@ -295,6 +349,26 @@
         const cant = parseInt(document.getElementById('cantidad').value) || 1;
         const total = (precioUnitarioActual * cant).toFixed(2);
         document.getElementById('modalTotal').innerText = '$' + total;
+    }
+
+    function abrirReporte() {
+        document.getElementById('modalReporte').style.display = 'flex';
+    }
+
+    function cerrarReporte() {
+        document.getElementById('modalReporte').style.display = 'none';
+    }
+
+    function toggleDetalleReporte() {
+        const motivo = document.getElementById('motivo').value;
+        const textarea = document.getElementById('detalle');
+        if (motivo === 'otro') {
+            textarea.required = true;
+            textarea.setAttribute('minlength', '10');
+        } else {
+            textarea.required = false;
+            textarea.removeAttribute('minlength');
+        }
     }
 </script>
 @endsection

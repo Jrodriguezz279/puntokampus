@@ -73,6 +73,21 @@
                 🏪 {{ $pedido->tienda->nombre }}
             </div>
 
+            {{-- R17: Código de entrega para el comprador --}}
+            @if ($pedido->estado === 'pendiente' && !empty($pedido->codigo_entrega_descifrado))
+                <div style="background:#FFF8F5; border:1.5px solid #CC4E01; border-radius:10px; padding:0.85rem; margin:0.6rem 0; text-align:center;">
+                    <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#A73C00; font-weight:700; display:block;">
+                        🔑 Código de entrega
+                    </span>
+                    <div style="font-size:1.9rem; font-weight:900; letter-spacing:8px; color:#CC4E01; margin:0.25rem 0;">
+                        {{ $pedido->codigo_entrega_descifrado }}
+                    </div>
+                    <span style="font-size:0.75rem; color:#A73C00;">
+                        Muéstrale o dicta este código al vendedor cuando recibas tu pedido en persona.
+                    </span>
+                </div>
+            @endif
+
             <div style="background:#f9fafb; padding:0.65rem 0.85rem; border-radius:8px; font-size:0.85rem; margin-bottom:0.6rem;">
                 @foreach ($pedido->items as $item)
                     <div style="display:flex; justify-content:space-between; margin-bottom:0.2rem;">
@@ -81,7 +96,7 @@
                     </div>
                 @endforeach
                 <div style="border-top:1px dashed #e5e7eb; margin-top:0.4rem; padding-top:0.4rem; display:flex; justify-content:space-between; font-weight:700;">
-                    <span>Total pagado:</span>
+                    <span>Total:</span>
                     <span style="color:#16a34a;">${{ number_format($pedido->total, 2) }}</span>
                 </div>
             </div>

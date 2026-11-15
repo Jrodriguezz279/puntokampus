@@ -5,17 +5,22 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Categoria;
 use App\Models\CodigoAcceso;
+use App\Models\Configuracion;
 use App\Models\Pedido;
 use App\Models\PedidoItem;
 use App\Models\Producto;
 use App\Models\PuntoEntrega;
+use App\Models\Reporte;
+use App\Models\SolicitudPremium;
 use App\Models\Tienda;
 use App\Models\Usuario;
 use App\Services\AuthService;
 use App\Services\ImagenService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -216,7 +221,12 @@ class AppEstudianteController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('app.mi_tienda', compact('tienda', 'productos', 'pedidos'));
+        $config = Configuracion::first();
+        $ultimaSolicitudPremium = SolicitudPremium::where('tienda_id', $tienda->id)
+            ->latest('id')
+            ->first();
+
+        return view('app.mi_tienda', compact('tienda', 'productos', 'pedidos', 'config', 'ultimaSolicitudPremium'));
     }
 
     /**
@@ -238,6 +248,7 @@ class AppEstudianteController extends Controller
             'punto_entrega_id' => ['nullable', 'exists:puntos_entrega,id'],
             'horario'          => ['nullable', 'string', 'max:100'],
             'whatsapp'         => ['required', 'string', 'max:20'],
+            'logo'             => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
         ]);
 
         // Formatear WhatsApp
@@ -258,6 +269,11 @@ class AppEstudianteController extends Controller
             $counter++;
         }
 
+        $logoUrl = null;
+        if ($request->hasFile('logo')) {
+            $logoUrl = $this->imagenService->procesarYGuardar($request->file('logo'), 'logos');
+        }
+
         Tienda::create([
             'usuario_id'       => $usuario->id,
             'nombre'           => $datos['nombre'],
@@ -267,11 +283,34 @@ class AppEstudianteController extends Controller
             'categoria_2_id'   => $datos['categoria_2_id'] ?? null,
             'punto_entrega_id' => $datos['punto_entrega_id'] ?? null,
             'horario'          => $datos['horario'] ?? null,
+            'logo_url'         => $logoUrl,
             'plan'             => 'gratis',
             'estado'           => 'activa',
         ]);
 
         return redirect('/app/mi-tienda')->with('mensaje', '¡Tu tienda ha sido creada y publicada con éxito!');
+    }
+
+    /**
+     * Subir o actualizar logo de la tienda
+     */
+    public function subirLogo(Request $request): RedirectResponse
+    {
+        $usuario = Auth::user();
+        $tienda = Tienda::where('usuario_id', $usuario->id)->firstOrFail();
+
+        $request->validate([
+            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+        ], [
+            'logo.required' => 'Selecciona una imagen de logo.',
+            'logo.image'    => 'El archivo debe ser una imagen.',
+            'logo.max'      => 'El logo no puede pesar más de 5MB.',
+        ]);
+
+        $url = $this->imagenService->procesarYGuardar($request->file('logo'), 'logos');
+        $tienda->update(['logo_url' => $url]);
+
+        return back()->with('mensaje', '¡Logo de la tienda actualizado con éxito!');
     }
 
     /**
@@ -321,8 +360,11 @@ class AppEstudianteController extends Controller
             'cantidad'         => ['required', 'integer', 'min:1', 'max:20'],
             'punto_entrega_id' => ['required', 'exists:puntos_entrega,id'],
             'forma_pago'       => ['required', 'in:efectivo,transferencia,deuna'],
-            'hora_entrega'     => ['required', 'date'],
+            'hora_entrega'     => ['required', 'date', 'after:+29 minutes', 'before:+7 days'],
             'nota'             => ['nullable', 'string', 'max:200'],
+        ], [
+            'hora_entrega.after'  => 'La hora de entrega debe ser de al menos 30 minutos en el futuro.',
+            'hora_entrega.before' => 'La hora de entrega no puede superar los 7 días en el futuro.',
         ]);
 
         $tienda = Tienda::findOrFail($datos['tienda_id']);
@@ -343,8 +385,10 @@ class AppEstudianteController extends Controller
 
         // Generar código único PK-XXXXXX
         $codigo = 'PK-' . strtoupper(Str::random(6));
+        // R17: Generar código numérico de 4 dígitos para entrega
+        $codigoEntrega = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
-        $pedido = DB::transaction(function () use ($usuario, $tienda, $datos, $total, $codigo, $producto, $subtotal) {
+        $pedido = DB::transaction(function () use ($usuario, $tienda, $datos, $total, $codigo, $producto, $subtotal, $codigoEntrega) {
             $nuevoPedido = Pedido::create([
                 'codigo'           => $codigo,
                 'comprador_id'     => $usuario->id,
@@ -355,6 +399,9 @@ class AppEstudianteController extends Controller
                 'nota'             => $datos['nota'] ?? null,
                 'total'            => $total,
                 'estado'           => 'pendiente',
+                'codigo_entrega'   => Crypt::encryptString($codigoEntrega),
+                'intentos_codigo'  => 0,
+                'codigo_bloqueado' => false,
             ]);
 
             PedidoItem::create([
@@ -394,7 +441,156 @@ class AppEstudianteController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
+        // R17: Descifrar código de entrega solo para el comprador y solo si está pendiente
+        foreach ($pedidos as $pedido) {
+            $pedido->codigo_entrega_descifrado = null;
+            if ($pedido->estado === 'pendiente' && !$pedido->codigo_bloqueado && !empty($pedido->codigo_entrega)) {
+                try {
+                    $pedido->codigo_entrega_descifrado = Crypt::decryptString($pedido->codigo_entrega);
+                } catch (\Throwable $e) {
+                    $pedido->codigo_entrega_descifrado = null;
+                }
+            }
+        }
+
         return view('app.mis_pedidos', compact('pedidos'));
+    }
+
+    /**
+     * R17: Confirmar entrega con código por el vendedor
+     */
+    public function confirmarEntrega(Request $request, string $codigo): RedirectResponse
+    {
+        $usuario = Auth::user();
+        $tienda = Tienda::where('usuario_id', $usuario->id)->firstOrFail();
+        $pedido = Pedido::where('codigo', $codigo)->where('tienda_id', $tienda->id)->firstOrFail();
+
+        $request->validate([
+            'codigo_entrega' => ['required', 'string', 'size:4'],
+        ], [
+            'codigo_entrega.required' => 'Ingresa el código de 4 dígitos.',
+            'codigo_entrega.size'     => 'El código debe tener exactamente 4 dígitos.',
+        ]);
+
+        if ($pedido->estado !== 'pendiente') {
+            return back()->withErrors(['general' => "Solo se puede confirmar entrega de pedidos pendientes. Estado: '{$pedido->estado}'."]);
+        }
+
+        if ($pedido->codigo_bloqueado) {
+            return back()->withErrors(['general' => 'Código bloqueado tras 5 intentos fallidos. Contacta al administrador para desbloquear.']);
+        }
+
+        if (!$pedido->verificarCodigoEntrega($request->input('codigo_entrega'))) {
+            $pedido->refresh();
+            if ($pedido->codigo_bloqueado) {
+                return back()->withErrors(['general' => 'Código bloqueado tras 5 intentos fallidos. Contacta al administrador.']);
+            }
+            $restantes = 5 - $pedido->intentos_codigo;
+            return back()->withErrors(['general' => "Código incorrecto. Intentos restantes: {$restantes}."]);
+        }
+
+        $pedido->update([
+            'estado'             => 'entregado',
+            'estado_cambiado_en' => now(),
+            'codigo_entrega'     => null,
+            'intentos_codigo'    => 0,
+        ]);
+
+        return back()->with('mensaje', "¡Pedido {$codigo} marcado como Entregado con éxito!");
+    }
+
+    /**
+     * P18: Solicitar Plan Premium (Sacó 10) desde la web
+     */
+    public function solicitarPremium(Request $request): RedirectResponse
+    {
+        $usuario = Auth::user();
+        $tienda = Tienda::where('usuario_id', $usuario->id)->firstOrFail();
+
+        // R21: No permite otra solicitud mientras haya una pendiente
+        $tienePendiente = SolicitudPremium::where('tienda_id', $tienda->id)
+            ->where('estado', 'pendiente')
+            ->exists();
+
+        if ($tienePendiente) {
+            return back()->withErrors(['general' => 'Ya tienes una solicitud en revisión.']);
+        }
+
+        $datos = $request->validate([
+            'numero_comprobante' => ['required', 'string', 'min:4', 'max:50'],
+            'monto'              => ['required', 'numeric', 'min:0.01', 'max:1000'],
+            'foto_comprobante'   => ['required', 'file', 'image', 'max:5120'],
+        ], [
+            'numero_comprobante.required' => 'El número de comprobante es obligatorio.',
+            'numero_comprobante.min'      => 'El número de comprobante debe tener al menos 4 caracteres.',
+            'monto.required'              => 'El monto transferido es obligatorio.',
+            'foto_comprobante.required'   => 'Debes adjuntar la foto del comprobante de pago.',
+            'foto_comprobante.max'        => 'La foto del comprobante no puede pesar más de 5MB.',
+        ]);
+
+        $ruta = $request->file('foto_comprobante')->store('comprobantes', 'local');
+
+        SolicitudPremium::create([
+            'tienda_id'          => $tienda->id,
+            'numero_comprobante' => $datos['numero_comprobante'],
+            'monto'              => $datos['monto'],
+            'foto_comprobante'   => $ruta,
+            'estado'             => 'pendiente',
+        ]);
+
+        return back()->with('mensaje', '¡Solicitud de Plan Premium enviada! El equipo la revisará pronto.');
+    }
+
+    /**
+     * P19: Reportar una tienda desde la web
+     */
+    public function reportarTienda(Request $request, string $slug): RedirectResponse
+    {
+        $usuario = Auth::user();
+        $tienda = Tienda::where('slug', $slug)->firstOrFail();
+
+        // R20: Prohibido autoreporte
+        if ($tienda->usuario_id === $usuario->id) {
+            return back()->withErrors(['general' => 'No puedes reportar tu propia tienda.']);
+        }
+
+        // R20: Límite de 1 reporte por tienda al día por usuario
+        $yaReportoHoy = Reporte::where('tienda_id', $tienda->id)
+            ->where('reportado_por', $usuario->id)
+            ->whereDate('creado_en', Carbon::today())
+            ->exists();
+
+        if ($yaReportoHoy) {
+            return back()->withErrors(['general' => 'Ya reportaste esta tienda hoy.']);
+        }
+
+        $datos = $request->validate([
+            'motivo'  => ['required', 'string', 'in:prohibido,no_entrego,informacion_falsa,trato_inadecuado,otro'],
+            'detalle' => [
+                'nullable',
+                'string',
+                'max:300',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->input('motivo') === 'otro' && (!is_string($value) || mb_strlen(trim($value)) < 10)) {
+                        $fail('Si el motivo es "otro", debes detallar la razón con al menos 10 caracteres.');
+                    }
+                },
+            ],
+        ], [
+            'motivo.required' => 'Selecciona un motivo para el reporte.',
+            'motivo.in'       => 'El motivo seleccionado no es válido.',
+            'detalle.max'     => 'El detalle no puede superar los 300 caracteres.',
+        ]);
+
+        Reporte::create([
+            'tienda_id'     => $tienda->id,
+            'reportado_por' => $usuario->id,
+            'motivo'        => $datos['motivo'],
+            'detalle'       => $datos['detalle'] ?? null,
+            'estado'        => 'nuevo',
+        ]);
+
+        return back()->with('mensaje', 'Gracias. El equipo lo revisará en 24 horas.');
     }
 
     /**

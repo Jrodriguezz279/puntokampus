@@ -13,8 +13,17 @@
             Publica tus productos ante toda la comunidad de la UTB. No cobramos comisiones y los cobros van directo a ti.
         </p>
 
-        <form method="POST" action="/app/mi-tienda/crear">
+        <form method="POST" action="/app/mi-tienda/crear" enctype="multipart/form-data">
             @csrf
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="logo" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.3rem;">
+                    Logo de tu Tienda (opcional)
+                </label>
+                <input type="file" id="logo" name="logo" accept="image/png,image/jpeg,image/jpg"
+                       class="form-control" style="width:100%; padding:0.4rem; border:1px solid var(--border); border-radius:8px;">
+                <span style="font-size:0.75rem; color:var(--text-muted);">Foto o logo para tu perfil (máx. 5MB).</span>
+            </div>
 
             <div class="form-group" style="margin-bottom: 1rem;">
                 <label for="nombre" style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.3rem;">

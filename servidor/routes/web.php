@@ -36,11 +36,15 @@ Route::prefix('app')->group(function () {
         // Modo Comprador
         Route::get('/mis-pedidos', [AppEstudianteController::class, 'misPedidos']);
         Route::post('/pedidos', [AppEstudianteController::class, 'crearPedido']);
+        Route::post('/tienda/{slug}/reportar', [AppEstudianteController::class, 'reportarTienda']);
 
         // Modo Vendedor ("Mi Tienda")
         Route::get('/mi-tienda', [AppEstudianteController::class, 'miTienda']);
         Route::post('/mi-tienda/crear', [AppEstudianteController::class, 'guardarTienda']);
+        Route::post('/mi-tienda/logo', [AppEstudianteController::class, 'subirLogo']);
         Route::post('/mi-tienda/producto', [AppEstudianteController::class, 'guardarProducto']);
+        Route::post('/mi-tienda/premium', [AppEstudianteController::class, 'solicitarPremium']);
+        Route::post('/mi-tienda/pedidos/{codigo}/confirmar-entrega', [AppEstudianteController::class, 'confirmarEntrega']);
         Route::post('/mi-tienda/pedidos/{codigo}/entregado', [AppEstudianteController::class, 'marcarEntregado']);
         Route::post('/mi-tienda/pedidos/{codigo}/cancelar', [AppEstudianteController::class, 'marcarCancelado']);
 
