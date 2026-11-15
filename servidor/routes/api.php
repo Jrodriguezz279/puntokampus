@@ -80,6 +80,7 @@ Route::prefix('v1')->group(function () {
 
         // Pedidos de Mi Tienda como Vendedor (H16, H17, R17)
         Route::get('/mi-tienda/pedidos', [TiendaPedidosController::class, 'index']);
+        Route::put('/mi-tienda/pedidos/{codigo}/confirmar-entrega', [TiendaPedidosController::class, 'confirmarEntrega']);
         Route::put('/mi-tienda/pedidos/{codigo}/entregado', [TiendaPedidosController::class, 'entregar']);
         Route::put('/mi-tienda/pedidos/{codigo}/cancelar', [TiendaPedidosController::class, 'cancelar']);
 

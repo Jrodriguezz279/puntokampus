@@ -46,6 +46,8 @@ class Pedido {
   final String? whatsappUrl;
   final List<PedidoItem> items;
   final String? creadoEn;
+  /// Solo visible para el comprador dueño del pedido cuando está en estado "pendiente".
+  final String? codigoEntrega;
 
   Pedido({
     required this.id,
@@ -64,6 +66,7 @@ class Pedido {
     this.whatsappUrl,
     this.items = const [],
     this.creadoEn,
+    this.codigoEntrega,
   });
 
   bool get esPendiente => estado.toLowerCase() == 'pendiente';
@@ -91,6 +94,7 @@ class Pedido {
       whatsappUrl: json['whatsapp_url'] as String?,
       items: itemsList,
       creadoEn: json['created_at'] as String?,
+      codigoEntrega: json['codigo_entrega'] as String?,
     );
   }
 }

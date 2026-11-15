@@ -1,4 +1,6 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../theme/theme.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -547,4 +549,172 @@ class PKNavItem {
   final IconData? iconoActivo;
   final String etiqueta;
   const PKNavItem({required this.icono, this.iconoActivo, required this.etiqueta});
+}
+
+// ─── Selector de Imagen (Galería) ─────────────────────────────────────────────
+/// Permite elegir fotos de la galería para productos, logos y comprobantes.
+class PKSelectorImagen extends StatefulWidget {
+  final String etiqueta;
+  final String? urlActual;
+  final Uint8List? bytesIniciales;
+  final String? nombreArchivoInicial;
+  final void Function(Uint8List bytes, String nombreArchivo) onImagenSeleccionada;
+  final VoidCallback? onRemover;
+  final double altura;
+  final bool circular;
+
+  const PKSelectorImagen({
+    super.key,
+    required this.etiqueta,
+    this.urlActual,
+    this.bytesIniciales,
+    this.nombreArchivoInicial,
+    required this.onImagenSeleccionada,
+    this.onRemover,
+    this.altura = 160,
+    this.circular = false,
+  });
+
+  @override
+  State<PKSelectorImagen> createState() => _PKSelectorImagenState();
+}
+
+class _PKSelectorImagenState extends State<PKSelectorImagen> {
+  Uint8List? _bytes;
+  String? _nombreArchivo;
+  bool _seleccionando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bytes = widget.bytesIniciales;
+    _nombreArchivo = widget.nombreArchivoInicial;
+  }
+
+  Future<void> _elegirDeGaleria() async {
+    setState(() => _seleccionando = true);
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
+      );
+
+      if (picked != null) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _bytes = bytes;
+          _nombreArchivo = picked.name;
+        });
+        widget.onImagenSeleccionada(bytes, picked.name);
+      }
+    } catch (e) {
+      if (mounted) {
+        pkSnackError(context, 'No se pudo abrir la galería. Revisa los permisos.');
+      }
+    } finally {
+      if (mounted) setState(() => _seleccionando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tieneFoto = _bytes != null || (widget.urlActual != null && widget.urlActual!.isNotEmpty);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(widget.etiqueta, style: PKTextStyles.etiqueta),
+        const SizedBox(height: PKSpacing.xs),
+        InkWell(
+          onTap: _seleccionando ? null : _elegirDeGaleria,
+          borderRadius: widget.circular ? BorderRadius.circular(100) : PKRadii.tarjetaAll,
+          child: Container(
+            height: widget.altura,
+            width: widget.circular ? widget.altura : double.infinity,
+            decoration: BoxDecoration(
+              color: PKColors.tarjeta,
+              shape: widget.circular ? BoxShape.circle : BoxShape.rectangle,
+              borderRadius: widget.circular ? null : PKRadii.tarjetaAll,
+              border: Border.all(
+                color: tieneFoto ? PKColors.primario : PKColors.borde,
+                width: tieneFoto ? 1.5 : 1,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: widget.circular ? BorderRadius.circular(100) : PKRadii.tarjetaAll,
+              child: _seleccionando
+                  ? const Center(child: CircularProgressIndicator(color: PKColors.primario))
+                  : _bytes != null
+                      ? Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.memory(_bytes!, fit: BoxFit.cover),
+                            Positioned(
+                              bottom: PKSpacing.xs,
+                              right: PKSpacing.xs,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.65),
+                                  borderRadius: PKRadii.botonAll,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.photo_library_outlined, size: 14, color: PKColors.sobrePrimario),
+                                    const SizedBox(width: 4),
+                                    Text('Cambiar', style: PKTextStyles.etiqueta.copyWith(color: PKColors.sobrePrimario, fontSize: 11)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : (widget.urlActual != null && widget.urlActual!.isNotEmpty)
+                          ? Image.network(widget.urlActual!, fit: BoxFit.cover)
+                          : Center(
+                              child: SingleChildScrollView(
+                                physics: const NeverScrollableScrollPhysics(),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(PKSpacing.xs),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.add_photo_alternate_outlined,
+                                        size: widget.circular ? 28 : 38,
+                                        color: PKColors.primario,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        widget.circular ? 'Subir foto' : 'Elegir de la galería',
+                                        textAlign: TextAlign.center,
+                                        style: PKTextStyles.etiqueta.copyWith(
+                                          color: PKColors.primario,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: widget.circular ? 11 : 13,
+                                        ),
+                                      ),
+                                      if (!widget.circular) ...[
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'PNG o JPG hasta 5MB',
+                                          style: PKTextStyles.etiqueta.copyWith(fontSize: 11),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }

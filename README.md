@@ -182,3 +182,37 @@ El repositorio incluye soporte nativo para **Render** mediante Blueprint (`rende
 
 ## ðŸ‘¥ Equipo de Desarrollo
 Proyecto de ingenierÃ­a de software para la **Universidad TÃ©cnica de Babahoyo (UTB)**.
+
+
+---
+
+## Cambios recientes
+
+### 2026-11-15 — R17: Confirmación de entrega con código (adelanto aprobado de Tramo 2)
+
+**Motivo:** El dueño del producto aprobó adelantar esta función del Tramo 2 al Tramo 1 para reemplazar el botón manual "Marcar entregado" por un flujo más seguro y verificable.
+
+**Qué cambia:**
+- Al crear un pedido, el servidor genera un **código de 4 dígitos** cifrado con AES-256.
+- El **comprador** lo ve en el detalle de su pedido (P12) y se lo dice en persona al vendedor.
+- El **vendedor** lo escribe en su pantalla de pedidos (P17) para confirmar la entrega.
+- El vendedor **nunca** ve el código en ninguna respuesta de API.
+- Bloqueo automático tras 5 intentos fallidos; desbloqueo solo desde el panel de admin.
+
+**Archivos modificados:**
+- servidor/database/migrations/2026_11_15_000001_add_codigo_entrega_to_pedidos_table.php (nueva migración)
+- servidor/app/Models/Pedido.php — campos y método erificarCodigoEntrega()
+- servidor/app/Http/Controllers/Api/TiendaPedidosController.php — método confirmarEntrega()
+- servidor/app/Http/Controllers/Api/PedidoController.php — genera código al crear pedido
+- servidor/app/Http/Resources/PedidoResource.php — expone código solo al comprador dueño
+- servidor/app/Http/Requests/CrearPedidoRequest.php — valida hora_entrega: 30min–7días
+- servidor/routes/api.php — nueva ruta PUT /mi-tienda/pedidos/{codigo}/confirmar-entrega
+- servidor/app/Filament/Resources/PedidoResource.php — acción "Desbloquear" para admin
+- servidor/tests/Feature/ConfirmacionEntregaTest.php — 9 pruebas automáticas
+- pp/lib/models/pedido.dart — campo codigoEntrega
+- pp/lib/services/pedido_service.dart — método confirmarEntrega()
+- pp/lib/screens/pedidos/mis_pedidos_screen.dart — muestra código al comprador (P12)
+- pp/lib/screens/tienda/tienda_screens.dart — formulario de código para vendedor (P17)
+- pp/lib/screens/carrito/carrito_screens.dart — rango de fecha corregido a 30min–7días
+
+**Decisiones de diseño:** ver docs/decisiones.md.

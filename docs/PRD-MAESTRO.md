@@ -666,3 +666,53 @@ Al cerrar cada fase entrega:
 7. **Comandos para que yo reproduzca** lo que hiciste (levantar servidor, correr pruebas, instalar APK).
 
 Fin del documento.
+
+
+---
+
+# PARTE 15. CAMBIOS POST-APROBACIÓN DEL DUEÑO DEL PRODUCTO
+
+## R17 — Confirmación de entrega con código (adelanto de Tramo 2)
+
+**Fecha:** 2026-11-15  
+**Aprobado por:** Dueño del producto (instrucción explícita en chat).  
+**Motivo:** Reemplaza el botón manual "Marcar entregado" por un flujo más seguro y verificable.
+
+### Descripción
+
+Al crear un pedido, el servidor genera un **código numérico de 4 dígitos de un solo uso**.
+
+- El **comprador** lo ve en el detalle de su pedido (P12) solo cuando el estado es pendiente.
+- El **comprador** se lo dice en persona al vendedor.
+- El **vendedor** lo escribe en su pantalla de pedidos (P17) y solo así el pedido pasa a entregado.
+- El vendedor **nunca** ve el código en ninguna respuesta de API.
+
+### Reglas (R17 actualizado)
+
+| Regla | Descripción |
+|---|---|
+| R17-a | El código se genera en PedidoController::store() con andom_int, se cifra con Crypt::encryptString() y se guarda en codigo_entrega (campo $hidden). |
+| R17-b | El código solo sirve cuando el pedido está en estado pendiente. Cancelado o vencido ? 422. |
+| R17-c | Bloqueo tras 5 intentos fallidos (codigo_bloqueado = true) ? HTTP 429. Solo admin puede desbloquear desde Filament. |
+| R17-d | El vendedor confirma via PUT /api/v1/mi-tienda/pedidos/{codigo}/confirmar-entrega con body {"codigo_entrega":"XXXX"}. |
+| R17-e | El comprador ve su código en GET /api/v1/mis-pedidos/{codigo} (campo codigo_entrega en la respuesta, solo si pendiente y no bloqueado). |
+| R17-f | No incluye QR ni tarjeta QR (quedan en Tramo 2). |
+| R17-g | Textos de UI: "entregado", nunca "pagado". |
+
+### Tabla pedidos — campos nuevos
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| codigo_entrega | string(500) nullable | Código de 4 dígitos cifrado con AES-256-CBC. $hidden en el modelo. Se limpia a 
+ull tras entrega exitosa. |
+| intentos_codigo | tinyint default 0 | Contador de intentos fallidos del vendedor. |
+| codigo_bloqueado | boolean default false | 	rue tras 5 intentos. Solo el admin puede resetear. |
+
+### Historial de decisiones
+
+Ver docs/decisiones.md.
+
+### Pruebas automáticas
+
+9 tests en servidor/tests/Feature/ConfirmacionEntregaTest.php:
+código correcto, código incorrecto, bloqueo (5 intentos), pedido cancelado, pedido vencido, vendedor ajeno (404), respuesta del vendedor sin codigo_entrega, comprador ve su código, comprador no ve código ajeno.

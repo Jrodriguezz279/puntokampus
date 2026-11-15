@@ -23,6 +23,13 @@ class Pedido extends Model
         'estado',
         'cancelado_por',
         'estado_cambiado_en',
+        'codigo_entrega',
+        'intentos_codigo',
+        'codigo_bloqueado',
+    ];
+
+    protected $hidden = [
+        'codigo_entrega',
     ];
 
     protected function casts(): array
@@ -31,6 +38,8 @@ class Pedido extends Model
             'hora_entrega'       => 'datetime',
             'total'              => 'decimal:2',
             'estado_cambiado_en' => 'datetime',
+            'codigo_bloqueado'   => 'boolean',
+            'intentos_codigo'    => 'integer',
         ];
     }
 
@@ -56,7 +65,7 @@ class Pedido extends Model
         return $this->hasMany(PedidoItem::class, 'pedido_id');
     }
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────
+    // ─── Helpers ─────────────────────────────────────────────────────────────
 
     /**
      * Genera el siguiente código PK-XXXXXX usando el último número secuencial.
@@ -75,6 +84,34 @@ class Pedido extends Model
         $telefono = $this->tienda?->usuario?->whatsapp ?? '';
         $mensaje  = urlencode("Hola, hice el pedido {$this->codigo} en PuntoKampus");
         return "https://wa.me/{$telefono}?text={$mensaje}";
+    }
+
+    /**
+     * Verifica el código de entrega ingresado por el vendedor.
+     * Incrementa intentos y bloquea tras 5 fallidos.
+     */
+    public function verificarCodigoEntrega(string $intento): bool
+    {
+        if ($this->codigo_bloqueado || !$this->codigo_entrega) {
+            return false;
+        }
+
+        try {
+            $codigoReal = \Illuminate\Support\Facades\Crypt::decryptString($this->codigo_entrega);
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        if ($codigoReal !== $intento) {
+            $this->intentos_codigo += 1;
+            if ($this->intentos_codigo >= 5) {
+                $this->codigo_bloqueado = true;
+            }
+            $this->save();
+            return false;
+        }
+
+        return true;
     }
 
     // ─── Scopes ───────────────────────────────────────────────────────────────

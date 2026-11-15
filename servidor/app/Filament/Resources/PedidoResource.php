@@ -54,10 +54,33 @@ class PedidoResource extends Resource
                     }),
                 Tables\Columns\TextColumn::make('hora_entrega')
                     ->dateTime(),
+                Tables\Columns\IconColumn::make('codigo_bloqueado')
+                    ->label('Bloqueado')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-lock-closed')
+                    ->falseIcon('heroicon-o-lock-open')
+                    ->trueColor('danger')
+                    ->falseColor('success'),
                 Tables\Columns\TextColumn::make('creado_en')
                     ->label('Fecha')
                     ->dateTime()
                     ->sortable(),
+            ])
+            ->actions([
+                Tables\Actions\Action::make('desbloquear')
+                    ->label('Desbloquear')
+                    ->icon('heroicon-o-lock-open')
+                    ->color('warning')
+                    ->visible(fn (Pedido $record): bool => (bool) $record->codigo_bloqueado)
+                    ->requiresConfirmation()
+                    ->modalHeading('Desbloquear código de entrega')
+                    ->modalDescription('Esto reiniciará los intentos fallidos a 0 y desbloqueará el pedido.')
+                    ->action(function (Pedido $record) {
+                        $record->update([
+                            'codigo_bloqueado' => false,
+                            'intentos_codigo'  => 0,
+                        ]);
+                    }),
             ]);
     }
 

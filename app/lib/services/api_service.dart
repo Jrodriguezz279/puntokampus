@@ -97,6 +97,41 @@ class ApiService {
     }
   }
 
+  static Future<dynamic> postMultipart(
+    String endpoint, {
+    Map<String, String>? fields,
+    required String fileField,
+    required List<int> fileBytes,
+    required String fileName,
+    bool requiresAuth = true,
+  }) async {
+    try {
+      final uri = _buildUri(endpoint);
+      final request = http.MultipartRequest('POST', uri);
+
+      final headers = await _getHeaders(requiresAuth: requiresAuth);
+      headers.remove('Content-Type');
+      request.headers.addAll(headers);
+
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      request.files.add(http.MultipartFile.fromBytes(
+        fileField,
+        fileBytes,
+        filename: fileName,
+      ));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      return _processResponse(response);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('No pudimos subir la imagen. Revisa tu conexión e inténtalo de nuevo.');
+    }
+  }
+
   static dynamic _processResponse(http.Response response) {
     dynamic decoded;
     try {

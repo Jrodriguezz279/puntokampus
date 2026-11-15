@@ -7,6 +7,7 @@ use App\Http\Requests\CrearPedidoRequest;
 use App\Http\Resources\PedidoResource;
 use App\Models\Pedido;
 use App\Models\Producto;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -99,7 +100,11 @@ class PedidoController extends Controller
 
             // Formatear código único con padding de 6 dígitos basado en su id secuencial
             $codigoFinal = 'PK-' . str_pad((string) $pedido->id, 6, '0', STR_PAD_LEFT);
-            $pedido->update(['codigo' => $codigoFinal]);
+            $codigoEntrega = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            $pedido->update([
+                'codigo'         => $codigoFinal,
+                'codigo_entrega' => Crypt::encryptString($codigoEntrega),
+            ]);
 
             foreach ($itemsParaGuardar as $item) {
                 $pedido->items()->create($item);

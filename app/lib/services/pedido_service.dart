@@ -30,9 +30,9 @@ class PedidoService {
     return list.map((p) => Pedido.fromJson(p as Map<String, dynamic>)).toList();
   }
 
-  // P12: Cancelar pedido de comprador
-  static Future<void> cancelarPedidoComprador(int pedidoId) async {
-    await ApiService.post('/pedidos/$pedidoId/cancelar');
+  // P12: Cancelar pedido de comprador (usa codigo del pedido, no id)
+  static Future<void> cancelarPedidoComprador(String codigo) async {
+    await ApiService.delete('/mis-pedidos/$codigo');
   }
 
   // P17: Pedidos recibidos en mi tienda (vendedor)
@@ -47,13 +47,15 @@ class PedidoService {
     return list.map((p) => Pedido.fromJson(p as Map<String, dynamic>)).toList();
   }
 
-  // P17: Marcar pedido como entregado (vendedor)
-  static Future<void> marcarEntregado(int pedidoId) async {
-    await ApiService.post('/mi-tienda/pedidos/$pedidoId/entregado');
+  // P17: Confirmar entrega con código de 4 dígitos (R17)
+  static Future<void> confirmarEntrega(String codigoPedido, String codigoEntrega) async {
+    await ApiService.put('/mi-tienda/pedidos/$codigoPedido/confirmar-entrega', body: {
+      'codigo_entrega': codigoEntrega,
+    });
   }
 
   // P17: Cancelar pedido (vendedor)
-  static Future<void> cancelarPedidoVendedor(int pedidoId) async {
-    await ApiService.post('/mi-tienda/pedidos/$pedidoId/cancelar');
+  static Future<void> cancelarPedidoVendedor(String codigo) async {
+    await ApiService.put('/mi-tienda/pedidos/$codigo/cancelar');
   }
 }

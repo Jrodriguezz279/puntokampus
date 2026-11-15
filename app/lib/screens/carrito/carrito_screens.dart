@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/theme.dart';
 import '../../constants/app_strings.dart';
-import '../../models/categoria.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vitrina_provider.dart';
@@ -228,7 +227,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       context: context,
       initialDate: _fechaEntrega.isBefore(now) ? now : _fechaEntrega,
       firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: now.add(const Duration(days: 30)),
+      lastDate: now.add(const Duration(days: 7)),
       helpText: 'Selecciona la fecha de entrega',
       confirmText: 'Aceptar',
       cancelText: 'Cancelar',
@@ -302,16 +301,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
+    // R17/A4: Validar rango de fecha/hora (30 min mínimo, 7 días máximo)
+    final fechaHora = DateTime(
+      _fechaEntrega.year,
+      _fechaEntrega.month,
+      _fechaEntrega.day,
+      _horaEntrega.hour,
+      _horaEntrega.minute,
+    );
+    final minima = DateTime.now().add(const Duration(minutes: 30));
+    final maxima = DateTime.now().add(const Duration(days: 7));
+    if (fechaHora.isBefore(minima)) {
+      pkSnackError(context, 'La hora de entrega debe ser al menos 30 minutos en el futuro.');
+      return;
+    }
+    if (fechaHora.isAfter(maxima)) {
+      pkSnackError(context, 'La hora de entrega no puede ser más de 7 días en el futuro.');
+      return;
+    }
+
     setState(() => _enviando = true);
 
     try {
-      final fechaHora = DateTime(
-        _fechaEntrega.year,
-        _fechaEntrega.month,
-        _fechaEntrega.day,
-        _horaEntrega.hour,
-        _horaEntrega.minute,
-      );
       final horaString = fechaHora.toIso8601String();
 
       final res = await PedidoService.crearPedido(

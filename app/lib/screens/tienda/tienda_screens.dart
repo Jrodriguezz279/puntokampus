@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/theme.dart';
@@ -7,7 +8,9 @@ import '../../models/tienda.dart';
 import '../../providers/tienda_provider.dart';
 import '../../providers/vitrina_provider.dart';
 import '../../services/pedido_service.dart';
+import '../../services/tienda_service.dart';
 import '../../widgets/pk_components.dart';
+import 'premium_screen.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // MI TIENDA — P14 Crear/Editar Tienda / P15 Panel Mi Tienda / P16 Nuevo Producto / P17 Pedidos
@@ -187,6 +190,41 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                 ),
               ),
 
+              const SizedBox(height: PKSpacing.base),
+
+              // P18: Tarjeta Plan Premium (Sacó 10)
+              PKTarjeta(
+                padding: EdgeInsets.zero,
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(PKSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: t.esPremium ? PKColors.okFondo : PKColors.primarioSuave,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.star_rounded,
+                      color: t.esPremium ? PKColors.okTexto : PKColors.primario,
+                    ),
+                  ),
+                  title: Text(
+                    t.esPremium ? 'Plan Premium Activo (Sacó 10)' : 'Mejorar a Plan Premium',
+                    style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15),
+                  ),
+                  subtitle: Text(
+                    t.esPremium ? 'Tu tienda cuenta con insignia y portada' : 'Insignia dorada y máxima visibilidad',
+                    style: PKTextStyles.etiqueta,
+                  ),
+                  trailing: const Icon(Icons.chevron_right, color: PKColors.secundario),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                    );
+                  },
+                ),
+              ),
+
               const SizedBox(height: PKSpacing.lg),
 
               // Lista de Productos de la Tienda
@@ -293,6 +331,9 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
   final _whatsappController = TextEditingController();
   int? _cat1Id;
   int? _puntoId;
+  Uint8List? _logoBytes;
+  String? _logoNombre;
+  bool _guardando = false;
 
   @override
   void initState() {
@@ -327,6 +368,7 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
     final catId = _cat1Id ?? (vitrina.categorias.isNotEmpty ? vitrina.categorias.first.id : 1);
     final puntoId = _puntoId ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first.id : 1);
 
+    setState(() => _guardando = true);
     final ok = await tiendaProv.guardarTienda(
       nombre: _nombreController.text.trim(),
       descripcion: _descripcionController.text.trim(),
@@ -338,8 +380,17 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
 
     if (!mounted) return;
     if (ok) {
+      if (_logoBytes != null && _logoNombre != null) {
+        try {
+          await TiendaService.subirLogo(bytes: _logoBytes!, fileName: _logoNombre!);
+          await tiendaProv.cargarMiTienda();
+        } catch (_) {}
+      }
+      if (!mounted) return;
+      setState(() => _guardando = false);
       Navigator.pop(context);
     } else {
+      setState(() => _guardando = false);
       pkSnackError(context, tiendaProv.error ?? 'Error al guardar.');
     }
   }
@@ -375,6 +426,23 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Información básica', style: PKTextStyles.tituloTarjeta),
+                  const SizedBox(height: PKSpacing.base),
+                  Center(
+                    child: PKSelectorImagen(
+                      etiqueta: 'Logo de la tienda (opcional)',
+                      urlActual: widget.tienda?.logoUrl,
+                      bytesIniciales: _logoBytes,
+                      nombreArchivoInicial: _logoNombre,
+                      altura: 110,
+                      circular: true,
+                      onImagenSeleccionada: (bytes, nombre) {
+                        setState(() {
+                          _logoBytes = bytes;
+                          _logoNombre = nombre;
+                        });
+                      },
+                    ),
+                  ),
                   const SizedBox(height: PKSpacing.base),
                   PKCampoEtiquetado(
                     etiqueta: 'Nombre de la tienda *',
@@ -474,6 +542,9 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
   final _nombreController = TextEditingController();
   final _descController = TextEditingController();
   final _precioController = TextEditingController();
+  Uint8List? _fotoBytes;
+  String? _fotoNombre;
+  bool _guardando = false;
 
   @override
   void dispose() {
@@ -490,16 +561,30 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
       return;
     }
 
-    final tiendaProv = Provider.of<TiendaProvider>(context, listen: false);
-    final ok = await tiendaProv.crearProducto(
-      nombre: _nombreController.text.trim(),
-      descripcion: _descController.text.trim(),
-      precio: precio,
-    );
+    setState(() => _guardando = true);
+    try {
+      final prod = await TiendaService.crearProducto(
+        nombre: _nombreController.text.trim(),
+        descripcion: _descController.text.trim(),
+        precio: precio,
+      );
 
-    if (!mounted) return;
-    if (ok) {
+      if (_fotoBytes != null && _fotoNombre != null) {
+        try {
+          await TiendaService.subirFotoProducto(prod.id, bytes: _fotoBytes!, fileName: _fotoNombre!);
+        } catch (_) {}
+      }
+
+      final tiendaProv = Provider.of<TiendaProvider>(context, listen: false);
+      await tiendaProv.cargarMiTienda();
+
+      if (!mounted) return;
+      setState(() => _guardando = false);
       Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _guardando = false);
+      pkSnackError(context, e.toString());
     }
   }
 
@@ -517,7 +602,8 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
         ),
         child: PKBotonPrimario(
           texto: 'Guardar Producto',
-          onPressed: _guardar,
+          cargando: _guardando,
+          onPressed: _guardando ? null : _guardar,
         ),
       ),
       body: SingleChildScrollView(
@@ -527,6 +613,19 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Detalles del producto', style: PKTextStyles.tituloTarjeta),
+              const SizedBox(height: PKSpacing.base),
+              PKSelectorImagen(
+                etiqueta: 'Foto del producto (opcional)',
+                bytesIniciales: _fotoBytes,
+                nombreArchivoInicial: _fotoNombre,
+                altura: 140,
+                onImagenSeleccionada: (bytes, nombre) {
+                  setState(() {
+                    _fotoBytes = bytes;
+                    _fotoNombre = nombre;
+                  });
+                },
+              ),
               const SizedBox(height: PKSpacing.base),
               PKCampoEtiquetado(
                 etiqueta: 'Nombre del producto *',
@@ -566,6 +665,9 @@ class PedidosTiendaScreen extends StatefulWidget {
 class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
   List<Pedido> _pedidos = [];
   bool _cargando = true;
+  // Controladores de texto: uno por código de pedido (para el campo de ingreso del código de entrega)
+  final Map<String, TextEditingController> _codigoControllers = {};
+  final Map<String, bool> _confirmando = {};
 
   @override
   void initState() {
@@ -573,16 +675,63 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
     _cargar();
   }
 
+  @override
+  void dispose() {
+    for (final c in _codigoControllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
   void _cargar() async {
     setState(() => _cargando = true);
     try {
       final list = await PedidoService.getPedidosTienda();
+      // Crear controladores para pedidos pendientes nuevos
+      for (final p in list) {
+        if (p.esPendiente && !_codigoControllers.containsKey(p.codigo)) {
+          _codigoControllers[p.codigo] = TextEditingController();
+        }
+      }
       setState(() {
         _pedidos = list;
         _cargando = false;
       });
     } catch (_) {
       setState(() => _cargando = false);
+    }
+  }
+
+  Future<void> _confirmarEntrega(Pedido p) async {
+    final controller = _codigoControllers[p.codigo];
+    final codigo = controller?.text.trim() ?? '';
+    if (codigo.length != 4) {
+      pkSnackError(context, 'El código debe tener exactamente 4 dígitos.');
+      return;
+    }
+    setState(() => _confirmando[p.codigo] = true);
+    try {
+      await PedidoService.confirmarEntrega(p.codigo, codigo);
+      if (!mounted) return;
+      pkSnackOk(context, '¡Pedido marcado como entregado!');
+      _cargar();
+    } catch (e) {
+      if (!mounted) return;
+      pkSnackError(context, e.toString());
+    } finally {
+      if (mounted) setState(() => _confirmando[p.codigo] = false);
+    }
+  }
+
+  Future<void> _cancelarPedido(Pedido p) async {
+    try {
+      await PedidoService.cancelarPedidoVendedor(p.codigo);
+      if (!mounted) return;
+      pkSnackOk(context, 'Pedido cancelado.');
+      _cargar();
+    } catch (e) {
+      if (!mounted) return;
+      pkSnackError(context, e.toString());
     }
   }
 
@@ -607,6 +756,8 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
                     itemCount: _pedidos.length,
                     itemBuilder: (context, index) {
                       final p = _pedidos[index];
+                      final controller = _codigoControllers[p.codigo];
+                      final confirmando = _confirmando[p.codigo] ?? false;
                       return Container(
                         margin: const EdgeInsets.only(bottom: PKSpacing.md),
                         child: PKTarjeta(
@@ -630,36 +781,81 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
                                 const SizedBox(height: 2),
                                 Text('📍 Entrega: ${p.puntoEntrega}', style: PKTextStyles.etiqueta),
                               ],
-                              if (p.esPendiente) ...[
+                              if (p.esPendiente && controller != null) ...[
                                 const SizedBox(height: PKSpacing.base),
+                                // R17: Campo para ingresar código de confirmación
+                                Text(
+                                  'Confirmar entrega',
+                                  style: PKTextStyles.etiqueta.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: PKSpacing.xs),
+                                Text(
+                                  'Pide el código de 4 dígitos al comprador e ingrésalo aquí.',
+                                  style: PKTextStyles.etiqueta,
+                                ),
+                                const SizedBox(height: PKSpacing.sm),
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: ElevatedButton(
-                                        onPressed: () async {
-                                          await PedidoService.marcarEntregado(p.id);
-                                          _cargar();
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: PKColors.okTexto,
-                                          foregroundColor: PKColors.sobrePrimario,
+                                      child: TextField(
+                                        controller: controller,
+                                        keyboardType: TextInputType.number,
+                                        maxLength: 4,
+                                        textAlign: TextAlign.center,
+                                        style: PKTextStyles.tituloPantalla.copyWith(
+                                          fontSize: 24,
+                                          letterSpacing: 6,
                                         ),
-                                        child: const Text('Marcar Entregado'),
+                                        decoration: InputDecoration(
+                                          hintText: '0000',
+                                          counterText: '',
+                                          contentPadding: const EdgeInsets.symmetric(
+                                            vertical: PKSpacing.sm,
+                                            horizontal: PKSpacing.base,
+                                          ),
+                                          border: OutlineInputBorder(
+                                            borderRadius: PKRadii.botonAll,
+                                            borderSide: const BorderSide(color: PKColors.borde),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: PKRadii.botonAll,
+                                            borderSide: const BorderSide(color: PKColors.primario, width: 2),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: PKSpacing.sm),
-                                    OutlinedButton(
-                                      onPressed: () async {
-                                        await PedidoService.cancelarPedidoVendedor(p.id);
-                                        _cargar();
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: PKColors.error,
-                                        side: const BorderSide(color: PKColors.error),
+                                    ElevatedButton(
+                                      onPressed: confirmando ? null : () => _confirmarEntrega(p),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: PKColors.okTexto,
+                                        foregroundColor: PKColors.sobrePrimario,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: PKSpacing.base,
+                                          vertical: PKSpacing.md,
+                                        ),
                                       ),
-                                      child: const Text('Cancelar'),
+                                      child: confirmando
+                                          ? const SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: PKColors.sobrePrimario,
+                                              ),
+                                            )
+                                          : const Text('Confirmar\nentrega', textAlign: TextAlign.center),
                                     ),
                                   ],
+                                ),
+                                const SizedBox(height: PKSpacing.sm),
+                                OutlinedButton(
+                                  onPressed: () => _cancelarPedido(p),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: PKColors.error,
+                                    side: const BorderSide(color: PKColors.error),
+                                  ),
+                                  child: const Text('Cancelar pedido'),
                                 ),
                               ],
                             ],

@@ -11,6 +11,7 @@ import '../../widgets/item_cards.dart';
 import '../../widgets/pk_components.dart';
 import '../auth/auth_screens.dart';
 import '../carrito/carrito_screens.dart';
+import 'reportar_tienda_screen.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
 // VITRINA & CATÁLOGO — P05 Vitrina / P07 Detalle Tienda / P08 Detalle Producto
@@ -306,6 +307,16 @@ class _TiendaScreenState extends State<TiendaScreen> {
       appBar: AppBar(
         title: Text(t.nombre),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.flag_outlined, color: PKColors.secundario),
+            tooltip: 'Reportar tienda',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ReportarTiendaScreen(tienda: t)),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.shopping_bag_outlined),
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CarritoScreen())),

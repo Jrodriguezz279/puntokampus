@@ -16,6 +16,7 @@ app/.flutter-plugins
 app/.flutter-plugins-dependencies
 app/.packages
 app/pubspec.lock
+**/GeneratedPluginRegistrant.java
 
 # General
 .DS_Store

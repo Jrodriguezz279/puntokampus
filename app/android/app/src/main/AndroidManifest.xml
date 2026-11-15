@@ -2,6 +2,8 @@
     package="ec.edu.utb.puntokampus">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
 
     <!-- Queries para abrir WhatsApp -->
     <queries>

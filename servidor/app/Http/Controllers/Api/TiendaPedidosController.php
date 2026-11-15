@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PedidoResource;
 use App\Models\Pedido;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 
 class TiendaPedidosController extends Controller
 {
@@ -34,6 +35,68 @@ class TiendaPedidosController extends Controller
         return PedidoResource::collection($pedidos);
     }
 
+    /**
+     * R17: Confirmar entrega con código de 4 dígitos.
+     * El vendedor ingresa el código que el comprador le muestra.
+     */
+    public function confirmarEntrega(Request $request, string $codigo)
+    {
+        $tienda = $request->user()->tienda;
+
+        if (!$tienda) {
+            return response()->json(['message' => 'No tienes una tienda registrada.'], 404);
+        }
+
+        $request->validate(['codigo_entrega' => 'required|string|size:4']);
+
+        $pedido = Pedido::where('codigo', $codigo)
+            ->where('tienda_id', $tienda->id)
+            ->first();
+
+        if (!$pedido) {
+            return response()->json(['message' => 'Pedido no encontrado.'], 404);
+        }
+
+        if ($pedido->estado !== 'pendiente') {
+            return response()->json([
+                'message' => "Solo se puede confirmar entrega de pedidos pendientes. Estado actual: '{$pedido->estado}'.",
+            ], 422);
+        }
+
+        if ($pedido->codigo_bloqueado) {
+            return response()->json([
+                'message' => 'Código bloqueado tras demasiados intentos fallidos. Contacta al administrador.',
+            ], 429);
+        }
+
+        if (!$pedido->verificarCodigoEntrega($request->input('codigo_entrega'))) {
+            $pedido->refresh();
+            if ($pedido->codigo_bloqueado) {
+                return response()->json([
+                    'message' => 'Código bloqueado tras 5 intentos fallidos. Contacta al administrador.',
+                ], 429);
+            }
+            $restantes = 5 - $pedido->intentos_codigo;
+            return response()->json([
+                'message' => "Código incorrecto. Intentos restantes: {$restantes}.",
+            ], 422);
+        }
+
+        $pedido->update([
+            'estado'             => 'entregado',
+            'estado_cambiado_en' => now(),
+            'codigo_entrega'     => null,
+            'intentos_codigo'    => 0,
+        ]);
+
+        $pedido->load(['comprador', 'puntoEntrega', 'items', 'tienda.usuario']);
+
+        return new PedidoResource($pedido);
+    }
+
+    /**
+     * Compatibilidad: marcar como entregado sin código (método previo a R17).
+     */
     public function entregar(Request $request, string $codigo)
     {
         $tienda = $request->user()->tienda;
@@ -109,4 +172,3 @@ class TiendaPedidosController extends Controller
         return new PedidoResource($pedido);
     }
 }
-

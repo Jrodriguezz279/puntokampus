@@ -89,27 +89,65 @@ class TiendaService {
     await ApiService.delete('/mi-tienda/productos/$productoId');
   }
 
-  // P18: Enviar solicitud Premium (Sacó 10)
-  static Future<void> solicitarPremium({
-    required String comprobanteUrl,
-    required String referencia,
-    required double monto,
+  // P14: Subir logo de la tienda
+  static Future<String> subirLogo({
+    required List<int> bytes,
+    required String fileName,
   }) async {
-    await ApiService.post('/premium/solicitud', body: {
-      'comprobante_url': comprobanteUrl,
-      'referencia': referencia,
-      'monto': monto,
-    });
+    final response = await ApiService.postMultipart(
+      '/mi-tienda/logo',
+      fileField: 'foto',
+      fileBytes: bytes,
+      fileName: fileName,
+    );
+    return response['logo_url'] as String? ?? '';
+  }
+
+  // P16: Subir foto a producto
+  static Future<void> subirFotoProducto(int productoId, {
+    required List<int> bytes,
+    required String fileName,
+  }) async {
+    await ApiService.postMultipart(
+      '/mi-tienda/productos/$productoId/fotos',
+      fileField: 'foto',
+      fileBytes: bytes,
+      fileName: fileName,
+    );
+  }
+
+  // P18: Obtener información y estado Premium
+  static Future<Map<String, dynamic>> getEstadoPremium() async {
+    final response = await ApiService.get('/mi-tienda/premium');
+    return response as Map<String, dynamic>;
+  }
+
+  // P18: Enviar solicitud Premium (Sacó 10) con foto del comprobante
+  static Future<void> solicitarPremium({
+    required String numeroComprobante,
+    required double monto,
+    required List<int> bytes,
+    required String fileName,
+  }) async {
+    await ApiService.postMultipart(
+      '/mi-tienda/premium',
+      fields: {
+        'numero_comprobante': numeroComprobante,
+        'monto': monto.toStringAsFixed(2),
+      },
+      fileField: 'foto_comprobante',
+      fileBytes: bytes,
+      fileName: fileName,
+    );
   }
 
   // P19: Reportar una tienda
   static Future<void> reportarTienda({
     required int tiendaId,
     required String motivo,
-    required String detalle,
+    String? detalle,
   }) async {
-    await ApiService.post('/reportes', body: {
-      'tienda_id': tiendaId,
+    await ApiService.post('/tiendas/$tiendaId/reportes', body: {
       'motivo': motivo,
       'detalle': detalle,
     });

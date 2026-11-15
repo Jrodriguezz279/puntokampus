@@ -71,7 +71,7 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
     if (confirmar != true) return;
 
     try {
-      await PedidoService.cancelarPedidoComprador(p.id);
+      await PedidoService.cancelarPedidoComprador(p.codigo);
       _cargar();
     } catch (e) {
       if (!mounted) return;
@@ -135,6 +135,9 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
                                     const SizedBox(height: 2),
                                     Text('📍 Entrega: ${p.puntoEntrega}', style: PKTextStyles.etiqueta),
                                   ],
+                                  // R17: Mostrar código de entrega solo cuando está pendiente
+                                  if (p.esPendiente && p.codigoEntrega != null)
+                                    _buildCodigoEntrega(p.codigoEntrega!),
                                   const SizedBox(height: PKSpacing.sm),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -159,6 +162,48 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
                           );
                         },
                       ),
+      ),
+    );
+  }
+
+  Widget _buildCodigoEntrega(String codigo) {
+    return Container(
+      margin: const EdgeInsets.only(top: PKSpacing.sm, bottom: PKSpacing.xs),
+      padding: const EdgeInsets.all(PKSpacing.base),
+      decoration: BoxDecoration(
+        color: PKColors.primarioSuave,
+        borderRadius: PKRadii.botonAll,
+        border: Border.all(color: PKColors.primario, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            const Icon(Icons.key_outlined, color: PKColors.primario, size: 18),
+            const SizedBox(width: PKSpacing.xs),
+            Text(
+              'Código de entrega',
+              style: PKTextStyles.etiqueta.copyWith(
+                color: PKColors.primarioSuaveTexto,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ]),
+          const SizedBox(height: PKSpacing.xs),
+          Text(
+            codigo,
+            style: PKTextStyles.tituloPantalla.copyWith(
+              letterSpacing: 8,
+              fontSize: 32,
+              color: PKColors.primario,
+            ),
+          ),
+          const SizedBox(height: PKSpacing.xs),
+          Text(
+            'Muéstrale este código al vendedor cuando recibas tu pedido.',
+            style: PKTextStyles.etiqueta.copyWith(color: PKColors.primarioSuaveTexto),
+          ),
+        ],
       ),
     );
   }

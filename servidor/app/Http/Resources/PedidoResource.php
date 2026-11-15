@@ -4,12 +4,25 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Crypt;
 
 class PedidoResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        return [
+        $codigoEntrega = null;
+        $usuario = $request->user();
+        if ($usuario && (int) $usuario->id === (int) $this->comprador_id) {
+            if ($this->estado === 'pendiente' && !$this->codigo_bloqueado && !empty($this->codigo_entrega)) {
+                try {
+                    $codigoEntrega = Crypt::decryptString($this->codigo_entrega);
+                } catch (\Throwable $e) {
+                    $codigoEntrega = null;
+                }
+            }
+        }
+
+        $data = [
             'id'                 => $this->id,
             'codigo'             => $this->codigo,
             'comprador'          => new UsuarioResource($this->whenLoaded('comprador')),
@@ -26,6 +39,12 @@ class PedidoResource extends JsonResource
             'items'              => PedidoItemResource::collection($this->whenLoaded('items')),
             'whatsapp_url'       => $this->whatsappUrl(),
         ];
+
+        if ($codigoEntrega !== null) {
+            $data['codigo_entrega'] = $codigoEntrega;
+        }
+
+        return $data;
     }
 }
 
