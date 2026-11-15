@@ -23,6 +23,8 @@ services:
         value: https://puntokampus-app.onrender.com
       - key: ASSET_URL
         value: https://puntokampus-app.onrender.com
+      - key: FILESYSTEM_DISK
+        value: public
       - key: APP_KEY
         value: base64:SHTBIKX9glFPQSAx3X4qNLTNd/pbkg+wlmYm1F5tzDU=
       - key: DB_CONNECTION

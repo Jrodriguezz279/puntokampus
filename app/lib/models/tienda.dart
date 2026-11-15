@@ -1,3 +1,4 @@
+import '../constants/api_constants.dart';
 import 'categoria.dart';
 import 'producto.dart';
 
@@ -52,8 +53,8 @@ class Tienda {
       nombre: json['nombre']?.toString() ?? '',
       slug: json['slug']?.toString() ?? '',
       descripcion: json['descripcion']?.toString(),
-      logoUrl: json['logo_url']?.toString(),
-      portadaUrl: json['portada_url']?.toString(),
+      logoUrl: ApiConstants.formatearUrlImagen(json['logo_url']?.toString()),
+      portadaUrl: ApiConstants.formatearUrlImagen(json['portada_url']?.toString()),
       horario: json['horario']?.toString(),
       whatsapp: json['whatsapp']?.toString(),
       plan: json['plan']?.toString() ?? 'gratis',

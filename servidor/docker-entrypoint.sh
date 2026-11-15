@@ -14,11 +14,14 @@ if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
 fi
 
-# Enlace de almacenamiento si no existe
-if [ ! -L /var/www/html/public/storage ]; then
-    echo "📦 Creando symlink de storage..."
-    php artisan storage:link || true
-fi
+# Enlace de almacenamiento asegurado
+echo "📦 Asegurando symlink de storage..."
+mkdir -p /var/www/html/storage/app/public/logos \
+         /var/www/html/storage/app/public/productos \
+         /var/www/html/storage/app/public/portadas
+chmod -R 775 /var/www/html/storage/app/public
+rm -f /var/www/html/public/storage || true
+php artisan storage:link --force || true
 
 # Publicar assets de Filament
 echo "🎨 Publicando assets de Filament..."

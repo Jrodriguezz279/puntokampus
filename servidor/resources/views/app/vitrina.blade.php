@@ -186,7 +186,7 @@
         <a href="/app/tienda/{{ $tienda->slug }}" class="store-card">
             <div class="store-avatar">
                 @if ($tienda->logo_url)
-                    <img src="{{ $tienda->logo_url }}" alt="{{ $tienda->nombre }}">
+                    <img src="{{ $tienda->logo_url }}" alt="{{ $tienda->nombre }}" onerror="this.onerror=null;this.parentElement.innerHTML='{{ mb_substr($tienda->nombre, 0, 1) }}';">
                 @else
                     {{ mb_substr($tienda->nombre, 0, 1) }}
                 @endif

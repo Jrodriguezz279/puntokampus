@@ -16,22 +16,25 @@ class ImagenService
     {
         $extension = strtolower($archivo->getClientOriginalExtension());
         $nombreArchivo = Str::uuid() . '.' . ($extension === 'png' ? 'png' : 'jpg');
-        $rutaRelativa = "public/{$directorio}/{$nombreArchivo}";
+        $directorioLimpio = trim($directorio, '/');
+        $rutaRelativa = "{$directorioLimpio}/{$nombreArchivo}";
+
+        $disk = Storage::disk('public');
 
         // Obtener dimensiones originales
         $info = @getimagesize($archivo->getRealPath());
         if (!$info) {
-            // Si no se puede leer como imagen binaria directa, guardar directamente
-            $path = $archivo->storeAs("public/{$directorio}", $nombreArchivo);
-            return Storage::url($path);
+            // Si no se puede leer como imagen binaria directa, guardar directamente en disco public
+            $disk->putFileAs($directorioLimpio, $archivo, $nombreArchivo);
+            return asset("storage/{$rutaRelativa}");
         }
 
         [$anchoOriginal, $altoOriginal, $tipo] = $info;
 
         // Si ya mide <= 1080px por ambos lados, guardar directamente
         if ($anchoOriginal <= 1080 && $altoOriginal <= 1080) {
-            $path = $archivo->storeAs("public/{$directorio}", $nombreArchivo);
-            return Storage::url($path);
+            $disk->putFileAs($directorioLimpio, $archivo, $nombreArchivo);
+            return asset("storage/{$rutaRelativa}");
         }
 
         // Calcular nuevas dimensiones manteniendo aspecto
@@ -52,8 +55,8 @@ class ImagenService
         };
 
         if (!$origen) {
-            $path = $archivo->storeAs("public/{$directorio}", $nombreArchivo);
-            return Storage::url($path);
+            $disk->putFileAs($directorioLimpio, $archivo, $nombreArchivo);
+            return asset("storage/{$rutaRelativa}");
         }
 
         // Redimensionar
@@ -69,7 +72,7 @@ class ImagenService
 
         imagecopyresampled($destino, $origen, 0, 0, 0, 0, $nuevoAncho, $nuevoAlto, $anchoOriginal, $altoOriginal);
 
-        // Guardar temporalmente y volcar a Storage
+        // Guardar temporalmente y volcar a Storage public
         $tempPath = tempnam(sys_get_temp_dir(), 'pk_img_');
         if ($tipo === IMAGETYPE_PNG) {
             imagepng($destino, $tempPath, 8);
@@ -80,10 +83,10 @@ class ImagenService
         imagedestroy($origen);
         imagedestroy($destino);
 
-        Storage::put($rutaRelativa, file_get_contents($tempPath));
+        $disk->put($rutaRelativa, file_get_contents($tempPath));
         @unlink($tempPath);
 
-        return Storage::url($rutaRelativa);
+        return asset("storage/{$rutaRelativa}");
     }
 }
 

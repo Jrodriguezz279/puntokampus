@@ -41,5 +41,10 @@ class SolicitudPremium extends Model
     {
         return $this->belongsTo(Usuario::class, 'revisado_por');
     }
+
+    public function getFotoComprobanteAttribute(?string $value): ?string
+    {
+        return Tienda::formatearUrl($value);
+    }
 }
 

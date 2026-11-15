@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../constants/api_constants.dart';
 import '../theme/theme.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -674,7 +675,13 @@ class _PKSelectorImagenState extends State<PKSelectorImagen> {
                           ],
                         )
                       : (widget.urlActual != null && widget.urlActual!.isNotEmpty)
-                          ? Image.network(widget.urlActual!, fit: BoxFit.cover)
+                          ? Image.network(
+                              ApiConstants.formatearUrlImagen(widget.urlActual) ?? widget.urlActual!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Center(
+                                child: Icon(Icons.broken_image_outlined, color: PKColors.secundario),
+                              ),
+                            )
                           : Center(
                               child: SingleChildScrollView(
                                 physics: const NeverScrollableScrollPhysics(),

@@ -140,21 +140,61 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(t.nombre, style: PKTextStyles.tituloTarjeta),
+                        Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: PKColors.primarioSuave,
+                            borderRadius: PKRadii.imagenAll,
+                            border: Border.all(color: PKColors.borde),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: (t.logoUrl != null && t.logoUrl!.isNotEmpty)
+                              ? Image.network(
+                                  t.logoUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Center(
+                                    child: Text(
+                                      t.nombre.isNotEmpty ? t.nombre[0].toUpperCase() : 'T',
+                                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: PKColors.primario, fontFamily: 'DMSans'),
+                                    ),
+                                  ),
+                                )
+                              : Center(
+                                  child: Text(
+                                    t.nombre.isNotEmpty ? t.nombre[0].toUpperCase() : 'T',
+                                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: PKColors.primario, fontFamily: 'DMSans'),
+                                  ),
+                                ),
                         ),
-                        if (t.esPremium)
-                          const PKInsigniaSaco10()
-                        else
-                          const PKInsigniaMatriculado(),
+                        const SizedBox(width: PKSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(t.nombre, style: PKTextStyles.tituloTarjeta),
+                                  ),
+                                  if (t.esPremium)
+                                    const PKInsigniaSaco10()
+                                  else
+                                    const PKInsigniaMatriculado(),
+                                ],
+                              ),
+                              if (t.descripcion != null && t.descripcion!.isNotEmpty) ...[
+                                const SizedBox(height: PKSpacing.xs),
+                                Text(t.descripcion!, style: PKTextStyles.cuerpo),
+                              ],
+                            ],
+                          ),
+                        ),
                       ],
                     ),
-                    if (t.descripcion != null && t.descripcion!.isNotEmpty) ...[
-                      const SizedBox(height: PKSpacing.sm),
-                      Text(t.descripcion!, style: PKTextStyles.cuerpo),
-                    ],
                     const SizedBox(height: PKSpacing.sm),
                     if (t.puntoEntrega != null)
                       Text('📍 Entrega: ${t.puntoEntrega!.nombre}', style: PKTextStyles.etiqueta),
@@ -256,7 +296,14 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                               borderRadius: PKRadii.imagenAll,
                               border: Border.all(color: PKColors.borde),
                             ),
-                            child: const Icon(Icons.fastfood_outlined, color: PKColors.secundario),
+                            clipBehavior: Clip.antiAlias,
+                            child: (prod.primeraFotoUrl != null && prod.primeraFotoUrl!.isNotEmpty)
+                                ? Image.network(
+                                    prod.primeraFotoUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Icon(Icons.fastfood_outlined, color: PKColors.secundario),
+                                  )
+                                : const Icon(Icons.fastfood_outlined, color: PKColors.secundario),
                           ),
                           const SizedBox(width: PKSpacing.md),
                           Expanded(

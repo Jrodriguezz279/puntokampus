@@ -54,7 +54,7 @@
             <div style="display:flex; align-items:center; gap:0.75rem;">
                 <div style="width:52px; height:52px; border-radius:12px; background:var(--bg); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:1.5rem; font-weight:800; color:var(--primary); flex-shrink:0;">
                     @if ($tienda->logo_url)
-                        <img src="{{ $tienda->logo_url }}" alt="{{ $tienda->nombre }}" style="width:100%; height:100%; object-fit:cover;">
+                        <img src="{{ $tienda->logo_url }}" alt="{{ $tienda->nombre }}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='{{ mb_substr($tienda->nombre, 0, 1) }}';">
                     @else
                         {{ mb_substr($tienda->nombre, 0, 1) }}
                     @endif
@@ -220,9 +220,18 @@
 
     @foreach ($productos as $prod)
         <div style="background:white; border-radius:10px; padding:0.85rem; border:1px solid var(--border); margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <strong>{{ $prod->nombre }}</strong><br>
-                <span style="font-size:0.8rem; color:var(--text-muted);">{{ $prod->descripcion ?: 'Sin descripción' }}</span>
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+                <div style="width:48px; height:48px; border-radius:8px; background:#f3f4f6; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:1.4rem; flex-shrink:0;">
+                    @if ($prod->fotos->isNotEmpty() && $prod->fotos->first()->url)
+                        <img src="{{ $prod->fotos->first()->url }}" alt="{{ $prod->nombre }}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='🍪';">
+                    @else
+                        🍪
+                    @endif
+                </div>
+                <div>
+                    <strong>{{ $prod->nombre }}</strong><br>
+                    <span style="font-size:0.8rem; color:var(--text-muted);">{{ $prod->descripcion ?: 'Sin descripción' }}</span>
+                </div>
             </div>
             <strong style="color:#16a34a; font-size:1.05rem;">${{ number_format($prod->precio, 2) }}</strong>
         </div>

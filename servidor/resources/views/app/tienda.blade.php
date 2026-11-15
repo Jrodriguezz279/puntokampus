@@ -134,7 +134,7 @@
         <div class="store-hero-body">
             <div class="store-hero-avatar">
                 @if ($tienda->logo_url)
-                    <img src="{{ $tienda->logo_url }}" alt="{{ $tienda->nombre }}">
+                    <img src="{{ $tienda->logo_url }}" alt="{{ $tienda->nombre }}" onerror="this.onerror=null;this.parentElement.innerHTML='{{ mb_substr($tienda->nombre, 0, 1) }}';">
                 @else
                     {{ mb_substr($tienda->nombre, 0, 1) }}
                 @endif
@@ -194,8 +194,8 @@
     @forelse ($productos as $producto)
         <div class="product-card">
             <div class="product-photo">
-                @if ($producto->fotos->isNotEmpty())
-                    <img src="{{ $producto->fotos->first()->url }}" alt="{{ $producto->nombre }}">
+                @if ($producto->fotos->isNotEmpty() && $producto->fotos->first()->url)
+                    <img src="{{ $producto->fotos->first()->url }}" alt="{{ $producto->nombre }}" onerror="this.onerror=null;this.parentElement.innerHTML='🍪';">
                 @else
                     🍪
                 @endif

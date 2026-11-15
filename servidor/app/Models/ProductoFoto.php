@@ -28,5 +28,10 @@ class ProductoFoto extends Model
     {
         return $this->belongsTo(Producto::class, 'producto_id');
     }
+
+    public function getUrlAttribute(?string $value): ?string
+    {
+        return Tienda::formatearUrl($value);
+    }
 }
 

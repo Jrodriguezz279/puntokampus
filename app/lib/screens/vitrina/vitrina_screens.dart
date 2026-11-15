@@ -358,17 +358,34 @@ class _TiendaScreenState extends State<TiendaScreen> {
                           borderRadius: PKRadii.imagenAll,
                           border: Border.all(color: PKColors.borde),
                         ),
-                        child: Center(
-                          child: Text(
-                            t.nombre.isNotEmpty ? t.nombre[0].toUpperCase() : 'T',
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: PKColors.primario,
-                              fontFamily: 'DMSans',
-                            ),
-                          ),
-                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: (t.logoUrl != null && t.logoUrl!.isNotEmpty)
+                            ? Image.network(
+                                t.logoUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Center(
+                                  child: Text(
+                                    t.nombre.isNotEmpty ? t.nombre[0].toUpperCase() : 'T',
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: PKColors.primario,
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Center(
+                                child: Text(
+                                  t.nombre.isNotEmpty ? t.nombre[0].toUpperCase() : 'T',
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: PKColors.primario,
+                                    fontFamily: 'DMSans',
+                                  ),
+                                ),
+                              ),
                       ),
                       const SizedBox(width: PKSpacing.base),
                       Expanded(
@@ -553,7 +570,7 @@ class _ProductoScreenState extends State<ProductoScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (p.primeraFotoUrl != null)
+            if (p.primeraFotoUrl != null && p.primeraFotoUrl!.isNotEmpty)
               Container(
                 height: 250,
                 width: double.infinity,
@@ -563,7 +580,13 @@ class _ProductoScreenState extends State<ProductoScreen> {
                   border: Border.all(color: PKColors.borde),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: Image.network(p.primeraFotoUrl!, fit: BoxFit.cover),
+                child: Image.network(
+                  p.primeraFotoUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Icon(Icons.fastfood_outlined, size: 64, color: PKColors.secundario),
+                  ),
+                ),
               ),
             const SizedBox(height: PKSpacing.base),
             Text(p.nombre, style: PKTextStyles.tituloPantalla.copyWith(fontSize: 22)),

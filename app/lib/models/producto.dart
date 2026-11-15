@@ -1,3 +1,5 @@
+import '../constants/api_constants.dart';
+
 class ProductoFoto {
   final int id;
   final String url;
@@ -10,9 +12,10 @@ class ProductoFoto {
   });
 
   factory ProductoFoto.fromJson(Map<String, dynamic> json) {
+    final rawUrl = json['url']?.toString() ?? json['foto_url']?.toString() ?? '';
     return ProductoFoto(
       id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      url: json['url']?.toString() ?? json['foto_url']?.toString() ?? '',
+      url: ApiConstants.formatearUrlImagen(rawUrl) ?? rawUrl,
       orden: json['orden'] is int ? json['orden'] as int : int.tryParse(json['orden']?.toString() ?? '0') ?? 0,
     );
   }
@@ -56,8 +59,10 @@ class Producto {
   }
 
   String? get primeraFotoUrl {
-    if (fotos.isNotEmpty) {
-      return fotos.first.url;
+    for (final f in fotos) {
+      if (f.url.trim().isNotEmpty) {
+        return f.url;
+      }
     }
     return null;
   }

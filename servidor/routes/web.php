@@ -60,3 +60,24 @@ Route::get('/admin-login', function () {
     return redirect('/admin/login');
 });
 
+// Entrega directa de archivos de storage (soporta cualquier entorno independientemente del symlink)
+Route::get('/storage/{path}', function (string $path) {
+    // 1. Probar en storage/app/public/{path}
+    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+        return response()->file(\Illuminate\Support\Facades\Storage::disk('public')->path($path));
+    }
+    // 2. Probar si tiene prefijo public/ en storage/app/public/public/{path}
+    if (\Illuminate\Support\Facades\Storage::disk('public')->exists("public/{$path}")) {
+        return response()->file(\Illuminate\Support\Facades\Storage::disk('public')->path("public/{$path}"));
+    }
+    // 3. Probar en storage/app/private/public/{path} (guardados previamente por error)
+    if (\Illuminate\Support\Facades\Storage::disk('local')->exists("public/{$path}")) {
+        return response()->file(\Illuminate\Support\Facades\Storage::disk('local')->path("public/{$path}"));
+    }
+    // 4. Probar en storage/app/private/{path}
+    if (\Illuminate\Support\Facades\Storage::disk('local')->exists($path)) {
+        return response()->file(\Illuminate\Support\Facades\Storage::disk('local')->path($path));
+    }
+    abort(404);
+})->where('path', '.*');
+

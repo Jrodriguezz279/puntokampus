@@ -44,7 +44,7 @@ class StoreCard extends StatelessWidget {
                     border: Border.all(color: PKColors.borde),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: tienda.logoUrl != null
+                  child: (tienda.logoUrl != null && tienda.logoUrl!.isNotEmpty)
                       ? Image.network(
                           tienda.logoUrl!,
                           fit: BoxFit.cover,
@@ -178,7 +178,7 @@ class ProductCard extends StatelessWidget {
                     border: Border.all(color: PKColors.borde),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: producto.primeraFotoUrl != null
+                  child: (producto.primeraFotoUrl != null && producto.primeraFotoUrl!.isNotEmpty)
                       ? Image.network(
                           producto.primeraFotoUrl!,
                           fit: BoxFit.cover,

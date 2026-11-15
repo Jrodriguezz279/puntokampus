@@ -76,5 +76,43 @@ class Tienda extends Model
     {
         return $this->hasMany(SolicitudPremium::class, 'tienda_id');
     }
+
+    public function getLogoUrlAttribute(?string $value): ?string
+    {
+        return self::formatearUrl($value);
+    }
+
+    public function getPortadaUrlAttribute(?string $value): ?string
+    {
+        return self::formatearUrl($value);
+    }
+
+    /**
+     * Resuelve de forma robusta cualquier URL almacenada para que sea alcanzable
+     * tanto en la web como en la app móvil.
+     */
+    public static function formatearUrl(?string $value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+        $val = trim($value);
+        if ($val === '') {
+            return null;
+        }
+
+        // Si ya es una URL con protocolo
+        if (str_starts_with($val, 'http://') || str_starts_with($val, 'https://')) {
+            // Si apunta a localhost o 127.0.0.1, convertir a la URL del host actual
+            if (str_contains($val, 'localhost') || str_contains($val, '127.0.0.1')) {
+                $path = parse_url($val, PHP_URL_PATH);
+                return asset(ltrim($path, '/'));
+            }
+            return $val;
+        }
+
+        // Si es una ruta relativa tipo /storage/... o storage/...
+        return asset(ltrim($val, '/'));
+    }
 }
 
