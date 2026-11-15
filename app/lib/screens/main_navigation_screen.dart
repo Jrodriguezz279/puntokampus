@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../providers/tienda_provider.dart';
 import 'vitrina/vitrina_screens.dart';
 import 'pedidos/mis_pedidos_screen.dart';
 import 'tienda/tienda_screens.dart';
