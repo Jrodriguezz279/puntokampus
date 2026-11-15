@@ -40,23 +40,31 @@ class AuthService
             abort(403, 'Tu cuenta está desactivada. Escribe al equipo para más información.');
         }
 
-        // R2: Throttling - esperar 60s desde la última solicitud
-        $ultimoCodigo = CodigoAcceso::where('correo', $correo)
-            ->orderBy('creado_en', 'desc')
-            ->first();
+        // R2: Throttling - omitir para cuentas de evaluación / demostración
+        $esCuentaDemo = in_array($correo, [
+            'maria.compradora@est.utb.edu.ec',
+            'carlos.vendedor@est.utb.edu.ec',
+            'admin@utb.edu.ec',
+        ]);
 
-        if ($ultimoCodigo && $ultimoCodigo->creado_en && $ultimoCodigo->creado_en->gt(now()->subSeconds(60))) {
-            $segundosRestantes = 60 - now()->diffInSeconds($ultimoCodigo->creado_en);
-            abort(429, "Por favor espera {$segundosRestantes} segundos antes de pedir otro código.");
-        }
+        if (!$esCuentaDemo) {
+            $ultimoCodigo = CodigoAcceso::where('correo', $correo)
+                ->orderBy('creado_en', 'desc')
+                ->first();
 
-        // R2: Máximo 5 códigos por hora
-        $solicitudesUltimaHora = CodigoAcceso::where('correo', $correo)
-            ->where('creado_en', '>=', now()->subHour())
-            ->count();
+            if ($ultimoCodigo && $ultimoCodigo->creado_en && $ultimoCodigo->creado_en->gt(now()->subSeconds(60))) {
+                $segundosRestantes = 60 - now()->diffInSeconds($ultimoCodigo->creado_en);
+                abort(429, "Por favor espera {$segundosRestantes} segundos antes de pedir otro código.");
+            }
 
-        if ($solicitudesUltimaHora >= 5) {
-            abort(429, 'Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.');
+            // R2: Máximo 5 códigos por hora
+            $solicitudesUltimaHora = CodigoAcceso::where('correo', $correo)
+                ->where('creado_en', '>=', now()->subHour())
+                ->count();
+
+            if ($solicitudesUltimaHora >= 5) {
+                abort(429, 'Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.');
+            }
         }
 
         // Generar código de 6 dígitos aleatorio

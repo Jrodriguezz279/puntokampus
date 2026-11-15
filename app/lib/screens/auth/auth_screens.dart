@@ -213,6 +213,39 @@ class _CorreoScreenState extends State<CorreoScreen> {
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : const Text(AppStrings.btnEnviarCodigo, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
+                const SizedBox(height: 24),
+                const Center(
+                  child: Text(
+                    'Acceso rápido de evaluación:',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.shopping_bag_outlined, size: 16, color: AppColors.primary),
+                        label: const Text('Compradora (María)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        onPressed: () {
+                          _correoController.text = 'maria.compradora@est.utb.edu.ec';
+                          _enviarCodigo();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.storefront_outlined, size: 16, color: AppColors.primary),
+                        label: const Text('Vendedor (Carlos)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        onPressed: () {
+                          _correoController.text = 'carlos.vendedor@est.utb.edu.ec';
+                          _enviarCodigo();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

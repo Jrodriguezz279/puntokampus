@@ -28,7 +28,7 @@ class MiTiendaController extends Controller
             abort(404, 'No tienes una tienda creada todavía.');
         }
 
-        $tienda->load(['categoria1', 'categoria2', 'puntoEntrega', 'usuario']);
+        $tienda->load(['categoria1', 'categoria2', 'puntoEntrega', 'usuario', 'productos.fotos']);
 
         return response()->json([
             'tienda' => new TiendaResource($tienda),
@@ -94,7 +94,7 @@ class MiTiendaController extends Controller
             'estado' => 'activa',
         ]);
 
-        $tienda->load(['categoria1', 'categoria2', 'puntoEntrega', 'usuario']);
+        $tienda->load(['categoria1', 'categoria2', 'puntoEntrega', 'usuario', 'productos.fotos']);
 
         return response()->json([
             'mensaje' => '¡Tu tienda ya está en la vitrina!',
@@ -145,7 +145,7 @@ class MiTiendaController extends Controller
             'punto_entrega_id' => $datos['punto_entrega_id'] ?? null,
         ]);
 
-        $tienda->load(['categoria1', 'categoria2', 'puntoEntrega', 'usuario']);
+        $tienda->load(['categoria1', 'categoria2', 'puntoEntrega', 'usuario', 'productos.fotos']);
 
         return response()->json([
             'tienda' => new TiendaResource($tienda),

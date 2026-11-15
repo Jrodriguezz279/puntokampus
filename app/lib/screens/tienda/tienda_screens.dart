@@ -247,17 +247,23 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
   final _descripcionController = TextEditingController();
   final _horarioController = TextEditingController();
   final _whatsappController = TextEditingController();
-  Categoria? _cat1;
-  PuntoEntrega? _punto;
+  int? _cat1Id;
+  int? _puntoId;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<VitrinaProvider>(context, listen: false).cargarInicial();
+    });
+
     if (widget.tienda != null) {
       _nombreController.text = widget.tienda!.nombre;
       _descripcionController.text = widget.tienda!.descripcion ?? '';
       _horarioController.text = widget.tienda!.horario ?? '';
       _whatsappController.text = widget.tienda!.whatsapp ?? '';
+      _cat1Id = widget.tienda!.categoria1?.id;
+      _puntoId = widget.tienda!.puntoEntrega?.id;
     }
   }
 
@@ -265,8 +271,8 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
     final vitrina = Provider.of<VitrinaProvider>(context, listen: false);
     final tiendaProv = Provider.of<TiendaProvider>(context, listen: false);
 
-    final catId = _cat1?.id ?? (vitrina.categorias.isNotEmpty ? vitrina.categorias.first.id : 1);
-    final puntoId = _punto?.id ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first.id : 1);
+    final catId = _cat1Id ?? (vitrina.categorias.isNotEmpty ? vitrina.categorias.first.id : 1);
+    final puntoId = _puntoId ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first.id : 1);
 
     final ok = await tiendaProv.guardarTienda(
       nombre: _nombreController.text.trim(),
@@ -291,6 +297,10 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
   Widget build(BuildContext context) {
     final vitrina = Provider.of<VitrinaProvider>(context);
 
+    // Si aún no hay selección y hay opciones, asignar la primera
+    final selectedCatId = _cat1Id ?? (vitrina.categorias.isNotEmpty ? vitrina.categorias.first.id : null);
+    final selectedPuntoId = _puntoId ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first.id : null);
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.tienda == null ? 'Crear mi tienda' : 'Editar tienda')),
       body: SingleChildScrollView(
@@ -308,18 +318,22 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
               decoration: const InputDecoration(labelText: 'Descripción *', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 14),
-            DropdownButtonFormField<Categoria>(
-              value: _cat1 ?? (vitrina.categorias.isNotEmpty ? vitrina.categorias.first : null),
+            DropdownButtonFormField<int>(
+              value: vitrina.categorias.any((c) => c.id == selectedCatId) ? selectedCatId : null,
               decoration: const InputDecoration(labelText: 'Categoría principal *', border: OutlineInputBorder()),
-              items: vitrina.categorias.map((c) => DropdownMenuItem(value: c, child: Text(c.nombre))).toList(),
-              onChanged: (val) => setState(() => _cat1 = val),
+              items: vitrina.categorias
+                  .map((c) => DropdownMenuItem<int>(value: c.id, child: Text(c.nombre)))
+                  .toList(),
+              onChanged: (val) => setState(() => _cat1Id = val),
             ),
             const SizedBox(height: 14),
-            DropdownButtonFormField<PuntoEntrega>(
-              value: _punto ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first : null),
+            DropdownButtonFormField<int>(
+              value: vitrina.puntosEntrega.any((p) => p.id == selectedPuntoId) ? selectedPuntoId : null,
               decoration: const InputDecoration(labelText: 'Punto de entrega preferido *', border: OutlineInputBorder()),
-              items: vitrina.puntosEntrega.map((p) => DropdownMenuItem(value: p, child: Text(p.nombre))).toList(),
-              onChanged: (val) => setState(() => _punto = val),
+              items: vitrina.puntosEntrega
+                  .map((p) => DropdownMenuItem<int>(value: p.id, child: Text(p.nombre)))
+                  .toList(),
+              onChanged: (val) => setState(() => _puntoId = val),
             ),
             const SizedBox(height: 14),
             TextField(

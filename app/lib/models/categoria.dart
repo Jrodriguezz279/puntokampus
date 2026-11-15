@@ -15,10 +15,10 @@ class Categoria {
 
   factory Categoria.fromJson(Map<String, dynamic> json) {
     return Categoria(
-      id: json['id'] as int,
-      nombre: json['nombre'] as String? ?? '',
-      slug: json['slug'] as String? ?? '',
-      icono: json['icono'] as String?,
+      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      nombre: json['nombre']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+      icono: json['icono']?.toString(),
       orden: json['orden'] is int ? json['orden'] : int.tryParse(json['orden']?.toString() ?? '0') ?? 0,
     );
   }
@@ -49,11 +49,11 @@ class PuntoEntrega {
 
   factory PuntoEntrega.fromJson(Map<String, dynamic> json) {
     return PuntoEntrega(
-      id: json['id'] as int,
-      nombre: json['nombre'] as String? ?? '',
-      descripcion: json['descripcion'] as String?,
-      ubicacionReferencia: json['ubicacion_referencia'] as String?,
-      activa: json['activa'] == true || json['activa'] == 1,
+      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      nombre: json['nombre']?.toString() ?? '',
+      descripcion: json['descripcion']?.toString(),
+      ubicacionReferencia: json['ubicacion_referencia']?.toString(),
+      activa: json['activa'] == true || json['activa'] == 1 || json['activa']?.toString() == 'true',
     );
   }
 

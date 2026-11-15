@@ -41,23 +41,32 @@ class Tienda {
 
   factory Tienda.fromJson(Map<String, dynamic> json) {
     var rawProds = json['productos'] as List<dynamic>? ?? [];
-    List<Producto> prodsList = rawProds.map((p) => Producto.fromJson(p as Map<String, dynamic>)).toList();
+    List<Producto> prodsList = rawProds
+        .where((p) => p is Map<String, dynamic>)
+        .map((p) => Producto.fromJson(p as Map<String, dynamic>))
+        .toList();
 
     return Tienda(
-      id: json['id'] as int,
-      usuarioId: json['usuario_id'] as int? ?? 0,
-      nombre: json['nombre'] as String? ?? '',
-      slug: json['slug'] as String? ?? '',
-      descripcion: json['descripcion'] as String?,
-      logoUrl: json['logo_url'] as String?,
-      portadaUrl: json['portada_url'] as String?,
-      horario: json['horario'] as String?,
-      whatsapp: json['whatsapp'] as String?,
-      plan: json['plan'] as String? ?? 'gratis',
-      estado: json['estado'] as String? ?? 'activa',
-      categoria1: json['categoria_1'] != null ? Categoria.fromJson(json['categoria_1'] as Map<String, dynamic>) : null,
-      categoria2: json['categoria_2'] != null ? Categoria.fromJson(json['categoria_2'] as Map<String, dynamic>) : null,
-      puntoEntrega: json['punto_entrega'] != null ? PuntoEntrega.fromJson(json['punto_entrega'] as Map<String, dynamic>) : null,
+      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      usuarioId: json['usuario_id'] is int ? json['usuario_id'] as int : int.tryParse(json['usuario_id']?.toString() ?? '0') ?? 0,
+      nombre: json['nombre']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+      descripcion: json['descripcion']?.toString(),
+      logoUrl: json['logo_url']?.toString(),
+      portadaUrl: json['portada_url']?.toString(),
+      horario: json['horario']?.toString(),
+      whatsapp: json['whatsapp']?.toString(),
+      plan: json['plan']?.toString() ?? 'gratis',
+      estado: json['estado']?.toString() ?? 'activa',
+      categoria1: (json['categoria_1'] is Map<String, dynamic> && json['categoria_1']['id'] != null)
+          ? Categoria.fromJson(json['categoria_1'] as Map<String, dynamic>)
+          : null,
+      categoria2: (json['categoria_2'] is Map<String, dynamic> && json['categoria_2']['id'] != null)
+          ? Categoria.fromJson(json['categoria_2'] as Map<String, dynamic>)
+          : null,
+      puntoEntrega: (json['punto_entrega'] is Map<String, dynamic> && json['punto_entrega']['id'] != null)
+          ? PuntoEntrega.fromJson(json['punto_entrega'] as Map<String, dynamic>)
+          : null,
       productos: prodsList,
     );
   }

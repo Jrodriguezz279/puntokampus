@@ -20,10 +20,11 @@ class TiendaResource extends JsonResource
             'insignia' => $this->plan === 'premium' ? 'Sacó 10' : 'Matriculado',
             'estado' => $this->estado,
             'horario' => $this->horario,
-            'categoria_1' => new CategoriaResource($this->whenLoaded('categoria1')),
-            'categoria_2' => new CategoriaResource($this->whenLoaded('categoria2')),
-            'punto_entrega' => new PuntoEntregaResource($this->whenLoaded('puntoEntrega')),
+            'categoria_1' => $this->categoria1 ? new CategoriaResource($this->categoria1) : null,
+            'categoria_2' => $this->categoria2 ? new CategoriaResource($this->categoria2) : null,
+            'punto_entrega' => $this->puntoEntrega ? new PuntoEntregaResource($this->puntoEntrega) : null,
             'whatsapp' => ($this->usuario && $this->usuario->mostrar_whatsapp) ? $this->usuario->whatsapp : null,
+            'productos' => ProductoResource::collection($this->whenLoaded('productos')),
         ];
     }
 }
