@@ -43,20 +43,38 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
     }
 
     if (!tiendaProv.tieneTienda) {
-      // P14 Invitación a crear tienda
+      // P14 Invitación a crear tienda o refrescar
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(title: const Text('Mi Tienda')),
-        body: EmptyStateWidget(
-          icon: '🏪',
-          message: '¿Vendes comida, snacks, accesorios o servicios en la UTB? Crea tu tienda y llega a miles de estudiantes.',
-          buttonText: AppStrings.btnCrearTienda,
-          onButtonPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const FormTiendaScreen()),
-            );
-          },
+        appBar: AppBar(
+          title: const Text('Mi Tienda'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualizar',
+              onPressed: () => tiendaProv.cargarMiTienda(),
+            ),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: () => tiendaProv.cargarMiTienda(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: EmptyStateWidget(
+                icon: '🏪',
+                message: '¿Vendes comida, snacks, accesorios o servicios en la UTB? Crea tu tienda y llega a miles de estudiantes.',
+                buttonText: AppStrings.btnCrearTienda,
+                onButtonPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FormTiendaScreen()),
+                  );
+                },
+              ),
+            ),
+          ),
         ),
       );
     }

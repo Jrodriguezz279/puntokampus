@@ -281,6 +281,7 @@ class _CodigoScreenState extends State<CodigoScreen> {
     if (!mounted) return;
 
     if (ok) {
+      Provider.of<TiendaProvider>(context, listen: false).cargarMiTienda();
       if (auth.usuario?.nombres == null || auth.usuario!.nombres!.isEmpty) {
         Navigator.pushReplacement(
           context,

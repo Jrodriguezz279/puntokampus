@@ -37,6 +37,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return;
     }
 
+    if (index == 2) {
+      Provider.of<TiendaProvider>(context, listen: false).cargarMiTienda();
+    }
+
     setState(() {
       _currentIndex = index;
     });
