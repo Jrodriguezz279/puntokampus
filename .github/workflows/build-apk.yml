@@ -12,6 +12,8 @@ jobs:
   build:
     name: Build APK Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: 📥 Clonar repositorio
@@ -57,3 +59,18 @@ jobs:
           path: app/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: 🚀 Publicar APK en GitHub Releases (descarga directa)
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: release-apk
+          name: "PuntoKampus UTB (Última versión APK)"
+          body: |
+            ### 📱 PuntoKampus UTB - APK Release Oficial
+            - Diseño visual Warm Minimalism.
+            - Corrección de selección de puntos de entrega.
+            - Descarga directa del APK sin descomprimir zip.
+          files: app/build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
