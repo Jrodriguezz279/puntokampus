@@ -219,8 +219,8 @@
     </h2>
 
     @foreach ($productos as $prod)
-        <div style="background:white; border-radius:10px; padding:0.85rem; border:1px solid var(--border); margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center;">
-            <div style="display:flex; align-items:center; gap:0.75rem;">
+        <div style="background:white; border-radius:10px; padding:0.85rem; border:1px solid var(--border); margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem; flex:1; min-width:0;">
                 <div style="width:48px; height:48px; border-radius:8px; background:#f3f4f6; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; overflow:hidden; font-size:1.4rem; flex-shrink:0;">
                     @if ($prod->fotos->isNotEmpty() && $prod->fotos->first()->url)
                         <img src="{{ $prod->fotos->first()->url }}" alt="{{ $prod->nombre }}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null;this.parentElement.innerHTML='🍪';">
@@ -228,12 +228,24 @@
                         🍪
                     @endif
                 </div>
-                <div>
-                    <strong>{{ $prod->nombre }}</strong><br>
-                    <span style="font-size:0.8rem; color:var(--text-muted);">{{ $prod->descripcion ?: 'Sin descripción' }}</span>
+                <div style="min-width:0;">
+                    <strong style="display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $prod->nombre }}</strong>
+                    <span style="font-size:0.8rem; color:var(--text-muted); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $prod->descripcion ?: 'Sin descripción' }}</span>
                 </div>
             </div>
-            <strong style="color:#16a34a; font-size:1.05rem;">${{ number_format($prod->precio, 2) }}</strong>
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-shrink:0;">
+                <strong style="color:#16a34a; font-size:1.05rem;">${{ number_format($prod->precio, 2) }}</strong>
+                <button type="button" class="btn btn-secondary" style="min-height:32px; font-size:0.78rem; padding:0.25rem 0.6rem;"
+                        onclick="abrirEditarProducto({{ $prod->id }}, '{{ addslashes($prod->nombre) }}', '{{ addslashes($prod->descripcion ?? '') }}', {{ $prod->precio }}, '{{ $prod->fotos->first()?->url ?? '' }}')">
+                    ✏️ Editar
+                </button>
+                <form method="POST" action="/app/mi-tienda/producto/{{ $prod->id }}/eliminar" onsubmit="return confirm('¿Eliminar {{ addslashes($prod->nombre) }}?');" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="btn btn-secondary" style="min-height:32px; font-size:0.78rem; padding:0.25rem 0.55rem; color:#dc2626;" title="Eliminar producto">
+                        🗑️
+                    </button>
+                </form>
+            </div>
         </div>
     @endforeach
 
@@ -309,4 +321,78 @@
         @endif
     </div>
 
+    <!-- Modal: Editar Producto -->
+    <div id="modalEditarProducto" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; align-items:flex-end; justify-content:center;">
+        <div style="background:white; width:100%; max-width:600px; border-radius:20px 20px 0 0; padding:1.5rem; max-height:88vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="font-size:1.1rem; font-weight:700; margin:0;">✏️ Editar Producto</h3>
+                <button onclick="cerrarEditarProducto()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted);">✕</button>
+            </div>
+            <form id="formEditarProducto" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="form-group">
+                    <label for="edit_nombre">Nombre del Producto *</label>
+                    <input type="text" id="edit_nombre" name="nombre" class="form-control" required maxlength="80">
+                </div>
+                <div class="form-group">
+                    <label for="edit_descripcion">Descripción (opcional)</label>
+                    <input type="text" id="edit_descripcion" name="descripcion" class="form-control" maxlength="300">
+                </div>
+                <div style="display:flex; gap:0.75rem;">
+                    <div class="form-group" style="flex:1;">
+                        <label for="edit_precio">Precio ($) *</label>
+                        <input type="number" id="edit_precio" name="precio" step="0.05" min="0.25" max="50" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1.5;">
+                        <label for="edit_foto">Cambiar Foto (opcional)</label>
+                        <input type="file" id="edit_foto" name="foto" accept="image/png,image/jpeg,image/jpg" class="form-control" style="padding:0.4rem;">
+                    </div>
+                </div>
+                <!-- Vista previa de la foto actual -->
+                <div id="edit_foto_preview" style="display:none; align-items:center; gap:0.6rem; margin-bottom:0.75rem;">
+                    <img id="edit_foto_img" src="" alt="Foto actual" style="width:70px; height:70px; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+                    <span style="font-size:0.78rem; color:var(--text-muted);">Foto actual (selecciona un archivo para reemplazarla)</span>
+                </div>
+                <button type="submit" class="btn btn-primary" style="min-height:42px; width:100%;">
+                    💾 Guardar Cambios
+                </button>
+            </form>
+        </div>
+    </div>
+
+@endsection
+
+@section('scripts')
+<script>
+    function abrirEditarProducto(id, nombre, descripcion, precio, fotoUrl) {
+        document.getElementById('formEditarProducto').action = '/app/mi-tienda/producto/' + id;
+        document.getElementById('edit_nombre').value = nombre;
+        document.getElementById('edit_descripcion').value = descripcion;
+        document.getElementById('edit_precio').value = precio;
+
+        const preview = document.getElementById('edit_foto_preview');
+        const img = document.getElementById('edit_foto_img');
+        if (fotoUrl && fotoUrl.trim() !== '') {
+            img.src = fotoUrl;
+            preview.style.display = 'flex';
+        } else {
+            preview.style.display = 'none';
+        }
+
+        // Limpiar el input de archivo
+        document.getElementById('edit_foto').value = '';
+
+        const modal = document.getElementById('modalEditarProducto');
+        modal.style.display = 'flex';
+    }
+
+    function cerrarEditarProducto() {
+        document.getElementById('modalEditarProducto').style.display = 'none';
+    }
+
+    // Cerrar al hacer clic en el backdrop
+    document.getElementById('modalEditarProducto').addEventListener('click', function(e) {
+        if (e.target === this) cerrarEditarProducto();
+    });
+</script>
 @endsection

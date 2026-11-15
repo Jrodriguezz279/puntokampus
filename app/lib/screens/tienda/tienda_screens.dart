@@ -322,6 +322,18 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                             ),
                           ),
                           IconButton(
+                            icon: const Icon(Icons.edit_outlined, color: PKColors.primario),
+                            tooltip: 'Editar producto',
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => FormProductoScreen(productoExistente: prod),
+                                ),
+                              );
+                            },
+                          ),
+                          IconButton(
                             icon: const Icon(Icons.delete_outline, color: PKColors.error),
                             onPressed: () {
                               showDialog(
@@ -577,9 +589,11 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
   }
 }
 
-// ─── P16: Formulario de Producto Nuevo ─────────────────────────────────────────
+// ─── P16: Formulario de Producto (Crear o Editar) ──────────────────────────────
 class FormProductoScreen extends StatefulWidget {
-  const FormProductoScreen({super.key});
+  /// Si se pasa [productoExistente], la pantalla funciona en modo edición.
+  final Producto? productoExistente;
+  const FormProductoScreen({super.key, this.productoExistente});
 
   @override
   State<FormProductoScreen> createState() => _FormProductoScreenState();
@@ -592,6 +606,19 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
   Uint8List? _fotoBytes;
   String? _fotoNombre;
   bool _guardando = false;
+
+  bool get _esEdicion => widget.productoExistente != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_esEdicion) {
+      final p = widget.productoExistente!;
+      _nombreController.text = p.nombre;
+      _descController.text = p.descripcion ?? '';
+      _precioController.text = p.precio.toStringAsFixed(2);
+    }
+  }
 
   @override
   void dispose() {
@@ -610,16 +637,33 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
 
     setState(() => _guardando = true);
     try {
-      final prod = await TiendaService.crearProducto(
-        nombre: _nombreController.text.trim(),
-        descripcion: _descController.text.trim(),
-        precio: precio,
-      );
+      if (_esEdicion) {
+        // Modo edición: actualizar datos y, si hay nueva foto, subirla
+        final prod = await TiendaService.actualizarProducto(
+          widget.productoExistente!.id,
+          nombre: _nombreController.text.trim(),
+          descripcion: _descController.text.trim(),
+          precio: precio,
+        );
 
-      if (_fotoBytes != null && _fotoNombre != null) {
-        try {
-          await TiendaService.subirFotoProducto(prod.id, bytes: _fotoBytes!, fileName: _fotoNombre!);
-        } catch (_) {}
+        if (_fotoBytes != null && _fotoNombre != null) {
+          try {
+            await TiendaService.subirFotoProducto(prod.id, bytes: _fotoBytes!, fileName: _fotoNombre!);
+          } catch (_) {}
+        }
+      } else {
+        // Modo creación
+        final prod = await TiendaService.crearProducto(
+          nombre: _nombreController.text.trim(),
+          descripcion: _descController.text.trim(),
+          precio: precio,
+        );
+
+        if (_fotoBytes != null && _fotoNombre != null) {
+          try {
+            await TiendaService.subirFotoProducto(prod.id, bytes: _fotoBytes!, fileName: _fotoNombre!);
+          } catch (_) {}
+        }
       }
 
       final tiendaProv = Provider.of<TiendaProvider>(context, listen: false);
@@ -628,6 +672,7 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
       if (!mounted) return;
       setState(() => _guardando = false);
       Navigator.pop(context);
+      pkSnackOk(context, _esEdicion ? 'Producto actualizado.' : 'Producto publicado.');
     } catch (e) {
       if (!mounted) return;
       setState(() => _guardando = false);
@@ -639,7 +684,7 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: PKColors.fondo,
-      appBar: AppBar(title: const Text('Nuevo Producto')),
+      appBar: AppBar(title: Text(_esEdicion ? 'Editar Producto' : 'Nuevo Producto')),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(PKSpacing.base),
         decoration: const BoxDecoration(
@@ -648,7 +693,7 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
           boxShadow: PKShadows.tarjeta,
         ),
         child: PKBotonPrimario(
-          texto: 'Guardar Producto',
+          texto: _esEdicion ? 'Guardar Cambios' : 'Publicar Producto',
           cargando: _guardando,
           onPressed: _guardando ? null : _guardar,
         ),
@@ -662,7 +707,10 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
               Text('Detalles del producto', style: PKTextStyles.tituloTarjeta),
               const SizedBox(height: PKSpacing.base),
               PKSelectorImagen(
-                etiqueta: 'Foto del producto (opcional)',
+                etiqueta: _esEdicion
+                    ? 'Reemplazar foto (opcional)'
+                    : 'Foto del producto (opcional)',
+                urlActual: _esEdicion ? widget.productoExistente!.primeraFotoUrl : null,
                 bytesIniciales: _fotoBytes,
                 nombreArchivoInicial: _fotoNombre,
                 altura: 140,
