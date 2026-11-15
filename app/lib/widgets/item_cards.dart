@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../theme/theme.dart';
 import '../models/tienda.dart';
 import '../models/producto.dart';
+import 'pk_components.dart';
 
 class StoreCard extends StatelessWidget {
   final Tienda tienda;
@@ -15,120 +16,105 @@ class StoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border),
+    return Container(
+      margin: const EdgeInsets.only(bottom: PKSpacing.md),
+      decoration: BoxDecoration(
+        color: PKColors.tarjeta,
+        borderRadius: PKRadii.tarjetaAll,
+        border: Border.all(color: PKColors.borde),
+        boxShadow: PKShadows.tarjeta,
       ),
-      color: AppColors.surface,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Avatar con Logo o Inicial
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: PKRadii.tarjetaAll,
+          child: Padding(
+            padding: const EdgeInsets.all(PKSpacing.base),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatar con Logo o Inicial
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: PKColors.primarioSuave,
+                    borderRadius: PKRadii.imagenAll,
+                    border: Border.all(color: PKColors.borde),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: tienda.logoUrl != null
+                      ? Image.network(
+                          tienda.logoUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildInitial(),
+                        )
+                      : _buildInitial(),
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: tienda.logoUrl != null
-                    ? Image.network(
-                        tienda.logoUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildInitial(),
-                      )
-                    : _buildInitial(),
-              ),
-              const SizedBox(width: 14),
+                const SizedBox(width: PKSpacing.md),
 
-              // Información
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            tienda.nombre,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.text,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (tienda.esPremium)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentLight,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              '⭐ Sacó 10',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.accent,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    if (tienda.descripcion != null && tienda.descripcion!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        tienda.descripcion!,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textMuted,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        if (tienda.puntoEntrega != null) ...[
-                          const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textMuted),
-                          const SizedBox(width: 2),
-                          Flexible(
+                // Información
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
                             child: Text(
-                              tienda.puntoEntrega!.nombre,
-                              style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                              tienda.nombre,
+                              style: PKTextStyles.tituloTarjeta,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          if (tienda.esPremium)
+                            const PKInsigniaSaco10()
+                          else
+                            const PKInsigniaMatriculado(),
                         ],
-                        if (tienda.categoria1 != null) ...[
-                          const Icon(Icons.label_outline, size: 14, color: AppColors.textMuted),
-                          const SizedBox(width: 2),
-                          Text(
-                            tienda.categoria1!.nombre,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                          ),
-                        ],
+                      ),
+                      if (tienda.descripcion != null && tienda.descripcion!.isNotEmpty) ...[
+                        const SizedBox(height: PKSpacing.xs),
+                        Text(
+                          tienda.descripcion!,
+                          style: PKTextStyles.cuerpoSecundario.copyWith(fontSize: 13),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
-                    ),
-                  ],
+                      const SizedBox(height: PKSpacing.sm),
+                      Row(
+                        children: [
+                          if (tienda.puntoEntrega != null) ...[
+                            const Icon(Icons.location_on_outlined, size: 14, color: PKColors.secundario),
+                            const SizedBox(width: 2),
+                            Flexible(
+                              child: Text(
+                                tienda.puntoEntrega!.nombre,
+                                style: PKTextStyles.etiqueta,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: PKSpacing.sm),
+                          ],
+                          if (tienda.categoria1 != null) ...[
+                            const Icon(Icons.label_outline, size: 14, color: PKColors.secundario),
+                            const SizedBox(width: 2),
+                            Text(
+                              tienda.categoria1!.nombre,
+                              style: PKTextStyles.etiqueta,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -142,7 +128,8 @@ class StoreCard extends StatelessWidget {
         style: const TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.bold,
-          color: AppColors.primary,
+          color: PKColors.primario,
+          fontFamily: 'DMSans',
         ),
       ),
     );
@@ -163,98 +150,97 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.border),
+    return Container(
+      margin: const EdgeInsets.only(bottom: PKSpacing.md),
+      decoration: BoxDecoration(
+        color: PKColors.tarjeta,
+        borderRadius: PKRadii.tarjetaAll,
+        border: Border.all(color: PKColors.borde),
+        boxShadow: PKShadows.tarjeta,
       ),
-      color: AppColors.surface,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Foto de producto
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: PKRadii.tarjetaAll,
+          child: Padding(
+            padding: const EdgeInsets.all(PKSpacing.md),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Foto de producto (radio 12)
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: PKColors.neutroFondo,
+                    borderRadius: PKRadii.imagenAll,
+                    border: Border.all(color: PKColors.borde),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: producto.primeraFotoUrl != null
+                      ? Image.network(
+                          producto.primeraFotoUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.fastfood_outlined, color: PKColors.secundario),
+                        )
+                      : const Icon(Icons.fastfood_outlined, color: PKColors.secundario),
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: producto.primeraFotoUrl != null
-                    ? Image.network(
-                        producto.primeraFotoUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.fastfood, color: AppColors.textMuted),
-                      )
-                    : const Icon(Icons.fastfood, color: AppColors.textMuted),
-              ),
-              const SizedBox(width: 14),
+                const SizedBox(width: PKSpacing.md),
 
-              // Detalle
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      producto.nombre,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.text,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (producto.descripcion != null && producto.descripcion!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
+                // Detalle
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        producto.descripcion!,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                        maxLines: 2,
+                        producto.nombre,
+                        style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (producto.descripcion != null && producto.descripcion!.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          producto.descripcion!,
+                          style: PKTextStyles.cuerpoSecundario.copyWith(fontSize: 12),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: PKSpacing.xs),
+                      Text(
+                        '\$${producto.precio.toStringAsFixed(2)}',
+                        style: PKTextStyles.precio,
+                      ),
                     ],
-                    const SizedBox(height: 6),
-                    Text(
-                      '\$${producto.precio.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
+                  ),
+                ),
+
+                // Botón añadir o pastilla Agotado
+                if (producto.disponible)
+                  IconButton(
+                    onPressed: onAddToCart,
+                    icon: const Icon(Icons.add_shopping_cart, color: PKColors.primario),
+                    tooltip: 'Agregar al carrito',
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: PKColors.neutroFondo,
+                      borderRadius: PKRadii.chipAll,
+                    ),
+                    child: Text(
+                      'Agotado',
+                      style: PKTextStyles.etiqueta.copyWith(
+                        color: PKColors.secundario,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              // Botón añadir
-              if (producto.disponible)
-                IconButton(
-                  onPressed: onAddToCart,
-                  icon: const Icon(Icons.add_shopping_cart, color: AppColors.primary),
-                  tooltip: 'Agregar al carrito',
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.errorLight,
-                    borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text(
-                    'Agotado',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.error),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

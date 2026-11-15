@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../constants/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../constants/app_strings.dart';
 import '../../models/categoria.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/vitrina_provider.dart';
 import '../../services/pedido_service.dart';
-import '../../widgets/common_widgets.dart';
+import '../../widgets/pk_components.dart';
 import '../auth/auth_screens.dart';
 
-// P09: Pantalla del Carrito
+// ══════════════════════════════════════════════════════════════════════════════
+// CARRITO & CHECKOUT — P09 Carrito / P10 Checkout / P11 Confirmación
+// Cumple con docs/DISENO-VISUAL.md
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ─── P09: Carrito de Compras ───────────────────────────────────────────────────
 class CarritoScreen extends StatelessWidget {
   const CarritoScreen({super.key});
 
@@ -22,23 +27,25 @@ class CarritoScreen extends StatelessWidget {
 
     if (cart.isEmpty) {
       return Scaffold(
+        backgroundColor: PKColors.fondo,
         appBar: AppBar(title: const Text('Mi Carrito')),
-        body: EmptyStateWidget(
-          icon: '🛒',
-          message: 'Tu carrito está vacío. Explora la vitrina y agrega tus productos favoritos.',
-          buttonText: 'Ir a la Vitrina',
-          onButtonPressed: () => Navigator.pop(context),
+        body: PKEstadoVacio(
+          icono: Icons.shopping_bag_outlined,
+          titulo: 'Tu carrito está vacío',
+          subtitulo: 'Explora la vitrina y agrega tus productos favoritos de los puestos del campus.',
+          botonTexto: 'Ir a la Vitrina',
+          onBoton: () => Navigator.pop(context),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(
         title: const Text('Mi Carrito'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_outline, color: PKColors.error),
             tooltip: 'Vaciar carrito',
             onPressed: () {
               showDialog(
@@ -53,7 +60,10 @@ class CarritoScreen extends StatelessWidget {
                         cart.vaciar();
                         Navigator.pop(ctx);
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: PKColors.error,
+                        foregroundColor: PKColors.sobrePrimario,
+                      ),
                       child: const Text('Vaciar'),
                     ),
                   ],
@@ -64,10 +74,11 @@ class CarritoScreen extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
+        padding: const EdgeInsets.all(PKSpacing.base),
+        decoration: const BoxDecoration(
+          color: PKColors.tarjeta,
+          border: Border(top: BorderSide(color: PKColors.borde)),
+          boxShadow: PKShadows.tarjeta,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -75,69 +86,49 @@ class CarritoScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Total a pagar:', style: TextStyle(fontSize: 16, color: AppColors.textMuted)),
+                Text('Total a pagar:', style: PKTextStyles.cuerpoSecundario),
                 Text(
                   '\$${cart.total.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary),
+                  style: PKTextStyles.precioGrande,
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            ElevatedButton(
+            const SizedBox(height: PKSpacing.md),
+            PKBotonPrimario(
+              texto: auth.tieneSesion ? AppStrings.btnContinuar : 'Iniciar sesión para continuar',
               onPressed: () {
                 if (!auth.tieneSesion) {
-                  // Si no tiene sesión, redirigir a login y luego volver
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const BienvenidaScreen()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const BienvenidaScreen()));
                 } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CheckoutScreen()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckoutScreen()));
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(
-                auth.tieneSesion ? AppStrings.btnContinuar : 'Iniciar sesión para continuar',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
             ),
           ],
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(PKSpacing.base),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tienda
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(10),
-              ),
+            // Banner Tienda
+            PKTarjeta(
+              padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
               child: Row(
                 children: [
-                  const Icon(Icons.storefront, color: AppColors.primary),
-                  const SizedBox(width: 8),
+                  const Icon(Icons.storefront_outlined, color: PKColors.primario),
+                  const SizedBox(width: PKSpacing.sm),
                   Expanded(
                     child: Text(
                       'Pedido para: ${cart.tiendaNombre}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                      style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15, color: PKColors.primarioSuaveTexto),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: PKSpacing.base),
 
             // Items
             ListView.builder(
@@ -146,24 +137,19 @@ class CarritoScreen extends StatelessWidget {
               itemCount: cart.items.values.length,
               itemBuilder: (context, index) {
                 final item = cart.items.values.elementAt(index);
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    side: const BorderSide(color: AppColors.border),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
+                return Container(
+                  margin: const EdgeInsets.only(bottom: PKSpacing.sm),
+                  child: PKTarjeta(
+                    padding: const EdgeInsets.all(PKSpacing.md),
                     child: Row(
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(item.producto.nombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                              const SizedBox(height: 4),
-                              Text('\$${item.producto.precio.toStringAsFixed(2)} c/u',
-                                  style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                              Text(item.producto.nombre, style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15)),
+                              const SizedBox(height: 2),
+                              Text('\$${item.producto.precio.toStringAsFixed(2)} c/u', style: PKTextStyles.etiqueta),
                             ],
                           ),
                         ),
@@ -171,20 +157,20 @@ class CarritoScreen extends StatelessWidget {
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.remove_circle_outline, color: AppColors.primary),
+                              icon: const Icon(Icons.remove_circle_outline, color: PKColors.primario, size: 20),
                               onPressed: () => cart.actualizarCantidad(item.producto.id, item.cantidad - 1),
                             ),
-                            Text('${item.cantidad}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text('${item.cantidad}', style: PKTextStyles.tituloTarjeta),
                             IconButton(
-                              icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+                              icon: const Icon(Icons.add_circle_outline, color: PKColors.primario, size: 20),
                               onPressed: () => cart.actualizarCantidad(item.producto.id, item.cantidad + 1),
                             ),
                           ],
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: PKSpacing.sm),
                         Text(
                           '\$${item.subtotal.toStringAsFixed(2)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.text),
+                          style: PKTextStyles.precio.copyWith(fontSize: 16),
                         ),
                       ],
                     ),
@@ -199,7 +185,7 @@ class CarritoScreen extends StatelessWidget {
   }
 }
 
-// P10: Pantalla de Entrega y Pago (Checkout)
+// ─── P10: Confirmar Entrega y Pago (Checkout) ─────────────────────────────────
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
 
@@ -217,7 +203,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    // Ajustar hora al menos 30 minutos después
     final now = DateTime.now().add(const Duration(minutes: 35));
     _horaEntrega = TimeOfDay(hour: now.hour, minute: now.minute);
   }
@@ -234,9 +219,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final punto = _puntoSeleccionado ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first : null);
     if (punto == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor selecciona un punto de entrega.')),
-      );
+      pkSnackError(context, 'Por favor selecciona un punto de entrega.');
       return;
     }
 
@@ -270,9 +253,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
     } catch (e) {
       setState(() => _enviando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
-      );
+      pkSnackError(context, e.toString());
     }
   }
 
@@ -282,111 +263,123 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final vitrina = Provider.of<VitrinaProvider>(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Confirmar Entrega y Pago')),
+      backgroundColor: PKColors.fondo,
+      appBar: AppBar(title: const Text('Confirmar Pedido')),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        color: AppColors.surface,
-        child: ElevatedButton(
+        padding: const EdgeInsets.all(PKSpacing.base),
+        decoration: const BoxDecoration(
+          color: PKColors.tarjeta,
+          border: Border(top: BorderSide(color: PKColors.borde)),
+          boxShadow: PKShadows.tarjeta,
+        ),
+        child: PKBotonPrimario(
+          texto: '${AppStrings.btnEnviarPedido} (\$${cart.total.toStringAsFixed(2)})',
           onPressed: _enviando ? null : _enviarPedido,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          child: _enviando
-              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : Text('${AppStrings.btnEnviarPedido} (\$${cart.total.toStringAsFixed(2)})',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          cargando: _enviando,
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(PKSpacing.base),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Punto de Entrega
-            const Text('Punto de encuentro en el campus *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<PuntoEntrega>(
-                  isExpanded: true,
-                  hint: const Text('Seleccionar punto de entrega'),
-                  value: _puntoSeleccionado ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first : null),
-                  items: vitrina.puntosEntrega.map((p) {
-                    return DropdownMenuItem(value: p, child: Text('📍 ${p.nombre}'));
-                  }).toList(),
-                  onChanged: (val) => setState(() => _puntoSeleccionado = val),
-                ),
+            // Sección 1: Lugar de encuentro
+            PKTarjeta(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Lugar de encuentro en el campus', style: PKTextStyles.tituloTarjeta),
+                  const SizedBox(height: PKSpacing.base),
+                  Text('Punto de encuentro *', style: PKTextStyles.etiqueta),
+                  const SizedBox(height: PKSpacing.xs),
+                  DropdownButtonFormField<PuntoEntrega>(
+                    value: _puntoSeleccionado ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first : null),
+                    items: vitrina.puntosEntrega
+                        .map((p) => DropdownMenuItem(value: p, child: Text('📍 ${p.nombre}', style: PKTextStyles.cuerpo)))
+                        .toList(),
+                    onChanged: (val) => setState(() => _puntoSeleccionado = val),
+                  ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: PKSpacing.base),
 
-            // Hora estimada
-            const Text('Hora acordada de entrega *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: () async {
-                final picked = await showTimePicker(context: context, initialTime: _horaEntrega);
-                if (picked != null) setState(() => _horaEntrega = picked);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.access_time, color: AppColors.primary),
-                    const SizedBox(width: 10),
-                    Text(_horaEntrega.format(context), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    const Spacer(),
-                    const Text('Cambiar', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
-                  ],
-                ),
+            // Sección 2: Hora estimada
+            PKTarjeta(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Hora estimada de entrega', style: PKTextStyles.tituloTarjeta),
+                  const SizedBox(height: PKSpacing.base),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showTimePicker(context: context, initialTime: _horaEntrega);
+                      if (picked != null) setState(() => _horaEntrega = picked);
+                    },
+                    borderRadius: PKRadii.botonAll,
+                    child: Container(
+                      padding: const EdgeInsets.all(PKSpacing.base),
+                      decoration: BoxDecoration(
+                        color: PKColors.tarjeta,
+                        borderRadius: PKRadii.botonAll,
+                        border: Border.all(color: PKColors.borde),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.access_time, color: PKColors.primario),
+                          const SizedBox(width: PKSpacing.sm),
+                          Text(_horaEntrega.format(context), style: PKTextStyles.tituloTarjeta),
+                          const Spacer(),
+                          Text('Cambiar', style: PKTextStyles.boton.copyWith(color: PKColors.primarioSuaveTexto, fontSize: 14)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: PKSpacing.base),
 
-            // Forma de Pago
-            const Text('Forma de pago *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _buildMetodoPago('efectivo', '💵 Efectivo'),
-                const SizedBox(width: 8),
-                _buildMetodoPago('transferencia', '🏦 Transferencia'),
-                const SizedBox(width: 8),
-                _buildMetodoPago('deuna', '📱 Deuna'),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            // Nota adicional
-            const Text('Nota opcional para el vendedor', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _notaController,
-              decoration: InputDecoration(
-                hintText: 'Ej: Sin cebolla, llevar cambio de \$5',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                filled: true,
-                fillColor: AppColors.surface,
+            // Sección 3: Forma de pago
+            PKTarjeta(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Forma de pago', style: PKTextStyles.tituloTarjeta),
+                  const SizedBox(height: PKSpacing.base),
+                  Row(
+                    children: [
+                      _buildMetodoPago('efectivo', '💵 Efectivo'),
+                      const SizedBox(width: PKSpacing.sm),
+                      _buildMetodoPago('transferencia', '🏦 Transfer.'),
+                      const SizedBox(width: PKSpacing.sm),
+                      _buildMetodoPago('deuna', '📱 Deuna'),
+                    ],
+                  ),
+                ],
               ),
             ),
+
+            const SizedBox(height: PKSpacing.base),
+
+            // Sección 4: Nota adicional
+            PKTarjeta(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Indicaciones para el vendedor', style: PKTextStyles.tituloTarjeta),
+                  const SizedBox(height: PKSpacing.base),
+                  PKCampoEtiquetado(
+                    etiqueta: 'Nota opcional',
+                    hint: 'Ej: Sin hielo, llevar cambio de \$5',
+                    controller: _notaController,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: PKSpacing.xxl),
           ],
         ),
       ),
@@ -396,22 +389,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildMetodoPago(String valor, String etiqueta) {
     final isSelected = _formaPago == valor;
     return Expanded(
-      child: InkWell(
+      child: GestureDetector(
         onTap: () => setState(() => _formaPago = valor),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: PKSpacing.md),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryLight : AppColors.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: isSelected ? AppColors.primary : AppColors.border, width: isSelected ? 2 : 1),
+            color: isSelected ? PKColors.primarioSuave : PKColors.tarjeta,
+            borderRadius: PKRadii.botonAll,
+            border: Border.all(
+              color: isSelected ? PKColors.primario : PKColors.borde,
+              width: isSelected ? 2 : 1,
+            ),
           ),
           child: Center(
             child: Text(
               etiqueta,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? AppColors.primary : AppColors.text,
+              style: PKTextStyles.etiqueta.copyWith(
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? PKColors.primarioSuaveTexto : PKColors.titulo,
               ),
             ),
           ),
@@ -421,7 +416,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 }
 
-// P11: Pedido Enviado y Enlace WhatsApp
+// ─── P11: Pedido Enviado y WhatsApp ───────────────────────────────────────────
 class PedidoEnviadoScreen extends StatelessWidget {
   final String codigo;
   final String? whatsappUrl;
@@ -434,9 +429,7 @@ class PedidoEnviadoScreen extends StatelessWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No pudimos abrir WhatsApp directamente.')),
-        );
+        pkSnackError(context, 'No pudimos abrir WhatsApp directamente.');
       }
     }
   }
@@ -444,55 +437,52 @@ class PedidoEnviadoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: PKColors.fondo,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(PKSpacing.xl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text('🎉', style: TextStyle(fontSize: 60)),
-              const SizedBox(height: 16),
-              const Text(
-                '¡Tu pedido quedó registrado!',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Código de pedido: $codigo',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Ahora abre WhatsApp para coordinar los últimos detalles y entrega directamente con el vendedor.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-              ),
-              const SizedBox(height: 32),
-              if (whatsappUrl != null)
-                ElevatedButton.icon(
-                  onPressed: () => _abrirWhatsapp(context),
-                  icon: const Icon(Icons.chat),
-                  label: const Text(AppStrings.btnAbrirWhatsapp, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF25D366), // Color WhatsApp
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+              Container(
+                width: 90,
+                height: 90,
+                decoration: const BoxDecoration(
+                  color: PKColors.okFondo,
+                  shape: BoxShape.circle,
                 ),
-              const SizedBox(height: 14),
-              OutlinedButton(
+                child: const Icon(Icons.check_circle_outline_rounded, size: 54, color: PKColors.okTexto),
+              ),
+              const SizedBox(height: PKSpacing.lg),
+              Text(
+                '¡Pedido registrado!',
+                style: PKTextStyles.tituloPantalla,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: PKSpacing.sm),
+              PKPastillaEstado(estado: EstadoPedido.pendiente, textoPersonalizado: 'Código: #$codigo'),
+              const SizedBox(height: PKSpacing.base),
+              Text(
+                'Abre WhatsApp para coordinar los últimos detalles y entrega directamente con el vendedor.',
+                textAlign: TextAlign.center,
+                style: PKTextStyles.cuerpoSecundario,
+              ),
+              const SizedBox(height: PKSpacing.xl),
+              if (whatsappUrl != null) ...[
+                PKBotonPrimario(
+                  texto: AppStrings.btnAbrirWhatsapp,
+                  icono: Icons.chat_outlined,
+                  onPressed: () => _abrirWhatsapp(context),
+                ),
+                const SizedBox(height: PKSpacing.sm),
+              ],
+              PKBotonSecundario(
+                texto: 'Volver a la Vitrina',
+                icono: Icons.storefront_outlined,
                 onPressed: () {
                   Navigator.popUntil(context, (route) => route.isFirst);
                 },
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Volver a la Vitrina'),
               ),
             ],
           ),

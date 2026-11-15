@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../constants/app_strings.dart';
 import '../../models/pedido.dart';
 import '../../services/pedido_service.dart';
-import '../../widgets/common_widgets.dart';
+import '../../widgets/pk_components.dart';
 
-// P12: Historial de Mis Pedidos (Comprador)
+// ══════════════════════════════════════════════════════════════════════════════
+// MIS PEDIDOS — P12 Historial de Mis Pedidos (Comprador)
+// Cumple con docs/DISENO-VISUAL.md
+// ══════════════════════════════════════════════════════════════════════════════
+
 class MisPedidosScreen extends StatefulWidget {
   const MisPedidosScreen({super.key});
 
@@ -49,12 +53,15 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('¿Cancelar pedido?'),
-        content: Text('¿Deseas cancelar el pedido ${p.codigo}? El vendedor verá que lo cancelaste.'),
+        content: Text('¿Deseas cancelar el pedido #${p.codigo}? El vendedor verá que lo cancelaste.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Volver')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: PKColors.error,
+              foregroundColor: PKColors.sobrePrimario,
+            ),
             child: const Text('Cancelar pedido'),
           ),
         ],
@@ -68,76 +75,80 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
       _cargar();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
-      );
+      pkSnackError(context, e.toString());
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(title: const Text('Mis Pedidos')),
       body: RefreshIndicator(
+        color: PKColors.primario,
         onRefresh: () async => _cargar(),
         child: _cargando
             ? const Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(PKSpacing.base),
                 child: Column(
                   children: [
-                    LoadingSkeleton(height: 100),
-                    LoadingSkeleton(height: 100),
+                    PKEsqueleto(height: 100),
+                    PKEsqueleto(height: 100),
                   ],
                 ),
               )
             : _error != null
-                ? ErrorViewWidget(message: _error!, onRetry: _cargar)
+                ? PKEstadoError(mensaje: _error!, onReintentar: _cargar)
                 : _pedidos.isEmpty
-                    ? const EmptyStateWidget(
-                        icon: '📦',
-                        message: AppStrings.emptyMisPedidos,
+                    ? const PKEstadoVacio(
+                        icono: Icons.receipt_long_outlined,
+                        titulo: 'Sin pedidos activos',
+                        subtitulo: AppStrings.emptyMisPedidos,
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(PKSpacing.base),
                         itemCount: _pedidos.length,
                         itemBuilder: (context, index) {
                           final p = _pedidos[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: AppColors.border),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: PKSpacing.md),
+                            child: PKTarjeta(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(p.codigo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                      _buildBadgeEstado(p.estado),
+                                      Text(
+                                        '#${p.codigo}',
+                                        style: PKTextStyles.tituloTarjeta,
+                                      ),
+                                      PKPastillaEstado(estado: estadoFromString(p.estado)),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text('Tienda: ${p.nombreTienda ?? "Tienda"}',
-                                      style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600)),
-                                  if (p.puntoEntrega != null)
-                                    Text('Entrega: ${p.puntoEntrega}', style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: PKSpacing.xs),
+                                  Text(
+                                    'Tienda: ${p.nombreTienda ?? "Tienda"}',
+                                    style: PKTextStyles.cuerpo.copyWith(fontWeight: FontWeight.w600),
+                                  ),
+                                  if (p.puntoEntrega != null) ...[
+                                    const SizedBox(height: 2),
+                                    Text('📍 Entrega: ${p.puntoEntrega}', style: PKTextStyles.etiqueta),
+                                  ],
+                                  const SizedBox(height: PKSpacing.sm),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         'Total: \$${p.total.toStringAsFixed(2)}',
-                                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.primary),
+                                        style: PKTextStyles.precio,
                                       ),
                                       if (p.esPendiente)
                                         TextButton(
                                           onPressed: () => _cancelarPedido(p),
-                                          style: TextButton.styleFrom(foregroundColor: AppColors.error),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: PKColors.error,
+                                          ),
                                           child: const Text('Cancelar pedido'),
                                         ),
                                     ],
@@ -148,36 +159,6 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
                           );
                         },
                       ),
-      ),
-    );
-  }
-
-  Widget _buildBadgeEstado(String estado) {
-    Color bg = Colors.grey.shade100;
-    Color text = Colors.grey.shade800;
-
-    switch (estado.toLowerCase()) {
-      case 'pendiente':
-        bg = AppColors.accentLight;
-        text = AppColors.accent;
-        break;
-      case 'entregado':
-        bg = AppColors.successLight;
-        text = AppColors.success;
-        break;
-      case 'cancelado':
-      case 'vencido':
-        bg = AppColors.errorLight;
-        text = AppColors.error;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text(
-        estado.toUpperCase(),
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: text),
       ),
     );
   }

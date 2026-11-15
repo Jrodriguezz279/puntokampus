@@ -8,6 +8,16 @@ comunidad universitaria. Requisitos completos en docs/PRD-MAESTRO.md. Léelo ant
 - app/      : Flutter (Material 3). Un solo código para Android y web.
 - docs/     : PRD-MAESTRO.md, registro-ia.md, ideas-tramo-2.md.
 
+## Diseño visual
+- La fuente de verdad visual es docs/DISENO-VISUAL.md. Los colores, tipografías, radios y sombras salen
+  SOLO de los tokens definidos ahí, centralizados en un único archivo de tema:
+  app/lib/theme/ (Flutter) y la configuración de colores del panel (Filament).
+- Prohibido escribir colores hexadecimales, tamaños de letra o radios sueltos dentro de las pantallas.
+  Siempre se usan los tokens del tema.
+- Prohibido fondo blanco puro (#FFFFFF) o negro puro (#000000) en cualquier pantalla o componente.
+- docs/PROMPTS-STITCH.md solo describe contenido y textos de cada pantalla; su paleta no se usa.
+- Un solo modo visual (claro cálido). No hay modo oscuro en el tramo 1.
+
 ## Reglas que no se rompen
 1. Fuente de verdad: las tablas, campos, rutas y reglas R1 a R31 de docs/PRD-MAESTRO.md. Nombres de tablas,
    campos y rutas en español y sin tildes, exactamente como están escritos. Si algo no está, pregunta.

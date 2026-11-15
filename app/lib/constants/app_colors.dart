@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
+import '../theme/pk_colors.dart';
 
+/// AppColors actúa como puente compatible hacia el sistema visual oficial (PKColors).
+/// Fuente de verdad: docs/DISENO-VISUAL.md
 class AppColors {
-  // Paleta oficial Material 3 de PuntoKampus
-  static const Color primary = Color(0xFF6C3FC5);
-  static const Color primaryDark = Color(0xFF552FA8);
-  static const Color primaryLight = Color(0xFFF0EBFF);
-  static const Color accent = Color(0xFFF59E0B);
-  static const Color accentLight = Color(0xFFFEF3C7);
+  // Paleta oficial Warm Minimalism PuntoKampus
+  static const Color primary = PKColors.primario;
+  static const Color primaryDark = PKColors.primarioPresionado;
+  static const Color primaryLight = PKColors.primarioSuave;
+  static const Color accent = PKColors.primario;
+  static const Color accentLight = PKColors.primarioSuave;
 
   // Estados
-  static const Color success = Color(0xFF10B981);
-  static const Color successLight = Color(0xFFD1FAE5);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color error = Color(0xFFEF4444);
-  static const Color errorLight = Color(0xFFFEE2E2);
+  static const Color success = PKColors.okTexto;
+  static const Color successLight = PKColors.okFondo;
+  static const Color warning = PKColors.avisoTexto;
+  static const Color warningLight = PKColors.avisoFondo;
+  static const Color error = PKColors.error;
+  static const Color errorLight = PKColors.errorFondo;
 
   // Superficies y textos
-  static const Color background = Color(0xFFF8F9FA);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color text = Color(0xFF1F2937);
-  static const Color textMuted = Color(0xFF6B7280);
-  static const Color border = Color(0xFFE5E7EB);
+  static const Color background = PKColors.fondo;
+  static const Color surface = PKColors.tarjeta;
+  static const Color text = PKColors.titulo;
+  static const Color textMuted = PKColors.secundario;
+  static const Color border = PKColors.borde;
 }

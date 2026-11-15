@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../constants/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../models/tienda.dart';
 import '../../models/producto.dart';
 import '../../providers/vitrina_provider.dart';
@@ -9,10 +9,16 @@ import '../../providers/auth_provider.dart';
 import '../../services/vitrina_service.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/item_cards.dart';
+import '../../widgets/pk_components.dart';
 import '../auth/auth_screens.dart';
 import '../carrito/carrito_screens.dart';
 
-// P05: Vitrina Principal
+// ══════════════════════════════════════════════════════════════════════════════
+// VITRINA & CATÁLOGO — P05 Vitrina / P07 Detalle Tienda / P08 Detalle Producto
+// Cumple con docs/DISENO-VISUAL.md
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ─── P05: Vitrina Principal ───────────────────────────────────────────────────
 class VitrinaScreen extends StatefulWidget {
   const VitrinaScreen({super.key});
 
@@ -44,18 +50,10 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
     final cart = Provider.of<CartProvider>(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(
-        title: RichText(
-          text: const TextSpan(
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.primary),
-            children: [
-              TextSpan(text: 'Punto'),
-              TextSpan(text: 'Kampus', style: TextStyle(color: AppColors.accent)),
-            ],
-          ),
-        ),
-        backgroundColor: AppColors.surface,
+        title: const PKLogo(fontSize: 20),
+        backgroundColor: PKColors.tarjeta,
         elevation: 0,
         actions: [
           // Botón Carrito con badge
@@ -63,7 +61,7 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.shopping_bag_outlined, color: AppColors.primary),
+                icon: const Icon(Icons.shopping_bag_outlined, color: PKColors.primario),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -77,12 +75,20 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
                   top: 8,
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(
+                      color: PKColors.primario,
+                      shape: BoxShape.circle,
+                    ),
                     constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                     child: Text(
                       '${cart.itemCount}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: PKColors.sobrePrimario,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'DMSans',
+                      ),
                     ),
                   ),
                 ),
@@ -93,35 +99,27 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
               onPressed: () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const BienvenidaScreen()));
               },
-              child: const Text('Entrar', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+              child: const Text('Entrar'),
             ),
-          const SizedBox(width: 8),
+          const SizedBox(width: PKSpacing.sm),
         ],
       ),
       body: RefreshIndicator(
+        color: PKColors.primario,
         onRefresh: () => vitrina.cargarInicial(),
         child: CustomScrollView(
           slivers: [
             // Barra de búsqueda
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(PKSpacing.base),
                 child: TextField(
                   controller: _searchController,
+                  style: PKTextStyles.cuerpo,
                   decoration: InputDecoration(
                     hintText: 'Buscar comida, postres, impresiones...',
-                    prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
+                    prefixIcon: const Icon(Icons.search, color: PKColors.secundario),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: PKSpacing.base),
                   ),
                   onSubmitted: (val) => vitrina.buscar(val),
                 ),
@@ -134,38 +132,28 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
                 height: 40,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
                   itemCount: vitrina.categorias.length + 1,
                   itemBuilder: (context, index) {
                     if (index == 0) {
                       final isSelected = vitrina.categoriaSeleccionadaId == null;
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.only(right: PKSpacing.sm),
                         child: ChoiceChip(
                           label: const Text('Todas'),
                           selected: isSelected,
                           onSelected: (_) => vitrina.filtrarPorCategoria(null),
-                          selectedColor: AppColors.primary,
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : AppColors.text,
-                            fontWeight: FontWeight.bold,
-                          ),
                         ),
                       );
                     }
                     final cat = vitrina.categorias[index - 1];
                     final isSelected = vitrina.categoriaSeleccionadaId == cat.id;
                     return Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.only(right: PKSpacing.sm),
                       child: ChoiceChip(
                         label: Text(cat.nombre),
                         selected: isSelected,
                         onSelected: (_) => vitrina.filtrarPorCategoria(isSelected ? null : cat.id),
-                        selectedColor: AppColors.primary,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.text,
-                          fontWeight: FontWeight.w600,
-                        ),
                       ),
                     );
                   },
@@ -173,15 +161,15 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            const SliverToBoxAdapter(child: SizedBox(height: PKSpacing.base)),
 
             // Título de la sección
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
                 child: Text(
                   'Tiendas en el campus UTB (${vitrina.tiendas.length})',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text),
+                  style: PKTextStyles.tituloSeccion.copyWith(fontSize: 16),
                 ),
               ),
             ),
@@ -189,31 +177,32 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
             // Lista de tiendas
             if (vitrina.cargando)
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (_, __) => const LoadingSkeleton(height: 90),
+                    (_, __) => const PKEsqueleto(height: 90),
                     childCount: 4,
                   ),
                 ),
               )
             else if (vitrina.error != null)
               SliverFillRemaining(
-                child: ErrorViewWidget(
-                  message: vitrina.error!,
-                  onRetry: () => vitrina.cargarInicial(),
+                child: PKEstadoError(
+                  mensaje: vitrina.error!,
+                  onReintentar: () => vitrina.cargarInicial(),
                 ),
               )
             else if (vitrina.tiendas.isEmpty)
               const SliverFillRemaining(
-                child: EmptyStateWidget(
-                  icon: '🏪',
-                  message: 'No encontramos tiendas en esta categoría o búsqueda.',
+                child: PKEstadoVacio(
+                  icono: Icons.storefront_outlined,
+                  titulo: 'No encontramos tiendas',
+                  subtitulo: 'Prueba buscando con otro término o revisa otra categoría.',
                 ),
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -241,7 +230,7 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
   }
 }
 
-// P07: Pantalla Detalle de Tienda y Catálogo
+// ─── P07: Detalle de Tienda y Catálogo ─────────────────────────────────────────
 class TiendaScreen extends StatefulWidget {
   final String slug;
   const TiendaScreen({super.key, required this.slug});
@@ -287,15 +276,16 @@ class _TiendaScreenState extends State<TiendaScreen> {
 
     if (_cargando) {
       return Scaffold(
+        backgroundColor: PKColors.fondo,
         appBar: AppBar(title: const Text('Cargando tienda...')),
         body: const Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(PKSpacing.base),
           child: Column(
             children: [
-              LoadingSkeleton(height: 120),
-              SizedBox(height: 16),
-              LoadingSkeleton(height: 80),
-              LoadingSkeleton(height: 80),
+              PKEsqueleto(height: 120),
+              SizedBox(height: PKSpacing.base),
+              PKEsqueleto(height: 80),
+              PKEsqueleto(height: 80),
             ],
           ),
         ),
@@ -304,15 +294,16 @@ class _TiendaScreenState extends State<TiendaScreen> {
 
     if (_error != null || _tienda == null) {
       return Scaffold(
+        backgroundColor: PKColors.fondo,
         appBar: AppBar(title: const Text('Error')),
-        body: ErrorViewWidget(message: _error ?? 'Tienda no disponible.', onRetry: _cargar),
+        body: PKEstadoError(mensaje: _error ?? 'Tienda no disponible.', onReintentar: _cargar),
       );
     }
 
     final t = _tienda!;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(
         title: Text(t.nombre),
         actions: [
@@ -324,26 +315,16 @@ class _TiendaScreenState extends State<TiendaScreen> {
       ),
       bottomNavigationBar: cart.itemCount > 0 && cart.tiendaId == t.id
           ? Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
+              padding: const EdgeInsets.all(PKSpacing.base),
+              decoration: const BoxDecoration(
+                color: PKColors.tarjeta,
+                border: Border(top: BorderSide(color: PKColors.borde)),
+                boxShadow: PKShadows.tarjeta,
               ),
-              child: ElevatedButton(
+              child: PKBotonPrimario(
+                texto: 'Ver carrito (${cart.itemCount}) · \$${cart.total.toStringAsFixed(2)}',
+                icono: Icons.shopping_bag_outlined,
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CarritoScreen())),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Ver carrito (${cart.itemCount})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text('\$${cart.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ],
-                ),
               ),
             )
           : null,
@@ -352,9 +333,8 @@ class _TiendaScreenState extends State<TiendaScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Cabecera de la Tienda
-            Container(
-              padding: const EdgeInsets.all(20),
-              color: AppColors.surface,
+            PKTarjeta(
+              padding: const EdgeInsets.all(PKSpacing.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -364,61 +344,81 @@ class _TiendaScreenState extends State<TiendaScreen> {
                         width: 70,
                         height: 70,
                         decoration: BoxDecoration(
-                          color: AppColors.primaryLight,
-                          borderRadius: BorderRadius.circular(14),
+                          color: PKColors.primarioSuave,
+                          borderRadius: PKRadii.imagenAll,
+                          border: Border.all(color: PKColors.borde),
                         ),
                         child: Center(
-                          child: Text(t.nombre.isNotEmpty ? t.nombre[0].toUpperCase() : 'T',
-                              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                          child: Text(
+                            t.nombre.isNotEmpty ? t.nombre[0].toUpperCase() : 'T',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: PKColors.primario,
+                              fontFamily: 'DMSans',
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: PKSpacing.base),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(t.nombre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text(t.nombre, style: PKTextStyles.tituloTarjeta),
+                            const SizedBox(height: PKSpacing.xs),
                             if (t.esPremium)
-                              const Text('⭐ Sacó 10 (Comercio Verificado)',
-                                  style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 12)),
-                            if (t.puntoEntrega != null)
-                              Text('📍 ${t.puntoEntrega!.nombre}', style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                              const PKInsigniaSaco10()
+                            else
+                              const PKInsigniaMatriculado(),
+                            if (t.puntoEntrega != null) ...[
+                              const SizedBox(height: PKSpacing.xs),
+                              Text('📍 ${t.puntoEntrega!.nombre}', style: PKTextStyles.etiqueta),
+                            ],
                           ],
                         ),
                       ),
                     ],
                   ),
                   if (t.descripcion != null && t.descripcion!.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(t.descripcion!, style: const TextStyle(color: AppColors.text, fontSize: 14)),
+                    const SizedBox(height: PKSpacing.md),
+                    Text(t.descripcion!, style: PKTextStyles.cuerpo),
                   ],
                   if (t.horario != null) ...[
-                    const SizedBox(height: 6),
-                    Text('⏰ Horario: ${t.horario}', style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                    const SizedBox(height: PKSpacing.xs),
+                    Text('⏰ Horario: ${t.horario}', style: PKTextStyles.etiqueta),
                   ],
                 ],
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: PKSpacing.base),
 
             // Catálogo de Productos
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text('Productos disponibles (${t.productos.length})',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
+              child: Text(
+                'Productos disponibles (${t.productos.length})',
+                style: PKTextStyles.tituloSeccion.copyWith(fontSize: 16),
+              ),
             ),
 
             if (t.productos.isEmpty)
               const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: Text('Esta tienda no tiene productos publicados aún.')),
+                padding: EdgeInsets.all(PKSpacing.xl),
+                child: Center(
+                  child: PKEstadoVacio(
+                    icono: Icons.inventory_2_outlined,
+                    titulo: 'Sin productos aún',
+                    subtitulo: 'Esta tienda todavía no ha publicado productos.',
+                  ),
+                ),
               )
             else
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
                 itemCount: t.productos.length,
                 itemBuilder: (context, index) {
                   final prod = t.productos[index];
@@ -433,45 +433,37 @@ class _TiendaScreenState extends State<TiendaScreen> {
                     onAddToCart: () {
                       final agregado = cart.agregarProducto(prod, t);
                       if (!agregado) {
-                        // Diálogo para cambiar de tienda
                         showDialog(
                           context: context,
                           builder: (ctx) => AlertDialog(
                             title: const Text('Cambiar de tienda'),
                             content: Text(
-                                'Tu carrito tiene productos de "${cart.tiendaNombre}". ¿Quieres vaciarlo y empezar con "${t.nombre}"?'),
+                              'Tu carrito tiene productos de "${cart.tiendaNombre}". ¿Quieres vaciarlo y empezar con "${t.nombre}"?',
+                            ),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Mantener carrito')),
-                              ElevatedButton(
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('Mantener carrito'),
+                              ),
+                              PKBotonPrimario(
+                                texto: 'Vaciar y continuar',
                                 onPressed: () {
                                   cart.forzarAgregar(prod, t);
                                   Navigator.pop(ctx);
                                 },
-                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-                                child: const Text('Vaciar y continuar'),
                               ),
                             ],
                           ),
                         );
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${prod.nombre} agregado al carrito'),
-                            duration: const Duration(seconds: 1),
-                            action: SnackBarAction(
-                              label: 'Ver carrito',
-                              textColor: AppColors.accent,
-                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CarritoScreen())),
-                            ),
-                          ),
-                        );
+                        pkSnackOk(context, '${prod.nombre} agregado al carrito');
                       }
                     },
                   );
                 },
               ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: PKSpacing.xxl),
           ],
         ),
       ),
@@ -479,7 +471,7 @@ class _TiendaScreenState extends State<TiendaScreen> {
   }
 }
 
-// P08: Detalle de Producto
+// ─── P08: Detalle de Producto ─────────────────────────────────────────────────
 class ProductoScreen extends StatefulWidget {
   final Producto producto;
   final Tienda tienda;
@@ -498,59 +490,56 @@ class _ProductoScreenState extends State<ProductoScreen> {
     final p = widget.producto;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(title: Text(p.nombre)),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        color: AppColors.surface,
+        padding: const EdgeInsets.all(PKSpacing.base),
+        decoration: const BoxDecoration(
+          color: PKColors.tarjeta,
+          border: Border(top: BorderSide(color: PKColors.borde)),
+          boxShadow: PKShadows.tarjeta,
+        ),
         child: Row(
           children: [
             // Selector de cantidad (1..20)
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(10),
+                color: PKColors.tarjeta,
+                border: Border.all(color: PKColors.borde),
+                borderRadius: PKRadii.botonAll,
               ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.remove),
+                    icon: const Icon(Icons.remove, size: 18),
                     onPressed: _cantidad > 1 ? () => setState(() => _cantidad--) : null,
                   ),
-                  Text('$_cantidad', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text('$_cantidad', style: PKTextStyles.tituloTarjeta),
                   IconButton(
-                    icon: const Icon(Icons.add),
+                    icon: const Icon(Icons.add, size: 18),
                     onPressed: _cantidad < 20 ? () => setState(() => _cantidad++) : null,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: PKSpacing.base),
             Expanded(
-              child: ElevatedButton(
+              child: PKBotonPrimario(
+                texto: p.disponible ? 'Agregar \$${(p.precio * _cantidad).toStringAsFixed(2)}' : 'Agotado',
+                icono: Icons.add_shopping_cart,
                 onPressed: p.disponible
                     ? () {
                         cart.agregarProducto(p, widget.tienda, cantidad: _cantidad);
                         Navigator.pop(context);
                       }
                     : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: Text(
-                  p.disponible ? 'Agregar \$${(p.precio * _cantidad).toStringAsFixed(2)}' : 'Agotado',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
               ),
             ),
           ],
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(PKSpacing.base),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -558,20 +547,23 @@ class _ProductoScreenState extends State<ProductoScreen> {
               Container(
                 height: 250,
                 width: double.infinity,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), color: Colors.grey.shade100),
+                decoration: BoxDecoration(
+                  borderRadius: PKRadii.tarjetaAll,
+                  color: PKColors.neutroFondo,
+                  border: Border.all(color: PKColors.borde),
+                ),
                 clipBehavior: Clip.antiAlias,
                 child: Image.network(p.primeraFotoUrl!, fit: BoxFit.cover),
               ),
-            const SizedBox(height: 20),
-            Text(p.nombre, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text('\$${p.precio.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.primary)),
-            const SizedBox(height: 16),
+            const SizedBox(height: PKSpacing.base),
+            Text(p.nombre, style: PKTextStyles.tituloPantalla.copyWith(fontSize: 22)),
+            const SizedBox(height: PKSpacing.sm),
+            Text('\$${p.precio.toStringAsFixed(2)}', style: PKTextStyles.precioGrande),
+            const SizedBox(height: PKSpacing.base),
             if (p.descripcion != null && p.descripcion!.isNotEmpty) ...[
-              const Text('Descripción', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              Text(p.descripcion!, style: const TextStyle(color: AppColors.text, fontSize: 14, height: 1.5)),
+              Text('Descripción', style: PKTextStyles.tituloTarjeta),
+              const SizedBox(height: PKSpacing.xs),
+              Text(p.descripcion!, style: PKTextStyles.cuerpo),
             ],
           ],
         ),

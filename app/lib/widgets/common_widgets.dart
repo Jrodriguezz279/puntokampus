@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../theme/theme.dart';
+import 'pk_components.dart';
 
 class LoadingSkeleton extends StatelessWidget {
   final double height;
@@ -10,19 +11,15 @@ class LoadingSkeleton extends StatelessWidget {
     super.key,
     this.height = 80,
     this.width = double.infinity,
-    this.borderRadius = 12,
+    this.borderRadius = PKRadii.boton,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return PKEsqueleto(
       height: height,
       width: width,
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(borderRadius),
-      ),
+      borderRadius: borderRadius,
     );
   }
 }
@@ -43,41 +40,11 @@ class EmptyStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 48)),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 15,
-                color: AppColors.textMuted,
-                height: 1.4,
-              ),
-            ),
-            if (buttonText != null && onButtonPressed != null) ...[
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: onButtonPressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(160, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: Text(buttonText!),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return PKEstadoVacio(
+      icono: Icons.inbox_outlined,
+      titulo: message,
+      botonTexto: buttonText,
+      onBoton: onButtonPressed,
     );
   }
 }
@@ -94,35 +61,9 @@ class ErrorViewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('⚠️', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: AppColors.text),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: onRetry,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(160, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text('Reintentar'),
-            ),
-          ],
-        ),
-      ),
+    return PKEstadoError(
+      mensaje: message,
+      onReintentar: onRetry,
     );
   }
 }

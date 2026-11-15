@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../constants/app_colors.dart';
+import '../theme/theme.dart';
+import '../widgets/pk_components.dart';
 import '../providers/auth_provider.dart';
 import '../providers/tienda_provider.dart';
 import 'vitrina/vitrina_screens.dart';
@@ -26,10 +27,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     CuentaScreen(),
   ];
 
+  static const _items = [
+    PKNavItem(icono: Icons.storefront_outlined,    iconoActivo: Icons.storefront,     etiqueta: 'Vitrina'),
+    PKNavItem(icono: Icons.receipt_long_outlined,  iconoActivo: Icons.receipt_long,   etiqueta: 'Mis pedidos'),
+    PKNavItem(icono: Icons.shopping_bag_outlined,  iconoActivo: Icons.shopping_bag,   etiqueta: 'Mi tienda'),
+    PKNavItem(icono: Icons.person_outline_rounded, iconoActivo: Icons.person_rounded, etiqueta: 'Cuenta'),
+  ];
+
   void _onItemTapped(int index) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    // Si intenta ir a pedidos, tienda o cuenta sin sesión, invitar a entrar
     if (index != 0 && !auth.tieneSesion) {
       Navigator.push(
         context,
@@ -42,46 +49,83 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       Provider.of<TiendaProvider>(context, listen: false).cargarMiTienda();
     }
 
-    setState(() {
-      _currentIndex = index;
-    });
+    setState(() => _currentIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
+    final ancho = MediaQuery.of(context).size.width;
+
+    if (ancho >= PKBreakpoints.mobile) {
+      // ── Tableta/escritorio: NavigationRail lateral ─────────────────────────
+      return Scaffold(
+        body: Row(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(right: BorderSide(color: PKColors.borde)),
+              ),
+              child: NavigationRail(
+                selectedIndex: _currentIndex,
+                onDestinationSelected: _onItemTapped,
+                backgroundColor: PKColors.tarjeta,
+                indicatorColor: PKColors.primarioSuave,
+                selectedIconTheme: const IconThemeData(color: PKColors.primarioSuaveTexto),
+                selectedLabelTextStyle: const TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: PKColors.primarioSuaveTexto,
+                ),
+                unselectedIconTheme: const IconThemeData(color: PKColors.secundario),
+                unselectedLabelTextStyle: const TextStyle(
+                  fontFamily: 'DMSans',
+                  fontSize: 12,
+                  color: PKColors.secundario,
+                ),
+                labelType: NavigationRailLabelType.all,
+                destinations: _items
+                    .map((i) => NavigationRailDestination(
+                          icon: Icon(i.icono),
+                          selectedIcon: Icon(i.iconoActivo ?? i.icono),
+                          label: Text(i.etiqueta),
+                        ))
+                    .toList(),
+              ),
+            ),
+            Expanded(
+              child: IndexedStack(
+                index: _currentIndex,
+                children: _screens,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ── Móvil: NavigationBar inferior ──────────────────────────────────────
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: _onItemTapped,
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primaryLight,
-        elevation: 4,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.storefront_outlined),
-            selectedIcon: Icon(Icons.storefront, color: AppColors.primary),
-            label: 'Vitrina',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long, color: AppColors.primary),
-            label: 'Mis pedidos',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.shopping_bag_outlined),
-            selectedIcon: Icon(Icons.shopping_bag, color: AppColors.primary),
-            label: 'Mi tienda',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: AppColors.primary),
-            label: 'Cuenta',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: PKColors.tarjeta,
+          border: Border(top: BorderSide(color: PKColors.borde)),
+        ),
+        child: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: _onItemTapped,
+          destinations: _items
+              .map((i) => NavigationDestination(
+                    icon: Icon(i.icono),
+                    selectedIcon: Icon(i.iconoActivo ?? i.icono),
+                    label: i.etiqueta,
+                  ))
+              .toList(),
+        ),
       ),
     );
   }

@@ -6,16 +6,16 @@
     <title>@yield('titulo', 'PuntoKampus — Marketplace UTB')</title>
     <style>
         :root {
-            --primary: #6c3fc5;
-            --primary-dark: #552fa8;
-            --primary-light: #f0ebff;
-            --accent: #f59e0b;
-            --bg: #f8f9fa;
-            --surface: #ffffff;
-            --text: #1f2937;
-            --text-muted: #6b7280;
-            --border: #e5e7eb;
-            --radius: 12px;
+            --primary: #CC4E01;
+            --primary-dark: #A83F00;
+            --primary-light: #F7E3D6;
+            --accent: #8A3500;
+            --bg: #FAF5F2;
+            --surface: #FEFAF8;
+            --text: #171717;
+            --text-muted: #77716D;
+            --border: #D9D2CC;
+            --radius: 16px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }

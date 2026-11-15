@@ -6,36 +6,36 @@
     <title>Eliminar mi cuenta — PuntoKampus</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a2e; background: #f8f9fa; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
-        header { background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); color: white; padding: 1.75rem 1rem; text-align: center; }
+        body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #171717; background: #FAF5F2; line-height: 1.6; min-height: 100vh; display: flex; flex-direction: column; }
+        header { background: #CC4E01; color: white; padding: 2rem 1rem; text-align: center; }
         header h1 { font-size: 1.6rem; font-weight: 700; }
-        header p { opacity: 0.85; margin-top: 0.3rem; font-size: 0.9rem; }
+        header p { opacity: 0.9; margin-top: 0.3rem; font-size: 0.9rem; }
         main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 2.5rem 1rem; }
-        .card { background: white; border-radius: 16px; padding: 2rem; max-width: 460px; width: 100%; box-shadow: 0 2px 12px rgba(0,0,0,.09); }
-        .card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: #c0392b; }
-        .info-box { background: #fff5f5; border: 1px solid #fca5a5; border-radius: 8px; padding: 1rem 1.1rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #7f1d1d; }
+        .card { background: #FEFAF8; border-radius: 16px; border: 1px solid #D9D2CC; padding: 2rem; max-width: 460px; width: 100%; box-shadow: 0 2px 12px rgba(23,23,23,.06); }
+        .card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; color: #B71C1C; }
+        .info-box { background: #F8DCDC; border: 1px solid #B71C1C; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #B71C1C; }
         .info-box ul { margin: 0.4rem 0 0 1.1rem; }
         .info-box li { margin-bottom: 0.2rem; }
-        label { display: block; font-size: 0.88rem; font-weight: 600; color: #374151; margin-bottom: 0.4rem; }
+        label { display: block; font-size: 0.88rem; font-weight: 600; color: #77716D; margin-bottom: 0.4rem; }
         input[type="email"], input[type="text"] {
-            width: 100%; padding: 0.65rem 0.9rem; border: 1.5px solid #d1d5db; border-radius: 8px;
-            font-size: 1rem; outline: none; transition: border-color .2s;
+            width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #D9D2CC; border-radius: 12px;
+            font-size: 1rem; outline: none; background: #FEFAF8; transition: border-color .2s;
         }
-        input:focus { border-color: #e74c3c; box-shadow: 0 0 0 3px rgba(231,76,60,.12); }
+        input:focus { border-color: #CC4E01; box-shadow: 0 0 0 2px rgba(204,78,1,.2); }
         .form-group { margin-bottom: 1.1rem; }
-        .btn { width: 100%; padding: 0.8rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity .2s; }
-        .btn-danger { background: #e74c3c; color: white; }
+        .btn { width: 100%; padding: 0.8rem; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+        .btn-danger { background: #B71C1C; color: white; }
         .btn-danger:hover { opacity: 0.88; }
-        .btn-secondary { background: #6c3fc5; color: white; margin-top: 0.75rem; }
-        .btn-secondary:hover { opacity: 0.88; }
-        .error-msg { color: #c0392b; font-size: 0.83rem; margin-top: 0.3rem; }
-        .success-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 1rem 1.1rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: #14532d; }
+        .btn-secondary { background: #FEFAF8; border: 1px solid #D9D2CC; color: #171717; margin-top: 0.75rem; }
+        .btn-secondary:hover { background: #ECE6E1; }
+        .error-msg { color: #B71C1C; font-size: 0.83rem; margin-top: 0.3rem; }
+        .success-box { background: #D8F0D5; border: 1px solid #176B27; border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: #176B27; }
         .eliminated-box { text-align: center; padding: 1rem 0; }
         .eliminated-box .icon { font-size: 3rem; }
-        .eliminated-box h2 { margin: 0.75rem 0 0.5rem; color: #374151; }
-        .eliminated-box p { color: #6b7280; font-size: 0.95rem; }
-        footer { text-align: center; padding: 1.5rem; font-size: 0.82rem; color: #9ca3af; }
-        a { color: #6c3fc5; text-decoration: none; }
+        .eliminated-box h2 { margin: 0.75rem 0 0.5rem; color: #171717; }
+        .eliminated-box p { color: #77716D; font-size: 0.95rem; }
+        footer { text-align: center; padding: 1.5rem; font-size: 0.82rem; color: #77716D; }
+        a { color: #8A3500; font-weight: 600; text-decoration: none; }
         a:hover { text-decoration: underline; }
     </style>
 </head>

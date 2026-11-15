@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../constants/app_colors.dart';
+import '../../theme/theme.dart';
 import '../../constants/app_strings.dart';
-import '../../models/categoria.dart';
 import '../../models/pedido.dart';
-import '../../models/producto.dart';
 import '../../models/tienda.dart';
 import '../../providers/tienda_provider.dart';
 import '../../providers/vitrina_provider.dart';
 import '../../services/pedido_service.dart';
-import '../../widgets/common_widgets.dart';
+import '../../widgets/pk_components.dart';
 
-// P15: Mi Tienda (Panel del Vendedor)
+// ══════════════════════════════════════════════════════════════════════════════
+// MI TIENDA — P14 Crear/Editar Tienda / P15 Panel Mi Tienda / P16 Nuevo Producto / P17 Pedidos
+// Cumple con docs/DISENO-VISUAL.md
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ─── P15: Mi Tienda (Panel del Vendedor) ───────────────────────────────────────
 class MiTiendaScreen extends StatefulWidget {
   const MiTiendaScreen({super.key});
 
@@ -34,18 +37,25 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
 
     if (tiendaProv.cargando) {
       return Scaffold(
+        backgroundColor: PKColors.fondo,
         appBar: AppBar(title: const Text('Mi Tienda')),
         body: const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Column(children: [LoadingSkeleton(height: 120), LoadingSkeleton(height: 120)]),
+          padding: EdgeInsets.all(PKSpacing.base),
+          child: Column(
+            children: [
+              PKEsqueleto(height: 120),
+              SizedBox(height: PKSpacing.base),
+              PKEsqueleto(height: 120),
+            ],
+          ),
         ),
       );
     }
 
     if (!tiendaProv.tieneTienda) {
-      // P14 Invitación a crear tienda o refrescar
+      // P14 Invitación a crear tienda
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: PKColors.fondo,
         appBar: AppBar(
           title: const Text('Mi Tienda'),
           actions: [
@@ -57,16 +67,18 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
           ],
         ),
         body: RefreshIndicator(
+          color: PKColors.primario,
           onRefresh: () => tiendaProv.cargarMiTienda(),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.7,
-              child: EmptyStateWidget(
-                icon: '🏪',
-                message: '¿Vendes comida, snacks, accesorios o servicios en la UTB? Crea tu tienda y llega a miles de estudiantes.',
-                buttonText: AppStrings.btnCrearTienda,
-                onButtonPressed: () {
+              child: PKEstadoVacio(
+                icono: Icons.storefront_outlined,
+                titulo: 'Crea tu tienda en la UTB',
+                subtitulo: '¿Vendes comida, snacks, accesorios o servicios en el campus? Llega a miles de estudiantes.',
+                botonTexto: AppStrings.btnCrearTienda,
+                onBoton: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const FormTiendaScreen()),
@@ -82,7 +94,7 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
     final t = tiendaProv.miTienda!;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(
         title: Text(t.nombre),
         actions: [
@@ -105,96 +117,87 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
             MaterialPageRoute(builder: (_) => const FormProductoScreen()),
           );
         },
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Nuevo Producto', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: PKColors.primario,
+        foregroundColor: PKColors.sobrePrimario,
+        elevation: 2,
+        icon: const Icon(Icons.add),
+        label: const Text('Nuevo Producto', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'DMSans')),
       ),
       body: RefreshIndicator(
+        color: PKColors.primario,
         onRefresh: () => tiendaProv.cargarMiTienda(),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(PKSpacing.base),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Tarjeta Resumen
-              Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(t.nombre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: t.esPremium ? AppColors.accentLight : AppColors.primaryLight,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              t.esPremium ? '⭐ Sacó 10' : 'Plan Básico',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: t.esPremium ? AppColors.accent : AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      if (t.descripcion != null) Text(t.descripcion!, style: const TextStyle(color: AppColors.text)),
-                      const SizedBox(height: 8),
-                      if (t.puntoEntrega != null)
-                        Text('📍 Entrega: ${t.puntoEntrega!.nombre}', style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
-                      if (t.horario != null)
-                        Text('⏰ Horario: ${t.horario}', style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+              PKTarjeta(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(t.nombre, style: PKTextStyles.tituloTarjeta),
+                        ),
+                        if (t.esPremium)
+                          const PKInsigniaSaco10()
+                        else
+                          const PKInsigniaMatriculado(),
+                      ],
+                    ),
+                    if (t.descripcion != null && t.descripcion!.isNotEmpty) ...[
+                      const SizedBox(height: PKSpacing.sm),
+                      Text(t.descripcion!, style: PKTextStyles.cuerpo),
                     ],
-                  ),
+                    const SizedBox(height: PKSpacing.sm),
+                    if (t.puntoEntrega != null)
+                      Text('📍 Entrega: ${t.puntoEntrega!.nombre}', style: PKTextStyles.etiqueta),
+                    if (t.horario != null)
+                      Text('⏰ Horario: ${t.horario}', style: PKTextStyles.etiqueta),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: PKSpacing.base),
 
               // Botón Pedidos Recibidos
-              ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: const BorderSide(color: AppColors.border),
+              PKTarjeta(
+                padding: EdgeInsets.zero,
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(PKSpacing.sm),
+                    decoration: const BoxDecoration(
+                      color: PKColors.primarioSuave,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.inbox_outlined, color: PKColors.primario),
+                  ),
+                  title: Text('Pedidos de mi tienda', style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15)),
+                  subtitle: Text('Gestionar pedidos entrantes y entregas', style: PKTextStyles.etiqueta),
+                  trailing: const Icon(Icons.chevron_right, color: PKColors.secundario),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PedidosTiendaScreen()),
+                    );
+                  },
                 ),
-                tileColor: AppColors.surface,
-                leading: const Icon(Icons.inbox_outlined, color: AppColors.primary),
-                title: const Text('Pedidos de mi tienda', style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text('Gestionar pedidos entrantes y despachos'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const PedidosTiendaScreen()),
-                  );
-                },
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: PKSpacing.lg),
 
               // Lista de Productos de la Tienda
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Mis Productos (${t.productos.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                ],
-              ),
-              const SizedBox(height: 12),
+              Text('Mis Productos (${t.productos.length})', style: PKTextStyles.tituloSeccion.copyWith(fontSize: 16)),
+              const SizedBox(height: PKSpacing.sm),
 
               if (t.productos.isEmpty)
-                const EmptyStateWidget(
-                  icon: '🏷️',
-                  message: AppStrings.emptyMisProductos,
+                const PKEstadoVacio(
+                  icono: Icons.inventory_2_outlined,
+                  titulo: 'Sin productos aún',
+                  subtitulo: AppStrings.emptyMisProductos,
                 )
               else
                 ListView.builder(
@@ -203,46 +206,69 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                   itemCount: t.productos.length,
                   itemBuilder: (context, index) {
                     final prod = t.productos[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: ListTile(
-                        leading: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
-                          child: const Icon(Icons.fastfood, color: AppColors.primary),
-                        ),
-                        title: Text(prod.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('\$${prod.precio.toStringAsFixed(2)} • ${prod.disponible ? "Disponible" : "Agotado"}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('¿Eliminar producto?'),
-                                content: Text('¿Deseas eliminar "${prod.nombre}" de tu catálogo?'),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      tiendaProv.eliminarProducto(prod.id);
-                                      Navigator.pop(ctx);
-                                    },
-                                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
-                                    child: const Text('Eliminar'),
+                    return PKTarjeta(
+                      padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: PKColors.neutroFondo,
+                              borderRadius: PKRadii.imagenAll,
+                              border: Border.all(color: PKColors.borde),
+                            ),
+                            child: const Icon(Icons.fastfood_outlined, color: PKColors.secundario),
+                          ),
+                          const SizedBox(width: PKSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(prod.nombre, style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '\$${prod.precio.toStringAsFixed(2)} • ${prod.disponible ? "Disponible" : "Agotado"}',
+                                  style: PKTextStyles.etiqueta.copyWith(
+                                    color: prod.disponible ? PKColors.primarioSuaveTexto : PKColors.secundario,
                                   ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: PKColors.error),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('¿Eliminar producto?'),
+                                  content: Text('¿Deseas eliminar "${prod.nombre}" de tu catálogo?'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        tiendaProv.eliminarProducto(prod.id);
+                                        Navigator.pop(ctx);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: PKColors.error,
+                                        foregroundColor: PKColors.sobrePrimario,
+                                      ),
+                                      child: const Text('Eliminar'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     );
                   },
                 ),
 
-              const SizedBox(height: 60),
+              const SizedBox(height: 80),
             ],
           ),
         ),
@@ -251,7 +277,7 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
   }
 }
 
-// P14: Formulario de Tienda (Crear o Editar)
+// ─── P14: Formulario de Tienda (Crear o Editar) ─────────────────────────────────
 class FormTiendaScreen extends StatefulWidget {
   final Tienda? tienda;
   const FormTiendaScreen({super.key, this.tienda});
@@ -285,6 +311,15 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    _descripcionController.dispose();
+    _horarioController.dispose();
+    _whatsappController.dispose();
+    super.dispose();
+  }
+
   void _guardar() async {
     final vitrina = Provider.of<VitrinaProvider>(context, listen: false);
     final tiendaProv = Provider.of<TiendaProvider>(context, listen: false);
@@ -305,9 +340,7 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
     if (ok) {
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(tiendaProv.error ?? 'Error al guardar.'), backgroundColor: AppColors.error),
-      );
+      pkSnackError(context, tiendaProv.error ?? 'Error al guardar.');
     }
   }
 
@@ -315,65 +348,106 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
   Widget build(BuildContext context) {
     final vitrina = Provider.of<VitrinaProvider>(context);
 
-    // Si aún no hay selección y hay opciones, asignar la primera
     final selectedCatId = _cat1Id ?? (vitrina.categorias.isNotEmpty ? vitrina.categorias.first.id : null);
     final selectedPuntoId = _puntoId ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first.id : null);
 
     return Scaffold(
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(title: Text(widget.tienda == null ? 'Crear mi tienda' : 'Editar tienda')),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(PKSpacing.base),
+        decoration: const BoxDecoration(
+          color: PKColors.tarjeta,
+          border: Border(top: BorderSide(color: PKColors.borde)),
+          boxShadow: PKShadows.tarjeta,
+        ),
+        child: PKBotonPrimario(
+          texto: widget.tienda == null ? AppStrings.btnCrearTienda : AppStrings.btnGuardarCambios,
+          onPressed: _guardar,
+        ),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(PKSpacing.base),
         child: Column(
           children: [
-            TextField(
-              controller: _nombreController,
-              decoration: const InputDecoration(labelText: 'Nombre de la tienda *', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _descripcionController,
-              maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Descripción *', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 14),
-            DropdownButtonFormField<int>(
-              value: vitrina.categorias.any((c) => c.id == selectedCatId) ? selectedCatId : null,
-              decoration: const InputDecoration(labelText: 'Categoría principal *', border: OutlineInputBorder()),
-              items: vitrina.categorias
-                  .map((c) => DropdownMenuItem<int>(value: c.id, child: Text(c.nombre)))
-                  .toList(),
-              onChanged: (val) => setState(() => _cat1Id = val),
-            ),
-            const SizedBox(height: 14),
-            DropdownButtonFormField<int>(
-              value: vitrina.puntosEntrega.any((p) => p.id == selectedPuntoId) ? selectedPuntoId : null,
-              decoration: const InputDecoration(labelText: 'Punto de entrega preferido *', border: OutlineInputBorder()),
-              items: vitrina.puntosEntrega
-                  .map((p) => DropdownMenuItem<int>(value: p.id, child: Text(p.nombre)))
-                  .toList(),
-              onChanged: (val) => setState(() => _puntoId = val),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _horarioController,
-              decoration: const InputDecoration(labelText: 'Horario disponible *', hintText: 'ej: Lun a Vie 09:00 - 14:00', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _whatsappController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(labelText: 'WhatsApp para pedidos', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _guardar,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
+            PKTarjeta(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Información básica', style: PKTextStyles.tituloTarjeta),
+                  const SizedBox(height: PKSpacing.base),
+                  PKCampoEtiquetado(
+                    etiqueta: 'Nombre de la tienda *',
+                    hint: 'Ej. Snacks & Dulces UTB',
+                    controller: _nombreController,
+                  ),
+                  const SizedBox(height: PKSpacing.base),
+                  PKCampoEtiquetado(
+                    etiqueta: 'Descripción *',
+                    hint: '¿Qué vendes o ofreces?',
+                    maxLines: 2,
+                    controller: _descripcionController,
+                  ),
+                ],
               ),
-              child: Text(widget.tienda == null ? AppStrings.btnCrearTienda : AppStrings.btnGuardarCambios),
             ),
+
+            const SizedBox(height: PKSpacing.base),
+
+            PKTarjeta(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Ubicación y categoría', style: PKTextStyles.tituloTarjeta),
+                  const SizedBox(height: PKSpacing.base),
+                  Text('Categoría principal *', style: PKTextStyles.etiqueta),
+                  const SizedBox(height: PKSpacing.xs),
+                  DropdownButtonFormField<int>(
+                    value: vitrina.categorias.any((c) => c.id == selectedCatId) ? selectedCatId : null,
+                    items: vitrina.categorias
+                        .map((c) => DropdownMenuItem<int>(value: c.id, child: Text(c.nombre, style: PKTextStyles.cuerpo)))
+                        .toList(),
+                    onChanged: (val) => setState(() => _cat1Id = val),
+                  ),
+                  const SizedBox(height: PKSpacing.base),
+                  Text('Punto de entrega preferido *', style: PKTextStyles.etiqueta),
+                  const SizedBox(height: PKSpacing.xs),
+                  DropdownButtonFormField<int>(
+                    value: vitrina.puntosEntrega.any((p) => p.id == selectedPuntoId) ? selectedPuntoId : null,
+                    items: vitrina.puntosEntrega
+                        .map((p) => DropdownMenuItem<int>(value: p.id, child: Text(p.nombre, style: PKTextStyles.cuerpo)))
+                        .toList(),
+                    onChanged: (val) => setState(() => _puntoId = val),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: PKSpacing.base),
+
+            PKTarjeta(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Contacto y horarios', style: PKTextStyles.tituloTarjeta),
+                  const SizedBox(height: PKSpacing.base),
+                  PKCampoEtiquetado(
+                    etiqueta: 'Horario disponible *',
+                    hint: 'Ej. Lun a Vie 09:00 - 14:00',
+                    controller: _horarioController,
+                  ),
+                  const SizedBox(height: PKSpacing.base),
+                  PKCampoEtiquetado(
+                    etiqueta: 'WhatsApp para pedidos',
+                    hint: 'Ej. 0987654321',
+                    keyboardType: TextInputType.phone,
+                    controller: _whatsappController,
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: PKSpacing.xxl),
           ],
         ),
       ),
@@ -381,7 +455,7 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
   }
 }
 
-// P16: Formulario de Producto Nuevo
+// ─── P16: Formulario de Producto Nuevo ─────────────────────────────────────────
 class FormProductoScreen extends StatefulWidget {
   const FormProductoScreen({super.key});
 
@@ -394,10 +468,18 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
   final _descController = TextEditingController();
   final _precioController = TextEditingController();
 
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    _descController.dispose();
+    _precioController.dispose();
+    super.dispose();
+  }
+
   void _guardar() async {
     final precio = double.tryParse(_precioController.text.trim()) ?? 0.0;
     if (_nombreController.text.trim().isEmpty || precio <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ingresa nombre y precio válido.')));
+      pkSnackError(context, 'Ingresa un nombre y precio válido.');
       return;
     }
 
@@ -417,45 +499,56 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(title: const Text('Nuevo Producto')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            TextField(
-              controller: _nombreController,
-              decoration: const InputDecoration(labelText: 'Nombre del producto *', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _precioController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Precio en dólares (\$)*', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _descController,
-              maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Descripción del producto', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _guardar,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(PKSpacing.base),
+        decoration: const BoxDecoration(
+          color: PKColors.tarjeta,
+          border: Border(top: BorderSide(color: PKColors.borde)),
+          boxShadow: PKShadows.tarjeta,
+        ),
+        child: PKBotonPrimario(
+          texto: 'Guardar Producto',
+          onPressed: _guardar,
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(PKSpacing.base),
+        child: PKTarjeta(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Detalles del producto', style: PKTextStyles.tituloTarjeta),
+              const SizedBox(height: PKSpacing.base),
+              PKCampoEtiquetado(
+                etiqueta: 'Nombre del producto *',
+                hint: 'Ej. Brownie de chocolate',
+                controller: _nombreController,
               ),
-              child: const Text('Guardar Producto'),
-            ),
-          ],
+              const SizedBox(height: PKSpacing.base),
+              PKCampoEtiquetado(
+                etiqueta: 'Precio en dólares (\$)*',
+                hint: '1.25',
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                controller: _precioController,
+              ),
+              const SizedBox(height: PKSpacing.base),
+              PKCampoEtiquetado(
+                etiqueta: 'Descripción (opcional)',
+                hint: 'Ingredientes, tamaño o detalles',
+                maxLines: 3,
+                controller: _descController,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// P17: Pedidos de mi Tienda (Vendedor)
+// ─── P17: Pedidos de mi Tienda (Vendedor) ──────────────────────────────────────
 class PedidosTiendaScreen extends StatefulWidget {
   const PedidosTiendaScreen({super.key});
 
@@ -489,52 +582,79 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(title: const Text('Pedidos Recibidos')),
       body: RefreshIndicator(
+        color: PKColors.primario,
         onRefresh: () async => _cargar(),
         child: _cargando
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator(color: PKColors.primario))
             : _pedidos.isEmpty
-                ? const EmptyStateWidget(icon: '📥', message: AppStrings.emptyPedidosTienda)
+                ? const PKEstadoVacio(
+                    icono: Icons.inbox_outlined,
+                    titulo: 'Sin pedidos recibidos',
+                    subtitulo: AppStrings.emptyPedidosTienda,
+                  )
                 : ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(PKSpacing.base),
                     itemCount: _pedidos.length,
                     itemBuilder: (context, index) {
                       final p = _pedidos[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: PKSpacing.md),
+                        child: PKTarjeta(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('${p.codigo} • Comprador: ${p.nombreComprador ?? "Estudiante"}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                              const SizedBox(height: 4),
-                              Text('Total: \$${p.total.toStringAsFixed(2)} • Pago: ${p.formaPago}'),
-                              if (p.puntoEntrega != null) Text('📍 Entrega: ${p.puntoEntrega}'),
-                              const SizedBox(height: 12),
-                              if (p.esPendiente)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '#${p.codigo}',
+                                    style: PKTextStyles.tituloTarjeta,
+                                  ),
+                                  PKPastillaEstado(estado: estadoFromString(p.estado)),
+                                ],
+                              ),
+                              const SizedBox(height: PKSpacing.xs),
+                              Text('Comprador: ${p.nombreComprador ?? "Estudiante"}', style: PKTextStyles.etiqueta),
+                              Text('Total: \$${p.total.toStringAsFixed(2)} • Pago: ${p.formaPago}', style: PKTextStyles.cuerpo),
+                              if (p.puntoEntrega != null) ...[
+                                const SizedBox(height: 2),
+                                Text('📍 Entrega: ${p.puntoEntrega}', style: PKTextStyles.etiqueta),
+                              ],
+                              if (p.esPendiente) ...[
+                                const SizedBox(height: PKSpacing.base),
                                 Row(
                                   children: [
-                                    ElevatedButton(
-                                      onPressed: () async {
-                                        await PedidoService.marcarEntregado(p.id);
-                                        _cargar();
-                                      },
-                                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.success, foregroundColor: Colors.white),
-                                      child: const Text('Entregado'),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        onPressed: () async {
+                                          await PedidoService.marcarEntregado(p.id);
+                                          _cargar();
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: PKColors.okTexto,
+                                          foregroundColor: PKColors.sobrePrimario,
+                                        ),
+                                        child: const Text('Marcar Entregado'),
+                                      ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: PKSpacing.sm),
                                     OutlinedButton(
                                       onPressed: () async {
                                         await PedidoService.cancelarPedidoVendedor(p.id);
                                         _cargar();
                                       },
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: PKColors.error,
+                                        side: const BorderSide(color: PKColors.error),
+                                      ),
                                       child: const Text('Cancelar'),
                                     ),
                                   ],
                                 ),
+                              ],
                             ],
                           ),
                         ),

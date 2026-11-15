@@ -1,104 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../constants/app_colors.dart';
+import '../../theme/theme.dart';
+import '../../widgets/pk_components.dart';
 import '../../constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/tienda_provider.dart';
 
-// P01: Pantalla de Bienvenida
+// ══════════════════════════════════════════════════════════════════════════════
+// PANTALLAS DE AUTENTICACIÓN — P01 Bienvenida / P02 Correo / P03 Código / P04 Perfil
+// Todos los colores y estilos vienen de app/lib/theme/ únicamente.
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ─── P01: Pantalla de Bienvenida ─────────────────────────────────────────────
 class BienvenidaScreen extends StatelessWidget {
   const BienvenidaScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: PKColors.fondo,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+          padding: const EdgeInsets.symmetric(
+            horizontal: PKSpacing.base,
+            vertical: PKSpacing.xl,
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: PKSpacing.lg),
+
+              // ── Área central: logo + ilustración + descripción ──────────────
               Column(
                 children: [
+                  // Logo visual (ilustración lineal)
                   Container(
-                    width: 100,
-                    height: 100,
+                    width: 110,
+                    height: 110,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(24),
+                      color: PKColors.primarioSuave,
+                      borderRadius: PKRadii.tarjetaAll,
+                      border: Border.all(color: PKColors.borde),
                     ),
-                    child: const Center(
-                      child: Text('🏪', style: TextStyle(fontSize: 48)),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
+                    child: Center(
+                      child: Icon(
+                        Icons.storefront_outlined,
+                        size: 56,
+                        color: PKColors.primario,
                       ),
-                      children: [
-                        TextSpan(text: 'Punto'),
-                        TextSpan(text: 'Kampus', style: TextStyle(color: AppColors.accent)),
-                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'El marketplace universitario de la UTB.\nCompra y vende dentro del campus entre estudiantes.',
+
+                  const SizedBox(height: PKSpacing.lg),
+
+                  // Nombre de la app
+                  const PKLogo(fontSize: 32),
+
+                  const SizedBox(height: PKSpacing.base),
+
+                  // Descripción editorial
+                  Text(
+                    'El marketplace universitario\nde la UTB.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: AppColors.textMuted,
-                      height: 1.5,
+                    style: PKTextStyles.tituloPantalla.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: PKColors.titulo,
                     ),
+                  ),
+
+                  const SizedBox(height: PKSpacing.sm),
+
+                  Text(
+                    'Compra y vende entre estudiantes\ndentro del campus.',
+                    textAlign: TextAlign.center,
+                    style: PKTextStyles.cuerpoSecundario,
                   ),
                 ],
               ),
+
+              // ── Área inferior: botones ──────────────────────────────────────
               Column(
                 children: [
-                  ElevatedButton(
+                  PKBotonPrimario(
+                    texto: AppStrings.btnEntrarUtb,
+                    icono: Icons.mail_outline_rounded,
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const CorreoScreen()),
                       );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      AppStrings.btnEntrarUtb,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
                   ),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Ver la vitrina',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                    ),
+                  const SizedBox(height: PKSpacing.sm),
+                  PKBotonSecundario(
+                    texto: 'Ver la vitrina sin sesión',
+                    icono: Icons.storefront_outlined,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(height: PKSpacing.base),
+                  Text(
+                    'Solo para estudiantes y docentes UTB.',
+                    style: PKTextStyles.etiqueta,
                   ),
                 ],
               ),
@@ -110,7 +113,7 @@ class BienvenidaScreen extends StatelessWidget {
   }
 }
 
-// P02: Pantalla de Ingreso de Correo
+// ─── P02: Ingreso de Correo ───────────────────────────────────────────────────
 class CorreoScreen extends StatefulWidget {
   const CorreoScreen({super.key});
 
@@ -128,7 +131,7 @@ class _CorreoScreenState extends State<CorreoScreen> {
     super.dispose();
   }
 
-  void _enviarCodigo() async {
+  Future<void> _enviarCodigo() async {
     if (!_formKey.currentState!.validate()) return;
 
     final correo = _correoController.text.trim().toLowerCase();
@@ -143,12 +146,7 @@ class _CorreoScreenState extends State<CorreoScreen> {
         MaterialPageRoute(builder: (_) => CodigoScreen(correo: correo)),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(auth.error ?? AppStrings.errServidor),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      pkSnackError(context, auth.error ?? AppStrings.errServidor);
     }
   }
 
@@ -157,89 +155,85 @@ class _CorreoScreenState extends State<CorreoScreen> {
     final auth = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(
-        title: const Text('Ingreso con correo UTB'),
+        title: const Text('Acceso con correo UTB'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(PKSpacing.base),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Ingresa tu correo institucional',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                const SizedBox(height: PKSpacing.sm),
+
+                Text('Ingresa tu correo\ninstitucional', style: PKTextStyles.tituloPantalla),
+                const SizedBox(height: PKSpacing.sm),
+                Text(
+                  'Te enviamos un código de 6 dígitos para entrar sin contraseña.',
+                  style: PKTextStyles.cuerpoSecundario,
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Te enviaremos un código de 6 dígitos para iniciar sesión sin contraseñas.',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-                ),
-                const SizedBox(height: 24),
-                TextFormField(
+
+                const SizedBox(height: PKSpacing.xl),
+
+                PKCampoEtiquetado(
+                  etiqueta: 'Correo electrónico UTB',
+                  hint: 'ejemplo@utb.edu.ec',
                   controller: _correoController,
                   keyboardType: TextInputType.emailAddress,
                   autofocus: true,
-                  decoration: InputDecoration(
-                    labelText: 'Correo electrónico UTB',
-                    hintText: 'ejemplo@utb.edu.ec o @est.utb.edu.ec',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                  prefixIcon: const Icon(Icons.mail_outline_rounded, size: 20, color: PKColors.secundario),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Por favor ingresa tu correo.';
                     }
-                    final clean = value.trim().toLowerCase();
-                    if (!clean.endsWith('utb.edu.ec')) {
+                    if (!value.trim().toLowerCase().endsWith('utb.edu.ec')) {
                       return AppStrings.errCorreoNoUtb;
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: auth.cargando ? null : _enviarCodigo,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: auth.cargando
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text(AppStrings.btnEnviarCodigo, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+
+                const SizedBox(height: PKSpacing.lg),
+
+                PKBotonPrimario(
+                  texto: AppStrings.btnEnviarCodigo,
+                  onPressed: _enviarCodigo,
+                  cargando: auth.cargando,
                 ),
-                const SizedBox(height: 24),
-                const Center(
+
+                const SizedBox(height: PKSpacing.xl),
+
+                // ── Acceso rápido demo ────────────────────────────────────────
+                Center(
                   child: Text(
                     'Acceso rápido de evaluación:',
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.w500),
+                    style: PKTextStyles.etiqueta,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: PKSpacing.sm),
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.shopping_bag_outlined, size: 16, color: AppColors.primary),
-                        label: const Text('Compradora (María)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                        onPressed: () {
+                      child: _BotonAccesoRapido(
+                        label: 'María\nCompradora',
+                        icono: Icons.shopping_bag_outlined,
+                        onTap: () {
                           _correoController.text = 'maria.compradora@est.utb.edu.ec';
                           _enviarCodigo();
                         },
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: PKSpacing.sm),
                     Expanded(
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.storefront_outlined, size: 16, color: AppColors.primary),
-                        label: const Text('Vendedor (Carlos)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                        onPressed: () {
+                      child: _BotonAccesoRapido(
+                        label: 'Carlos\nVendedor',
+                        icono: Icons.storefront_outlined,
+                        onTap: () {
                           _correoController.text = 'carlos.vendedor@est.utb.edu.ec';
                           _enviarCodigo();
                         },
@@ -256,7 +250,49 @@ class _CorreoScreenState extends State<CorreoScreen> {
   }
 }
 
-// P03: Pantalla de Verificación de Código de 6 Dígitos
+class _BotonAccesoRapido extends StatelessWidget {
+  final String label;
+  final IconData icono;
+  final VoidCallback onTap;
+
+  const _BotonAccesoRapido({
+    required this.label,
+    required this.icono,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: PKSpacing.md, horizontal: PKSpacing.sm),
+        decoration: BoxDecoration(
+          color: PKColors.primarioSuave,
+          borderRadius: PKRadii.botonAll,
+          border: Border.all(color: PKColors.primarioSuaveTexto.withAlpha(50)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icono, size: 18, color: PKColors.primarioSuaveTexto),
+            const SizedBox(width: PKSpacing.xs),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: PKTextStyles.etiqueta.copyWith(
+                color: PKColors.primarioSuaveTexto,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── P03: Verificación de Código ─────────────────────────────────────────────
 class CodigoScreen extends StatefulWidget {
   final String correo;
   const CodigoScreen({super.key, required this.correo});
@@ -268,12 +304,10 @@ class CodigoScreen extends StatefulWidget {
 class _CodigoScreenState extends State<CodigoScreen> {
   final _codigoController = TextEditingController();
 
-  void _verificar() async {
+  Future<void> _verificar() async {
     final codigo = _codigoController.text.trim();
     if (codigo.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresa el código completo de 6 dígitos.')),
-      );
+      pkSnackError(context, 'Ingresa el código completo de 6 dígitos.');
       return;
     }
 
@@ -292,12 +326,7 @@ class _CodigoScreenState extends State<CodigoScreen> {
         Navigator.popUntil(context, (route) => route.isFirst);
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(auth.error ?? 'Código incorrecto.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      pkSnackError(context, auth.error ?? 'Código incorrecto. Intenta de nuevo.');
     }
   }
 
@@ -306,84 +335,112 @@ class _CodigoScreenState extends State<CodigoScreen> {
     final auth = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(
-        title: const Text('Verificar Código'),
+        title: const Text('Verificar código'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(PKSpacing.base),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text('📩', style: TextStyle(fontSize: 48)),
-              const SizedBox(height: 16),
-              const Text(
-                'Revisa tu bandeja de entrada',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Enviamos un código de 6 dígitos a:\n${widget.correo}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: PKSpacing.lg),
+
+              // Icono
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                width: 80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  color: PKColors.primarioSuave,
+                  shape: BoxShape.circle,
                 ),
+                child: const Icon(
+                  Icons.mark_email_unread_outlined,
+                  size: 40,
+                  color: PKColors.primario,
+                ),
+              ),
+
+              const SizedBox(height: PKSpacing.base),
+
+              Text(
+                'Revisa tu bandeja',
+                style: PKTextStyles.tituloSeccion,
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: PKSpacing.sm),
+
+              Text(
+                'Enviamos un código a:\n${widget.correo}',
+                textAlign: TextAlign.center,
+                style: PKTextStyles.cuerpoSecundario,
+              ),
+
+              const SizedBox(height: PKSpacing.lg),
+
+              // Banner demo
+              PKTarjeta(
+                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
                 child: Row(
                   children: [
-                    const Icon(Icons.verified_user_outlined, color: AppColors.primary, size: 20),
-                    const SizedBox(width: 8),
-                    const Expanded(
+                    const Icon(Icons.verified_user_outlined, color: PKColors.primario, size: 20),
+                    const SizedBox(width: PKSpacing.sm),
+                    Expanded(
                       child: Text(
                         'Código demo de evaluación: 123456',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.text),
+                        style: PKTextStyles.etiqueta.copyWith(
+                          color: PKColors.primarioSuaveTexto,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _codigoController.text = '123456';
-                        });
-                      },
-                      child: const Text('Usar', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                      onPressed: () => setState(() => _codigoController.text = '123456'),
+                      child: const Text('Usar'),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+
+              const SizedBox(height: PKSpacing.lg),
+
+              // Campo de código grande
               TextField(
                 controller: _codigoController,
                 keyboardType: TextInputType.number,
                 maxLength: 6,
                 textAlign: TextAlign.center,
                 autofocus: true,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 8),
-                decoration: InputDecoration(
-                  hintText: '000000',
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 10,
+                  color: PKColors.titulo,
+                  fontFamily: 'DMSans',
+                ),
+                decoration: const InputDecoration(
+                  hintText: '·  ·  ·  ·  ·  ·',
                   counterText: '',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: auth.cargando ? null : _verificar,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: auth.cargando
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text(AppStrings.btnEntrar, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+
+              const SizedBox(height: PKSpacing.lg),
+
+              PKBotonPrimario(
+                texto: AppStrings.btnEntrar,
+                onPressed: _verificar,
+                cargando: auth.cargando,
+              ),
+
+              const SizedBox(height: PKSpacing.base),
+
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cambiar correo'),
               ),
             ],
           ),
@@ -393,7 +450,7 @@ class _CodigoScreenState extends State<CodigoScreen> {
   }
 }
 
-// P04: Completar Perfil y Aceptar Privacidad
+// ─── P04: Completar Perfil ────────────────────────────────────────────────────
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
 
@@ -406,18 +463,20 @@ class _PerfilScreenState extends State<PerfilScreen> {
   final _whatsappController = TextEditingController();
   bool _aceptoPrivacidad = false;
 
-  void _guardar() async {
+  @override
+  void dispose() {
+    _nombresController.dispose();
+    _whatsappController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _guardar() async {
     if (_nombresController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor escribe tus nombres y apellidos.')),
-      );
+      pkSnackError(context, 'Por favor escribe tus nombres y apellidos.');
       return;
     }
-
     if (!_aceptoPrivacidad) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Debes aceptar la política de privacidad para continuar.')),
-      );
+      pkSnackError(context, 'Debes aceptar la política de privacidad para continuar.');
       return;
     }
 
@@ -429,9 +488,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
 
     if (!mounted) return;
-    if (ok) {
-      Navigator.popUntil(context, (route) => route.isFirst);
-    }
+    if (ok) Navigator.popUntil(context, (route) => route.isFirst);
   }
 
   @override
@@ -439,58 +496,71 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final auth = Provider.of<AuthProvider>(context);
 
     return Scaffold(
+      backgroundColor: PKColors.fondo,
       appBar: AppBar(title: const Text('Completa tu perfil')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(PKSpacing.base),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('¡Casi listo! 👋', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              const Text(
+              const SizedBox(height: PKSpacing.sm),
+              Text('¡Casi listo! 👋', style: PKTextStyles.tituloPantalla),
+              const SizedBox(height: PKSpacing.sm),
+              Text(
                 'Indícanos tus datos para identificarte al comprar y coordinar entregas.',
-                style: TextStyle(color: AppColors.textMuted),
+                style: PKTextStyles.cuerpoSecundario,
               ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _nombresController,
-                decoration: InputDecoration(
-                  labelText: 'Nombres y Apellidos *',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              const SizedBox(height: PKSpacing.xl),
+
+              PKTarjeta(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Datos personales', style: PKTextStyles.tituloTarjeta),
+                    const SizedBox(height: PKSpacing.base),
+                    PKCampoEtiquetado(
+                      etiqueta: 'Nombres y Apellidos *',
+                      hint: 'Ej. María García López',
+                      controller: _nombresController,
+                      prefixIcon: const Icon(Icons.person_outline, size: 20, color: PKColors.secundario),
+                    ),
+                    const SizedBox(height: PKSpacing.base),
+                    PKCampoEtiquetado(
+                      etiqueta: 'WhatsApp (opcional)',
+                      hint: 'Ej. 0987654321',
+                      controller: _whatsappController,
+                      keyboardType: TextInputType.phone,
+                      prefixIcon: const Icon(Icons.phone_outlined, size: 20, color: PKColors.secundario),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _whatsappController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Número de WhatsApp',
-                  hintText: 'ej: 0987654321',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+
+              const SizedBox(height: PKSpacing.base),
+
+              // Checkbox de privacidad
+              PKTarjeta(
+                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.sm, vertical: PKSpacing.xs),
+                child: CheckboxListTile(
+                  value: _aceptoPrivacidad,
+                  onChanged: (val) => setState(() => _aceptoPrivacidad = val ?? false),
+                  title: Text(
+                    'Acepto la política de privacidad y tratamiento de datos de PuntoKampus.',
+                    style: PKTextStyles.etiqueta.copyWith(color: PKColors.titulo),
+                  ),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
+                  activeColor: PKColors.primario,
                 ),
               ),
-              const SizedBox(height: 20),
-              CheckboxListTile(
-                value: _aceptoPrivacidad,
-                onChanged: (val) => setState(() => _aceptoPrivacidad = val ?? false),
-                title: const Text(
-                  'Acepto la política de privacidad y tratamiento de datos de PuntoKampus.',
-                  style: TextStyle(fontSize: 13),
-                ),
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: auth.cargando ? null : _guardar,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text(AppStrings.btnContinuar, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+
+              const SizedBox(height: PKSpacing.xl),
+
+              PKBotonPrimario(
+                texto: AppStrings.btnContinuar,
+                onPressed: _guardar,
+                cargando: auth.cargando,
               ),
             ],
           ),

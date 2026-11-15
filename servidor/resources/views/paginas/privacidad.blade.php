@@ -6,21 +6,21 @@
     <title>Política de Privacidad — PuntoKampus</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a2e; background: #f8f9fa; line-height: 1.7; }
-        header { background: linear-gradient(135deg, #6c3fc5 0%, #9b59b6 100%); color: white; padding: 2rem 1rem; text-align: center; }
+        body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #171717; background: #FAF5F2; line-height: 1.7; }
+        header { background: #CC4E01; color: white; padding: 2.2rem 1rem; text-align: center; }
         header h1 { font-size: 1.8rem; font-weight: 700; }
-        header p { opacity: 0.85; margin-top: 0.4rem; font-size: 0.95rem; }
+        header p { opacity: 0.9; margin-top: 0.4rem; font-size: 0.95rem; }
         .container { max-width: 780px; margin: 2rem auto; padding: 0 1.25rem 4rem; }
-        section { background: white; border-radius: 12px; padding: 1.75rem 2rem; margin-bottom: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
-        h2 { font-size: 1.1rem; font-weight: 700; color: #6c3fc5; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+        section { background: #FEFAF8; border-radius: 16px; border: 1px solid #D9D2CC; padding: 1.75rem 2rem; margin-bottom: 1.25rem; box-shadow: 0 2px 12px rgba(23,23,23,.06); }
+        h2 { font-size: 1.15rem; font-weight: 700; color: #CC4E01; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
         h2 .icon { font-size: 1.3rem; }
-        p { font-size: 0.95rem; color: #444; }
+        p { font-size: 0.95rem; color: #171717; }
         ul { margin: 0.6rem 0 0 1.25rem; }
-        li { font-size: 0.95rem; color: #444; margin-bottom: 0.3rem; }
-        footer { text-align: center; padding: 1.5rem; font-size: 0.85rem; color: #888; }
-        a { color: #6c3fc5; text-decoration: none; }
+        li { font-size: 0.95rem; color: #77716D; margin-bottom: 0.3rem; }
+        footer { text-align: center; padding: 1.5rem; font-size: 0.85rem; color: #77716D; }
+        a { color: #8A3500; font-weight: 600; text-decoration: none; }
         a:hover { text-decoration: underline; }
-        .badge { background: #f0ebff; color: #6c3fc5; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+        .badge { background: #F7E3D6; color: #8A3500; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
     </style>
 </head>
 <body>
