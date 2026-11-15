@@ -70,8 +70,8 @@ void main() {
 
     testWidgets('Insignias Matriculado y Saco 10 renderizan correctamente', (WidgetTester tester) async {
       await tester.pumpWidget(crearTestApp(
-        const Column(
-          children: [
+        Column(
+          children: const [
             PKInsigniaMatriculado(),
             PKInsigniaSaco10(),
           ],
@@ -84,8 +84,8 @@ void main() {
 
     testWidgets('PKPastillaEstado renderiza estados', (WidgetTester tester) async {
       await tester.pumpWidget(crearTestApp(
-        const Column(
-          children: [
+        Column(
+          children: const [
             PKPastillaEstado(estado: EstadoPedido.pendiente),
             PKPastillaEstado(estado: EstadoPedido.entregado),
           ],

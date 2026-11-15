@@ -24,28 +24,31 @@ class PKBotonPrimario extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: cargando ? null : onPressed,
-      child: cargando
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                color: PKColors.sobrePrimario,
-                strokeWidth: 2.5,
-              ),
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icono != null) ...[
-                  Icon(icono, size: 20, color: PKColors.sobrePrimario),
-                  const SizedBox(width: PKSpacing.sm),
-                ],
-                Text(texto),
-              ],
-            ),
+    if (cargando) {
+      return ElevatedButton(
+        onPressed: null,
+        child: const SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(
+            color: PKColors.sobrePrimario,
+            strokeWidth: 2.5,
+          ),
+        ),
+      );
+    }
+
+    if (icono == null) {
+      return ElevatedButton(
+        onPressed: onPressed,
+        child: Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis),
+      );
+    }
+
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icono, size: 20, color: PKColors.sobrePrimario),
+      label: Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 }
@@ -66,19 +69,17 @@ class PKBotonSecundario extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton(
+    if (icono == null) {
+      return OutlinedButton(
+        onPressed: onPressed,
+        child: Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis),
+      );
+    }
+
+    return OutlinedButton.icon(
       onPressed: onPressed,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icono != null) ...[
-            Icon(icono, size: 20),
-            const SizedBox(width: PKSpacing.sm),
-          ],
-          Text(texto),
-        ],
-      ),
+      icon: Icon(icono, size: 20),
+      label: Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 }

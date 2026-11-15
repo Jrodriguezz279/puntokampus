@@ -7,7 +7,6 @@ import '../../providers/vitrina_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/vitrina_service.dart';
-import '../../widgets/common_widgets.dart';
 import '../../widgets/item_cards.dart';
 import '../../widgets/pk_components.dart';
 import '../auth/auth_screens.dart';

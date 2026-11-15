@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'theme/theme.dart';
+import 'widgets/pk_components.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/vitrina_provider.dart';
@@ -34,7 +35,6 @@ class PuntoKampusApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: PKTheme.light,
         home: const MainNavigationScreen(),
-        // Ruta de galería de componentes (solo debug)
         routes: {
           '/galeria': (ctx) => const _GaleriaComponentes(),
         },
@@ -49,11 +49,6 @@ class _GaleriaComponentes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    assert(() {
-      // Solo accesible en debug
-      return true;
-    }());
-
     return Scaffold(
       backgroundColor: PKColors.fondo,
       appBar: AppBar(
@@ -143,9 +138,9 @@ class _GaleriaComponentes extends StatelessWidget {
           children: [
             PKBotonPrimario(texto: 'Botón primario', onPressed: () {}),
             const SizedBox(height: PKSpacing.sm),
-            PKBotonPrimario(texto: 'Cargando...', onPressed: null, cargando: true),
+            const PKBotonPrimario(texto: 'Cargando...', onPressed: null, cargando: true),
             const SizedBox(height: PKSpacing.sm),
-            PKBotonPrimario(texto: 'Deshabilitado', onPressed: null),
+            const PKBotonPrimario(texto: 'Deshabilitado', onPressed: null),
             const SizedBox(height: PKSpacing.sm),
             PKBotonSecundario(texto: 'Botón secundario', onPressed: () {}),
             const SizedBox(height: PKSpacing.sm),
