@@ -20,6 +20,10 @@ if [ ! -L /var/www/html/public/storage ]; then
     php artisan storage:link || true
 fi
 
+# Publicar assets de Filament
+echo "🎨 Publicando assets de Filament..."
+php artisan filament:assets || true
+
 # Optimización y caché de rutas y vistas
 echo "⚡ Optimizando caché de Laravel..."
 php artisan config:cache || true
