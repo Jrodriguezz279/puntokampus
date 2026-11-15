@@ -348,6 +348,60 @@ class AppEstudianteController extends Controller
     }
 
     /**
+     * P16: Actualizar producto existente (incluyendo foto y disponibilidad)
+     */
+    public function actualizarProducto(Request $request, int $id): RedirectResponse
+    {
+        $usuario = Auth::user();
+        $tienda = Tienda::where('usuario_id', $usuario->id)->firstOrFail();
+        $producto = Producto::where('tienda_id', $tienda->id)->whereNull('eliminado_en')->findOrFail($id);
+
+        $datos = $request->validate([
+            'nombre'      => ['required', 'string', 'max:80'],
+            'descripcion' => ['nullable', 'string', 'max:300'],
+            'precio'      => ['required', 'numeric', 'min:0.25', 'max:50'],
+            'disponible'  => ['nullable', 'boolean'],
+            'foto'        => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+        ]);
+
+        $producto->update([
+            'nombre'      => $datos['nombre'],
+            'descripcion' => $datos['descripcion'] ?? null,
+            'precio'      => $datos['precio'],
+            'disponible'  => $request->has('disponible') ? (bool) $request->input('disponible') : true,
+        ]);
+
+        if ($request->hasFile('foto')) {
+            $url = $this->imagenService->procesarYGuardar($request->file('foto'), 'productos');
+            $primeraFoto = $producto->fotos()->orderBy('orden')->first();
+            if ($primeraFoto) {
+                $primeraFoto->update(['url' => $url]);
+            } else {
+                $producto->fotos()->create([
+                    'url'   => $url,
+                    'orden' => 1,
+                ]);
+            }
+        }
+
+        return redirect('/app/mi-tienda')->with('mensaje', "¡Producto '{$producto->nombre}' actualizado con éxito!");
+    }
+
+    /**
+     * P16: Eliminar producto desde la web
+     */
+    public function eliminarProducto(int $id): RedirectResponse
+    {
+        $usuario = Auth::user();
+        $tienda = Tienda::where('usuario_id', $usuario->id)->firstOrFail();
+        $producto = Producto::where('tienda_id', $tienda->id)->whereNull('eliminado_en')->findOrFail($id);
+
+        $producto->update(['eliminado_en' => now()]);
+
+        return redirect('/app/mi-tienda')->with('mensaje', "Producto '{$producto->nombre}' eliminado.");
+    }
+
+    /**
      * P10: Realizar un Pedido como Comprador
      */
     public function crearPedido(Request $request): RedirectResponse

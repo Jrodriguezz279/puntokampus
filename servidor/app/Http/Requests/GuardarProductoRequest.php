@@ -18,6 +18,7 @@ class GuardarProductoRequest extends FormRequest
             'descripcion' => ['nullable', 'string', 'max:300'],
             'precio' => ['required', 'numeric', 'min:0.01', 'max:500'],
             'disponible' => ['nullable', 'boolean'],
+            'foto' => ['nullable', 'image', 'max:10240'],
         ];
     }
 

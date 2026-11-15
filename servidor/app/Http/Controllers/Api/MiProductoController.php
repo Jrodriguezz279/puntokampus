@@ -61,6 +61,11 @@ class MiProductoController extends Controller
             'disponible' => $datos['disponible'] ?? true,
         ]);
 
+        if ($request->hasFile('foto')) {
+            $url = $this->imagenService->procesarYGuardar($request->file('foto'), 'productos');
+            $producto->fotos()->create(['url' => $url, 'orden' => 1]);
+        }
+
         $producto->load('fotos');
 
         return response()->json([
@@ -77,6 +82,17 @@ class MiProductoController extends Controller
         $producto = $tienda->productos()->whereNull('eliminado_en')->findOrFail($id);
 
         $producto->update($request->validated());
+
+        if ($request->hasFile('foto')) {
+            $url = $this->imagenService->procesarYGuardar($request->file('foto'), 'productos');
+            $primeraFoto = $producto->fotos()->orderBy('orden')->first();
+            if ($primeraFoto) {
+                $primeraFoto->update(['url' => $url]);
+            } else {
+                $producto->fotos()->create(['url' => $url, 'orden' => 1]);
+            }
+        }
+
         $producto->load('fotos');
 
         return response()->json([
@@ -105,17 +121,20 @@ class MiProductoController extends Controller
         $tienda = $this->obtenerTienda($request);
         $producto = $tienda->productos()->whereNull('eliminado_en')->findOrFail($id);
 
-        if ($producto->fotos()->count() >= 3) {
-            abort(422, 'Cada producto puede tener hasta 3 fotos.');
-        }
-
         $url = $this->imagenService->procesarYGuardar($request->file('foto'), 'productos');
 
-        $orden = $producto->fotos()->max('orden') + 1;
-        $foto = $producto->fotos()->create([
-            'url' => $url,
-            'orden' => $orden,
-        ]);
+        // Si se pide reemplazar o ya tiene 3 fotos, actualizamos la primera foto existente
+        $primeraFoto = $producto->fotos()->orderBy('orden')->first();
+        if ($primeraFoto && ($request->boolean('reemplazar') || $producto->fotos()->count() >= 3)) {
+            $primeraFoto->update(['url' => $url]);
+            $foto = $primeraFoto;
+        } else {
+            $orden = ($producto->fotos()->max('orden') ?? 0) + 1;
+            $foto = $producto->fotos()->create([
+                'url' => $url,
+                'orden' => $orden,
+            ]);
+        }
 
         return response()->json([
             'foto' => new ProductoFotoResource($foto),

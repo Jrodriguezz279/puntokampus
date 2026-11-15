@@ -43,6 +43,8 @@ Route::prefix('app')->group(function () {
         Route::post('/mi-tienda/crear', [AppEstudianteController::class, 'guardarTienda']);
         Route::post('/mi-tienda/logo', [AppEstudianteController::class, 'subirLogo']);
         Route::post('/mi-tienda/producto', [AppEstudianteController::class, 'guardarProducto']);
+        Route::post('/mi-tienda/producto/{id}', [AppEstudianteController::class, 'actualizarProducto']);
+        Route::post('/mi-tienda/producto/{id}/eliminar', [AppEstudianteController::class, 'eliminarProducto']);
         Route::post('/mi-tienda/premium', [AppEstudianteController::class, 'solicitarPremium']);
         Route::post('/mi-tienda/pedidos/{codigo}/confirmar-entrega', [AppEstudianteController::class, 'confirmarEntrega']);
         Route::post('/mi-tienda/pedidos/{codigo}/entregado', [AppEstudianteController::class, 'marcarEntregado']);
