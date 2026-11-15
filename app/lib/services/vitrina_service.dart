@@ -12,7 +12,12 @@ class VitrinaService {
 
   static Future<List<PuntoEntrega>> getPuntosEntrega() async {
     final response = await ApiService.get('/puntos-entrega', requiresAuth: false);
-    final list = (response is List) ? response : (response['puntos_entrega'] as List<dynamic>? ?? []);
+    final list = (response is List)
+        ? response
+        : (response['puntos_entrega'] as List<dynamic>? ??
+            response['puntos'] as List<dynamic>? ??
+            response['data'] as List<dynamic>? ??
+            []);
     return list.map((p) => PuntoEntrega.fromJson(p as Map<String, dynamic>)).toList();
   }
 

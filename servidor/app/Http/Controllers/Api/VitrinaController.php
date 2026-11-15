@@ -40,8 +40,12 @@ class VitrinaController extends Controller
             ->orderBy('orden')
             ->get();
 
+        $collection = PuntoEntregaResource::collection($puntos);
+
         return response()->json([
-            'puntos' => PuntoEntregaResource::collection($puntos),
+            'puntos' => $collection,
+            'puntos_entrega' => $collection,
+            'data' => $collection,
         ]);
     }
 

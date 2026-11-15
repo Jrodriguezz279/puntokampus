@@ -412,13 +412,20 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
                   const SizedBox(height: PKSpacing.base),
                   Text('Punto de entrega preferido *', style: PKTextStyles.etiqueta),
                   const SizedBox(height: PKSpacing.xs),
-                  DropdownButtonFormField<int>(
-                    value: vitrina.puntosEntrega.any((p) => p.id == selectedPuntoId) ? selectedPuntoId : null,
-                    items: vitrina.puntosEntrega
-                        .map((p) => DropdownMenuItem<int>(value: p.id, child: Text(p.nombre, style: PKTextStyles.cuerpo)))
-                        .toList(),
-                    onChanged: (val) => setState(() => _puntoId = val),
-                  ),
+                  if (vitrina.cargando && vitrina.puntosEntrega.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Text('Cargando puntos de entrega...', style: TextStyle(color: PKColors.secundario)),
+                    )
+                  else
+                    DropdownButtonFormField<int>(
+                      value: vitrina.puntosEntrega.any((p) => p.id == selectedPuntoId) ? selectedPuntoId : null,
+                      hint: const Text('Selecciona un punto de entrega'),
+                      items: vitrina.puntosEntrega
+                          .map((p) => DropdownMenuItem<int>(value: p.id, child: Text('📍 ${p.nombre}', style: PKTextStyles.cuerpo)))
+                          .toList(),
+                      onChanged: (val) => setState(() => _puntoId = val),
+                    ),
                 ],
               ),
             ),

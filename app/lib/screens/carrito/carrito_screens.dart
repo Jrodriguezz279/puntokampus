@@ -194,7 +194,7 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  PuntoEntrega? _puntoSeleccionado;
+  int? _puntoSeleccionadoId;
   String _formaPago = 'efectivo'; // 'efectivo', 'transferencia', 'deuna'
   final _notaController = TextEditingController();
   TimeOfDay _horaEntrega = TimeOfDay.now();
@@ -205,6 +205,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     final now = DateTime.now().add(const Duration(minutes: 35));
     _horaEntrega = TimeOfDay(hour: now.hour, minute: now.minute);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final vitrina = Provider.of<VitrinaProvider>(context, listen: false);
+      if (vitrina.puntosEntrega.isEmpty) {
+        vitrina.cargarInicial();
+      }
+    });
   }
 
   @override
@@ -217,9 +224,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = Provider.of<CartProvider>(context, listen: false);
     final vitrina = Provider.of<VitrinaProvider>(context, listen: false);
 
-    final punto = _puntoSeleccionado ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first : null);
-    if (punto == null) {
-      pkSnackError(context, 'Por favor selecciona un punto de entrega.');
+    final selectedId = _puntoSeleccionadoId ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first.id : null);
+    if (selectedId == null) {
+      pkSnackError(context, 'Por favor selecciona un punto de encuentro.');
       return;
     }
 
@@ -232,7 +239,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       final res = await PedidoService.crearPedido(
         tiendaId: cart.tiendaId!,
-        puntoEntregaId: punto.id,
+        puntoEntregaId: selectedId,
         horaEntrega: horaString,
         formaPago: _formaPago,
         nota: _notaController.text.trim().isNotEmpty ? _notaController.text.trim() : null,
@@ -291,12 +298,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: PKSpacing.base),
                   Text('Punto de encuentro *', style: PKTextStyles.etiqueta),
                   const SizedBox(height: PKSpacing.xs),
-                  DropdownButtonFormField<PuntoEntrega>(
-                    value: _puntoSeleccionado ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first : null),
-                    items: vitrina.puntosEntrega
-                        .map((p) => DropdownMenuItem(value: p, child: Text('📍 ${p.nombre}', style: PKTextStyles.cuerpo)))
-                        .toList(),
-                    onChanged: (val) => setState(() => _puntoSeleccionado = val),
+                  Builder(
+                    builder: (context) {
+                      final selectedPuntoId = _puntoSeleccionadoId ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first.id : null);
+                      return DropdownButtonFormField<int>(
+                        value: vitrina.puntosEntrega.any((p) => p.id == selectedPuntoId) ? selectedPuntoId : null,
+                        items: vitrina.puntosEntrega
+                            .map((p) => DropdownMenuItem<int>(value: p.id, child: Text('📍 ${p.nombre}', style: PKTextStyles.cuerpo)))
+                            .toList(),
+                        onChanged: (val) => setState(() => _puntoSeleccionadoId = val),
+                      );
+                    },
                   ),
                 ],
               ),

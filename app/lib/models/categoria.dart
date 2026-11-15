@@ -64,4 +64,12 @@ class PuntoEntrega {
     'ubicacion_referencia': ubicacionReferencia,
     'activa': activa,
   };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PuntoEntrega && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
