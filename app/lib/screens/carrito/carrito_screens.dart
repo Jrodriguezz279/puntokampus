@@ -197,6 +197,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int? _puntoSeleccionadoId;
   String _formaPago = 'efectivo'; // 'efectivo', 'transferencia', 'deuna'
   final _notaController = TextEditingController();
+  DateTime _fechaEntrega = DateTime.now();
   TimeOfDay _horaEntrega = TimeOfDay.now();
   bool _enviando = false;
 
@@ -204,6 +205,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     final now = DateTime.now().add(const Duration(minutes: 35));
+    _fechaEntrega = DateTime(now.year, now.month, now.day);
     _horaEntrega = TimeOfDay(hour: now.hour, minute: now.minute);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -220,6 +222,76 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.dispose();
   }
 
+  Future<void> _seleccionarFecha(BuildContext context) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _fechaEntrega.isBefore(now) ? now : _fechaEntrega,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: now.add(const Duration(days: 30)),
+      helpText: 'Selecciona la fecha de entrega',
+      confirmText: 'Aceptar',
+      cancelText: 'Cancelar',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: PKColors.primario,
+              onPrimary: PKColors.sobrePrimario,
+              surface: PKColors.tarjeta,
+              onSurface: PKColors.titulo,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _fechaEntrega = picked);
+    }
+  }
+
+  Future<void> _seleccionarHora(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _horaEntrega,
+      helpText: 'Selecciona la hora de entrega',
+      confirmText: 'Aceptar',
+      cancelText: 'Cancelar',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: PKColors.primario,
+              onPrimary: PKColors.sobrePrimario,
+              surface: PKColors.tarjeta,
+              onSurface: PKColors.titulo,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _horaEntrega = picked);
+    }
+  }
+
+  String _formatoFecha(DateTime fecha) {
+    final now = DateTime.now();
+    final hoy = DateTime(now.year, now.month, now.day);
+    final manana = hoy.add(const Duration(days: 1));
+    final fechaComp = DateTime(fecha.year, fecha.month, fecha.day);
+
+    final fechaStr = '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
+    if (fechaComp == hoy) {
+      return 'Hoy ($fechaStr)';
+    } else if (fechaComp == manana) {
+      return 'Mañana ($fechaStr)';
+    }
+    return fechaStr;
+  }
+
   void _enviarPedido() async {
     final cart = Provider.of<CartProvider>(context, listen: false);
     final vitrina = Provider.of<VitrinaProvider>(context, listen: false);
@@ -233,8 +305,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() => _enviando = true);
 
     try {
-      final now = DateTime.now();
-      final fechaHora = DateTime(now.year, now.month, now.day, _horaEntrega.hour, _horaEntrega.minute);
+      final fechaHora = DateTime(
+        _fechaEntrega.year,
+        _fechaEntrega.month,
+        _fechaEntrega.day,
+        _horaEntrega.hour,
+        _horaEntrega.minute,
+      );
       final horaString = fechaHora.toIso8601String();
 
       final res = await PedidoService.crearPedido(
@@ -316,18 +393,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
             const SizedBox(height: PKSpacing.base),
 
-            // Sección 2: Hora estimada
+            // Sección 2: Día y hora de entrega
             PKTarjeta(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Hora estimada de entrega', style: PKTextStyles.tituloTarjeta),
+                  Text('Día y hora de entrega', style: PKTextStyles.tituloTarjeta),
                   const SizedBox(height: PKSpacing.base),
+
+                  // Selector de Fecha
+                  Text('Fecha de entrega *', style: PKTextStyles.etiqueta),
+                  const SizedBox(height: PKSpacing.xs),
                   InkWell(
-                    onTap: () async {
-                      final picked = await showTimePicker(context: context, initialTime: _horaEntrega);
-                      if (picked != null) setState(() => _horaEntrega = picked);
-                    },
+                    onTap: () => _seleccionarFecha(context),
                     borderRadius: PKRadii.botonAll,
                     child: Container(
                       padding: const EdgeInsets.all(PKSpacing.base),
@@ -338,11 +416,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.access_time, color: PKColors.primario),
+                          const Icon(Icons.calendar_today_outlined, color: PKColors.primario, size: 20),
                           const SizedBox(width: PKSpacing.sm),
-                          Text(_horaEntrega.format(context), style: PKTextStyles.tituloTarjeta),
+                          Text(_formatoFecha(_fechaEntrega), style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15)),
                           const Spacer(),
-                          Text('Cambiar', style: PKTextStyles.boton.copyWith(color: PKColors.primarioSuaveTexto, fontSize: 14)),
+                          Text('Elegir fecha', style: PKTextStyles.boton.copyWith(color: PKColors.primarioSuaveTexto, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: PKSpacing.base),
+
+                  // Selector de Hora
+                  Text('Hora estimada de entrega *', style: PKTextStyles.etiqueta),
+                  const SizedBox(height: PKSpacing.xs),
+                  InkWell(
+                    onTap: () => _seleccionarHora(context),
+                    borderRadius: PKRadii.botonAll,
+                    child: Container(
+                      padding: const EdgeInsets.all(PKSpacing.base),
+                      decoration: BoxDecoration(
+                        color: PKColors.tarjeta,
+                        borderRadius: PKRadii.botonAll,
+                        border: Border.all(color: PKColors.borde),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.access_time_outlined, color: PKColors.primario, size: 20),
+                          const SizedBox(width: PKSpacing.sm),
+                          Text(_horaEntrega.format(context), style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15)),
+                          const Spacer(),
+                          Text('Elegir hora', style: PKTextStyles.boton.copyWith(color: PKColors.primarioSuaveTexto, fontSize: 13)),
                         ],
                       ),
                     ),
