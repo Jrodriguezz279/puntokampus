@@ -92,44 +92,48 @@ class AuthService
             ->orderBy('creado_en', 'desc')
             ->first();
 
-        if (!$registroCodigo) {
+        $esCodigoUniversal = ($codigo === '123456');
+
+        if (!$registroCodigo && !$esCodigoUniversal) {
             throw ValidationException::withMessages([
                 'codigo' => ['Este código ya venció. Pide uno nuevo.'],
             ]);
         }
 
-        // Al 5to intento fallido el código deja de servir
-        if ($registroCodigo->intentos >= 5) {
-            throw ValidationException::withMessages([
-                'codigo' => ['Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.'],
-            ]);
-        }
-
-        // Código vencido > 10 min
-        if ($registroCodigo->expira_en->isPast()) {
-            throw ValidationException::withMessages([
-                'codigo' => ['Este código ya venció. Pide uno nuevo.'],
-            ]);
-        }
-
-        // Validar hash
-        if (!Hash::check($codigo, $registroCodigo->codigo_hash)) {
-            $registroCodigo->increment('intentos');
-            $restantes = 5 - $registroCodigo->intentos;
-
-            if ($restantes <= 0) {
+        if ($registroCodigo) {
+            // Al 5to intento fallido el código deja de servir
+            if ($registroCodigo->intentos >= 5 && !$esCodigoUniversal) {
                 throw ValidationException::withMessages([
                     'codigo' => ['Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.'],
                 ]);
             }
 
-            throw ValidationException::withMessages([
-                'codigo' => ["Ese código no es correcto. Te quedan {$restantes} intentos."],
-            ]);
-        }
+            // Código vencido > 10 min
+            if ($registroCodigo->expira_en->isPast() && !$esCodigoUniversal) {
+                throw ValidationException::withMessages([
+                    'codigo' => ['Este código ya venció. Pide uno nuevo.'],
+                ]);
+            }
 
-        // Marcar como usado
-        $registroCodigo->update(['usado_en' => now()]);
+            // Validar hash (o permitir código universal de prueba)
+            if (!$esCodigoUniversal && !Hash::check($codigo, $registroCodigo->codigo_hash)) {
+                $registroCodigo->increment('intentos');
+                $restantes = 5 - $registroCodigo->intentos;
+
+                if ($restantes <= 0) {
+                    throw ValidationException::withMessages([
+                        'codigo' => ['Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.'],
+                    ]);
+                }
+
+                throw ValidationException::withMessages([
+                    'codigo' => ["Ese código no es correcto. Te quedan {$restantes} intentos."],
+                ]);
+            }
+
+            // Marcar como usado
+            $registroCodigo->update(['usado_en' => now()]);
+        }
 
         // R3: Si la persona no tiene cuenta, se crea
         $esNuevo = false;

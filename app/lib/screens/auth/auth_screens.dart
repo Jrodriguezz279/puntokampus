@@ -294,7 +294,36 @@ class _CodigoScreenState extends State<CodigoScreen> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.verified_user_outlined, color: AppColors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Código demo de evaluación: 123456',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _codigoController.text = '123456';
+                        });
+                      },
+                      child: const Text('Usar', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
               TextField(
                 controller: _codigoController,
                 keyboardType: TextInputType.number,

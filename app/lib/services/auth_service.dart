@@ -4,12 +4,10 @@ import 'storage_service.dart';
 
 class AuthService {
   // P02: Solicitar código de 6 dígitos
-  static Future<Map<String, dynamic>> solicitarCodigo(String correo) async {
-    final response = await ApiService.post('/auth/codigo', body: {
+  static Future<void> solicitarCodigo(String correo) async {
+    await ApiService.post('/auth/codigo', body: {
       'correo': correo.trim().toLowerCase(),
     }, requiresAuth: false);
-
-    return response as Map<String, dynamic>;
   }
 
   // P03: Verificar código de 6 dígitos y obtener Token Sanctum
@@ -19,12 +17,12 @@ class AuthService {
       'codigo': codigo.trim(),
     }, requiresAuth: false);
 
-    final data = response as Map<String, dynamic>;
+    final data = (response is Map<String, dynamic>) ? response : <String, dynamic>{};
     if (data.containsKey('token')) {
       final token = data['token'] as String;
       await StorageService.saveToken(token);
     }
-    if (data.containsKey('usuario')) {
+    if (data.containsKey('usuario') && data['usuario'] is Map<String, dynamic>) {
       final user = Usuario.fromJson(data['usuario'] as Map<String, dynamic>);
       await StorageService.saveUsuario(user);
     }
