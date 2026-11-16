@@ -33,6 +33,7 @@ class PedidoResource extends JsonResource
             'nota'               => $this->nota,
             'total'              => (float) $this->total,
             'estado'             => $this->estado,
+            'codigo_bloqueado'   => (bool) $this->codigo_bloqueado,
             'cancelado_por'      => $this->cancelado_por,
             'estado_cambiado_en' => $this->estado_cambiado_en?->toIso8601String(),
             'creado_en'          => $this->creado_en?->toIso8601String(),

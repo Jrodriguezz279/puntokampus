@@ -48,6 +48,7 @@ class Pedido {
   final String? creadoEn;
   /// Solo visible para el comprador dueño del pedido cuando está en estado "pendiente".
   final String? codigoEntrega;
+  final bool codigoBloqueado;
 
   Pedido({
     required this.id,
@@ -67,11 +68,12 @@ class Pedido {
     this.items = const [],
     this.creadoEn,
     this.codigoEntrega,
+    this.codigoBloqueado = false,
   });
 
-  bool get esPendiente => estado.toLowerCase() == 'pendiente';
-  bool get esEntregado => estado.toLowerCase() == 'entregado';
-  bool get esCancelado => estado.toLowerCase() == 'cancelado';
+  bool get esPendiente => estado.trim().toLowerCase() == 'pendiente';
+  bool get esEntregado => estado.trim().toLowerCase() == 'entregado';
+  bool get esCancelado => estado.trim().toLowerCase() == 'cancelado';
 
   factory Pedido.fromJson(Map<String, dynamic> json) {
     var rawItems = json['items'] as List<dynamic>? ?? [];
@@ -95,6 +97,7 @@ class Pedido {
       items: itemsList,
       creadoEn: json['created_at'] as String?,
       codigoEntrega: json['codigo_entrega'] as String?,
+      codigoBloqueado: json['codigo_bloqueado'] == true || json['codigo_bloqueado'] == 1,
     );
   }
 }

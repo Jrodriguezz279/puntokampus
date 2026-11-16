@@ -65,7 +65,7 @@ Route::prefix('v1')->group(function () {
         // Productos de Mi Tienda (R7, H07, H08)
         Route::get('/mi-tienda/productos', [MiProductoController::class, 'index']);
         Route::post('/mi-tienda/productos', [MiProductoController::class, 'store']);
-        Route::put('/mi-tienda/productos/{id}', [MiProductoController::class, 'update']);
+        Route::match(['put', 'post'], '/mi-tienda/productos/{id}', [MiProductoController::class, 'update']);
         Route::delete('/mi-tienda/productos/{id}', [MiProductoController::class, 'destroy']);
         Route::post('/mi-tienda/productos/{id}/fotos', [MiProductoController::class, 'agregarFoto']);
         Route::delete('/mi-tienda/productos/{id}/fotos/{fotoId}', [MiProductoController::class, 'eliminarFoto']);
@@ -80,9 +80,9 @@ Route::prefix('v1')->group(function () {
 
         // Pedidos de Mi Tienda como Vendedor (H16, H17, R17)
         Route::get('/mi-tienda/pedidos', [TiendaPedidosController::class, 'index']);
-        Route::put('/mi-tienda/pedidos/{codigo}/confirmar-entrega', [TiendaPedidosController::class, 'confirmarEntrega']);
-        Route::put('/mi-tienda/pedidos/{codigo}/entregado', [TiendaPedidosController::class, 'entregar']);
-        Route::put('/mi-tienda/pedidos/{codigo}/cancelar', [TiendaPedidosController::class, 'cancelar']);
+        Route::match(['put', 'post'], '/mi-tienda/pedidos/{codigo}/confirmar-entrega', [TiendaPedidosController::class, 'confirmarEntrega']);
+        Route::match(['put', 'post'], '/mi-tienda/pedidos/{codigo}/entregado', [TiendaPedidosController::class, 'entregar']);
+        Route::match(['put', 'post'], '/mi-tienda/pedidos/{codigo}/cancelar', [TiendaPedidosController::class, 'cancelar']);
 
         // Reportes de Tiendas (H19, R20)
         Route::post('/tiendas/{id}/reportes', [ReporteController::class, 'store']);

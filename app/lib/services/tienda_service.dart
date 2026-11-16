@@ -107,9 +107,15 @@ class TiendaService {
   static Future<void> subirFotoProducto(int productoId, {
     required List<int> bytes,
     required String fileName,
+    bool reemplazar = false,
   }) async {
+    final Map<String, String> fields = {};
+    if (reemplazar) {
+      fields['reemplazar'] = '1';
+    }
     await ApiService.postMultipart(
       '/mi-tienda/productos/$productoId/fotos',
+      fields: fields.isNotEmpty ? fields : null,
       fileField: 'foto',
       fileBytes: bytes,
       fileName: fileName,

@@ -102,7 +102,7 @@ class Pedido extends Model
             return false;
         }
 
-        if ($codigoReal !== $intento) {
+        if (trim($codigoReal) !== trim($intento)) {
             $this->intentos_codigo += 1;
             if ($this->intentos_codigo >= 5) {
                 $this->codigo_bloqueado = true;

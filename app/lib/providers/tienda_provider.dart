@@ -89,6 +89,33 @@ class TiendaProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> actualizarProducto(
+    int productoId, {
+    required String nombre,
+    required String descripcion,
+    required double precio,
+    bool disponible = true,
+  }) async {
+    _cargando = true;
+    notifyListeners();
+    try {
+      await TiendaService.actualizarProducto(
+        productoId,
+        nombre: nombre,
+        descripcion: descripcion,
+        precio: precio,
+        disponible: disponible,
+      );
+      await cargarMiTienda();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _cargando = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> eliminarProducto(int productoId) async {
     _cargando = true;
     notifyListeners();

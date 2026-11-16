@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../theme/theme.dart';
 import '../../constants/app_strings.dart';
@@ -32,6 +33,18 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TiendaProvider>(context, listen: false).cargarMiTienda();
     });
+  }
+
+  Future<void> _abrirFormProducto([Producto? prod]) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FormProductoScreen(productoExistente: prod),
+      ),
+    );
+    if (mounted) {
+      Provider.of<TiendaProvider>(context, listen: false).cargarMiTienda();
+    }
   }
 
   @override
@@ -114,12 +127,7 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const FormProductoScreen()),
-          );
-        },
+        onPressed: () => _abrirFormProducto(),
         backgroundColor: PKColors.primario,
         foregroundColor: PKColors.sobrePrimario,
         elevation: 2,
@@ -284,82 +292,111 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                   itemCount: t.productos.length,
                   itemBuilder: (context, index) {
                     final prod = t.productos[index];
-                    return PKTarjeta(
-                      padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: PKColors.neutroFondo,
-                              borderRadius: PKRadii.imagenAll,
-                              border: Border.all(color: PKColors.borde),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: (prod.primeraFotoUrl != null && prod.primeraFotoUrl!.isNotEmpty)
-                                ? Image.network(
-                                    prod.primeraFotoUrl!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const Icon(Icons.fastfood_outlined, color: PKColors.secundario),
-                                  )
-                                : const Icon(Icons.fastfood_outlined, color: PKColors.secundario),
-                          ),
-                          const SizedBox(width: PKSpacing.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: PKSpacing.sm),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: PKRadii.tarjetaAll,
+                        child: InkWell(
+                          borderRadius: PKRadii.tarjetaAll,
+                          onTap: () => _abrirFormProducto(prod),
+                          child: PKTarjeta(
+                            padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
+                            child: Row(
                               children: [
-                                Text(prod.nombre, style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15)),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '\$${prod.precio.toStringAsFixed(2)} • ${prod.disponible ? "Disponible" : "Agotado"}',
-                                  style: PKTextStyles.etiqueta.copyWith(
-                                    color: prod.disponible ? PKColors.primarioSuaveTexto : PKColors.secundario,
+                                Container(
+                                  width: 54,
+                                  height: 54,
+                                  decoration: BoxDecoration(
+                                    color: PKColors.neutroFondo,
+                                    borderRadius: PKRadii.imagenAll,
+                                    border: Border.all(color: PKColors.borde),
                                   ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: (prod.primeraFotoUrl != null && prod.primeraFotoUrl!.isNotEmpty)
+                                      ? Image.network(
+                                          prod.primeraFotoUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => const Icon(Icons.fastfood_outlined, color: PKColors.secundario),
+                                        )
+                                      : const Icon(Icons.fastfood_outlined, color: PKColors.secundario),
+                                ),
+                                const SizedBox(width: PKSpacing.md),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(prod.nombre, style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15)),
+                                      const SizedBox(height: 3),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '\$${prod.precio.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                              color: PKColors.primario,
+                                              fontFamily: 'DMSans',
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: prod.disponible ? PKColors.okFondo : PKColors.neutroFondo,
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              prod.disponible ? "Disponible" : "Agotado",
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: prod.disponible ? PKColors.okTexto : PKColors.secundario,
+                                                fontFamily: 'DMSans',
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, color: PKColors.primario),
+                                  tooltip: 'Editar producto',
+                                  onPressed: () => _abrirFormProducto(prod),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: PKColors.error),
+                                  tooltip: 'Eliminar producto',
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text('¿Eliminar producto?'),
+                                        content: Text('¿Deseas eliminar "${prod.nombre}" de tu catálogo?'),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              tiendaProv.eliminarProducto(prod.id);
+                                              Navigator.pop(ctx);
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: PKColors.error,
+                                              foregroundColor: PKColors.sobrePrimario,
+                                            ),
+                                            child: const Text('Eliminar'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, color: PKColors.primario),
-                            tooltip: 'Editar producto',
-                            onPressed: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => FormProductoScreen(productoExistente: prod),
-                                ),
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: PKColors.error),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('¿Eliminar producto?'),
-                                  content: Text('¿Deseas eliminar "${prod.nombre}" de tu catálogo?'),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        tiendaProv.eliminarProducto(prod.id);
-                                        Navigator.pop(ctx);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: PKColors.error,
-                                        foregroundColor: PKColors.sobrePrimario,
-                                      ),
-                                      child: const Text('Eliminar'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ],
+                        ),
                       ),
                     );
                   },
@@ -606,6 +643,7 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
   Uint8List? _fotoBytes;
   String? _fotoNombre;
   bool _guardando = false;
+  bool _disponible = true;
 
   bool get _esEdicion => widget.productoExistente != null;
 
@@ -617,6 +655,7 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
       _nombreController.text = p.nombre;
       _descController.text = p.descripcion ?? '';
       _precioController.text = p.precio.toStringAsFixed(2);
+      _disponible = p.disponible;
     }
   }
 
@@ -629,50 +668,76 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
   }
 
   void _guardar() async {
-    final precio = double.tryParse(_precioController.text.trim()) ?? 0.0;
-    if (_nombreController.text.trim().isEmpty || precio <= 0) {
-      pkSnackError(context, 'Ingresa un nombre y precio válido.');
+    final precio = double.tryParse(_precioController.text.trim().replaceAll(',', '.')) ?? 0.0;
+    final nombre = _nombreController.text.trim();
+
+    if (nombre.isEmpty) {
+      pkSnackError(context, 'Ingresa el nombre del producto.');
+      return;
+    }
+    if (nombre.length < 3) {
+      pkSnackError(context, 'El nombre debe tener al menos 3 caracteres.');
+      return;
+    }
+    if (precio <= 0) {
+      pkSnackError(context, 'Ingresa un precio mayor a \$0.00.');
       return;
     }
 
     setState(() => _guardando = true);
+    final tiendaProv = Provider.of<TiendaProvider>(context, listen: false);
+
     try {
       if (_esEdicion) {
-        // Modo edición: actualizar datos y, si hay nueva foto, subirla
+        // Modo edición: actualizar datos y, si hay nueva foto, reemplazarla
         final prod = await TiendaService.actualizarProducto(
           widget.productoExistente!.id,
-          nombre: _nombreController.text.trim(),
+          nombre: nombre,
           descripcion: _descController.text.trim(),
           precio: precio,
+          disponible: _disponible,
         );
 
         if (_fotoBytes != null && _fotoNombre != null) {
           try {
-            await TiendaService.subirFotoProducto(prod.id, bytes: _fotoBytes!, fileName: _fotoNombre!);
-          } catch (_) {}
+            await TiendaService.subirFotoProducto(
+              prod.id,
+              bytes: _fotoBytes!,
+              fileName: _fotoNombre!,
+              reemplazar: true,
+            );
+          } catch (e) {
+            debugPrint('Error al subir foto: $e');
+          }
         }
       } else {
         // Modo creación
         final prod = await TiendaService.crearProducto(
-          nombre: _nombreController.text.trim(),
+          nombre: nombre,
           descripcion: _descController.text.trim(),
           precio: precio,
+          disponible: _disponible,
         );
 
         if (_fotoBytes != null && _fotoNombre != null) {
           try {
-            await TiendaService.subirFotoProducto(prod.id, bytes: _fotoBytes!, fileName: _fotoNombre!);
-          } catch (_) {}
+            await TiendaService.subirFotoProducto(
+              prod.id,
+              bytes: _fotoBytes!,
+              fileName: _fotoNombre!,
+            );
+          } catch (e) {
+            debugPrint('Error al subir foto: $e');
+          }
         }
       }
 
-      final tiendaProv = Provider.of<TiendaProvider>(context, listen: false);
       await tiendaProv.cargarMiTienda();
 
       if (!mounted) return;
       setState(() => _guardando = false);
-      Navigator.pop(context);
-      pkSnackOk(context, _esEdicion ? 'Producto actualizado.' : 'Producto publicado.');
+      Navigator.pop(context, true);
+      pkSnackOk(context, _esEdicion ? 'Producto actualizado correctamente.' : 'Producto publicado con éxito.');
     } catch (e) {
       if (!mounted) return;
       setState(() => _guardando = false);
@@ -741,6 +806,30 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
                 maxLines: 3,
                 controller: _descController,
               ),
+              const SizedBox(height: PKSpacing.base),
+              Container(
+                decoration: BoxDecoration(
+                  color: PKColors.fondo,
+                  borderRadius: PKRadii.botonAll,
+                  border: Border.all(color: PKColors.borde),
+                ),
+                child: SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: PKSpacing.md, vertical: 2),
+                  title: const Text(
+                    'Disponible para venta',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontFamily: 'DMSans'),
+                  ),
+                  subtitle: Text(
+                    _disponible
+                        ? 'Los estudiantes podrán ver y ordenar este producto'
+                        : 'Marcado temporalmente como agotado',
+                    style: PKTextStyles.etiqueta,
+                  ),
+                  value: _disponible,
+                  activeColor: PKColors.primario,
+                  onChanged: (val) => setState(() => _disponible = val),
+                ),
+              ),
             ],
           ),
         ),
@@ -782,11 +871,8 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
     setState(() => _cargando = true);
     try {
       final list = await PedidoService.getPedidosTienda();
-      // Crear controladores para pedidos pendientes nuevos
       for (final p in list) {
-        if (p.esPendiente && !_codigoControllers.containsKey(p.codigo)) {
-          _codigoControllers[p.codigo] = TextEditingController();
-        }
+        _codigoControllers.putIfAbsent(p.codigo, () => TextEditingController());
       }
       setState(() {
         _pedidos = list;
@@ -797,18 +883,21 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
     }
   }
 
-  Future<void> _confirmarEntrega(Pedido p) async {
-    final controller = _codigoControllers[p.codigo];
-    final codigo = controller?.text.trim() ?? '';
-    if (codigo.length != 4) {
-      pkSnackError(context, 'El código debe tener exactamente 4 dígitos.');
+  Future<void> _confirmarEntrega(Pedido p, [String? codigoManual]) async {
+    final controller = _codigoControllers.putIfAbsent(p.codigo, () => TextEditingController());
+    final codigo = (codigoManual ?? controller.text).trim();
+
+    if (codigo.length != 4 || !RegExp(r'^\d{4}$').hasMatch(codigo)) {
+      pkSnackError(context, 'El código debe tener exactamente 4 dígitos numéricos.');
       return;
     }
+
     setState(() => _confirmando[p.codigo] = true);
     try {
       await PedidoService.confirmarEntrega(p.codigo, codigo);
+      controller.clear();
       if (!mounted) return;
-      pkSnackOk(context, '¡Pedido marcado como entregado!');
+      pkSnackOk(context, '¡Pedido #${p.codigo} marcado como entregado!');
       _cargar();
     } catch (e) {
       if (!mounted) return;
@@ -818,7 +907,109 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
     }
   }
 
+  void _mostrarDialogoCodigo(Pedido p) {
+    final dialogController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.pin_outlined, color: PKColors.primario),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Confirmar #${p.codigo}',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17, fontFamily: 'DMSans'),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Ingresa el código de 4 dígitos dado por el comprador (${p.nombreComprador ?? "Estudiante"}):',
+              style: PKTextStyles.cuerpo,
+            ),
+            const SizedBox(height: PKSpacing.base),
+            TextField(
+              controller: dialogController,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(4),
+              ],
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 28,
+                letterSpacing: 8,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFFA43D00),
+                fontFamily: 'DMSans',
+              ),
+              decoration: InputDecoration(
+                hintText: '0000',
+                counterText: '',
+                contentPadding: const EdgeInsets.symmetric(vertical: PKSpacing.md, horizontal: PKSpacing.base),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: PKColors.borde)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: PKColors.primario, width: 2)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: PKColors.secundario)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final code = dialogController.text.trim();
+              if (code.length != 4) {
+                pkSnackError(context, 'Ingresa los 4 dígitos numéricos.');
+                return;
+              }
+              Navigator.pop(ctx);
+              _confirmarEntrega(p, code);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            child: const Text('✓ Confirmar entrega', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _cancelarPedido(Pedido p) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Cancelar pedido?'),
+        content: Text('¿Deseas cancelar el pedido #${p.codigo}? El comprador verá que fue cancelado.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Volver')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: PKColors.error,
+              foregroundColor: PKColors.sobrePrimario,
+            ),
+            child: const Text('Cancelar pedido'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
     try {
       await PedidoService.cancelarPedidoVendedor(p.codigo);
       if (!mounted) return;
@@ -851,7 +1042,7 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
                     itemCount: _pedidos.length,
                     itemBuilder: (context, index) {
                       final p = _pedidos[index];
-                      final controller = _codigoControllers[p.codigo];
+                      final controller = _codigoControllers.putIfAbsent(p.codigo, () => TextEditingController());
                       final confirmando = _confirmando[p.codigo] ?? false;
                       return Container(
                         margin: const EdgeInsets.only(bottom: PKSpacing.md),
@@ -871,86 +1062,166 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
                               ),
                               const SizedBox(height: PKSpacing.xs),
                               Text('Comprador: ${p.nombreComprador ?? "Estudiante"}', style: PKTextStyles.etiqueta),
-                              Text('Total: \$${p.total.toStringAsFixed(2)} • Pago: ${p.formaPago}', style: PKTextStyles.cuerpo),
+                              Text('Total: \$${p.total.toStringAsFixed(2)} • Pago: ${p.formaPago}', style: PKTextStyles.cuerpo.copyWith(fontWeight: FontWeight.w600)),
                               if (p.puntoEntrega != null) ...[
                                 const SizedBox(height: 2),
                                 Text('📍 Entrega: ${p.puntoEntrega}', style: PKTextStyles.etiqueta),
                               ],
-                              if (p.esPendiente && controller != null) ...[
-                                const SizedBox(height: PKSpacing.base),
-                                // R17: Campo para ingresar código de confirmación
-                                Text(
-                                  'Confirmar entrega',
-                                  style: PKTextStyles.etiqueta.copyWith(fontWeight: FontWeight.w700),
-                                ),
+                              if (p.items.isNotEmpty) ...[
                                 const SizedBox(height: PKSpacing.xs),
-                                Text(
-                                  'Pide el código de 4 dígitos al comprador e ingrésalo aquí.',
-                                  style: PKTextStyles.etiqueta,
-                                ),
-                                const SizedBox(height: PKSpacing.sm),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: TextField(
-                                        controller: controller,
-                                        keyboardType: TextInputType.number,
-                                        maxLength: 4,
-                                        textAlign: TextAlign.center,
-                                        style: PKTextStyles.tituloPantalla.copyWith(
-                                          fontSize: 24,
-                                          letterSpacing: 6,
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: '0000',
-                                          counterText: '',
-                                          contentPadding: const EdgeInsets.symmetric(
-                                            vertical: PKSpacing.sm,
-                                            horizontal: PKSpacing.base,
-                                          ),
-                                          border: OutlineInputBorder(
-                                            borderRadius: PKRadii.botonAll,
-                                            borderSide: const BorderSide(color: PKColors.borde),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderRadius: PKRadii.botonAll,
-                                            borderSide: const BorderSide(color: PKColors.primario, width: 2),
-                                          ),
-                                        ),
-                                      ),
+                                ...p.items.map((item) => Text(
+                                  '• ${item.cantidad}x ${item.nombreProducto} (\$${item.subtotal.toStringAsFixed(2)})',
+                                  style: PKTextStyles.etiqueta.copyWith(color: PKColors.secundario),
+                                )),
+                              ],
+                              if (p.esPendiente) ...[
+                                const SizedBox(height: PKSpacing.base),
+                                if (p.codigoBloqueado)
+                                  Container(
+                                    padding: const EdgeInsets.all(PKSpacing.sm),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFDAD6),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFFBA1A1A)),
                                     ),
-                                    const SizedBox(width: PKSpacing.sm),
-                                    ElevatedButton(
-                                      onPressed: confirmando ? null : () => _confirmarEntrega(p),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: PKColors.okTexto,
-                                        foregroundColor: PKColors.sobrePrimario,
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: PKSpacing.base,
-                                          vertical: PKSpacing.md,
+                                    child: const Row(
+                                      children: [
+                                        Icon(Icons.lock_outline, color: Color(0xFFBA1A1A), size: 18),
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Código bloqueado tras 5 intentos fallidos. Contacta al administrador.',
+                                            style: TextStyle(color: Color(0xFF93000A), fontSize: 12, fontWeight: FontWeight.bold),
+                                          ),
                                         ),
-                                      ),
-                                      child: confirmando
-                                          ? const SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: PKColors.sobrePrimario,
+                                      ],
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.all(PKSpacing.md),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFF8F5),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: const Color(0xFFFED7AA), width: 1.5),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Text('🔑 ', style: TextStyle(fontSize: 16)),
+                                            Text(
+                                              'Confirmar entrega con código',
+                                              style: PKTextStyles.etiqueta.copyWith(
+                                                fontWeight: FontWeight.w800,
+                                                color: const Color(0xFFA43D00),
                                               ),
-                                            )
-                                          : const Text('Confirmar\nentrega', textAlign: TextAlign.center),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Pide el código de 4 dígitos al comprador e ingrésalo aquí:',
+                                          style: PKTextStyles.etiqueta.copyWith(color: PKColors.secundario),
+                                        ),
+                                        const SizedBox(height: PKSpacing.sm),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: TextField(
+                                                controller: controller,
+                                                keyboardType: TextInputType.number,
+                                                inputFormatters: [
+                                                  FilteringTextInputFormatter.digitsOnly,
+                                                  LengthLimitingTextInputFormatter(4),
+                                                ],
+                                                maxLength: 4,
+                                                textAlign: TextAlign.center,
+                                                textInputAction: TextInputAction.done,
+                                                onSubmitted: (_) => _confirmarEntrega(p),
+                                                style: const TextStyle(
+                                                  fontSize: 22,
+                                                  letterSpacing: 6,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Color(0xFFA43D00),
+                                                  fontFamily: 'DMSans',
+                                                ),
+                                                decoration: InputDecoration(
+                                                  hintText: '0000',
+                                                  hintStyle: const TextStyle(letterSpacing: 6, color: Color(0xFFD9D2CC)),
+                                                  counterText: '',
+                                                  fillColor: Colors.white,
+                                                  filled: true,
+                                                  contentPadding: const EdgeInsets.symmetric(
+                                                    vertical: PKSpacing.sm,
+                                                    horizontal: PKSpacing.base,
+                                                  ),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    borderSide: const BorderSide(color: Color(0xFFD9D2CC)),
+                                                  ),
+                                                  focusedBorder: OutlineInputBorder(
+                                                    borderRadius: BorderRadius.circular(10),
+                                                    borderSide: const BorderSide(color: Color(0xFFA43D00), width: 2),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: PKSpacing.sm),
+                                            ElevatedButton(
+                                              onPressed: confirmando ? null : () => _confirmarEntrega(p),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF16A34A),
+                                                foregroundColor: Colors.white,
+                                                elevation: 1,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: PKSpacing.base,
+                                                  vertical: PKSpacing.md,
+                                                ),
+                                              ),
+                                              child: confirmando
+                                                  ? const SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: Colors.white,
+                                                      ),
+                                                    )
+                                                  : const Text(
+                                                      '✓ Confirmar\nentrega',
+                                                      textAlign: TextAlign.center,
+                                                      style: TextStyle(fontWeight: FontWeight.bold),
+                                                    ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Center(
+                                          child: TextButton.icon(
+                                            onPressed: () => _mostrarDialogoCodigo(p),
+                                            icon: const Icon(Icons.open_in_full, size: 14, color: Color(0xFFA43D00)),
+                                            label: const Text(
+                                              '¿Problemas con el teclado? Toca aquí',
+                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFFA43D00)),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
                                 const SizedBox(height: PKSpacing.sm),
-                                OutlinedButton(
+                                OutlinedButton.icon(
+                                  icon: const Icon(Icons.close, size: 16),
+                                  label: const Text('Cancelar pedido'),
                                   onPressed: () => _cancelarPedido(p),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: PKColors.error,
                                     side: const BorderSide(color: PKColors.error),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
-                                  child: const Text('Cancelar pedido'),
                                 ),
                               ],
                             ],

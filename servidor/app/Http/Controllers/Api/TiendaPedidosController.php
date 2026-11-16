@@ -47,7 +47,10 @@ class TiendaPedidosController extends Controller
             return response()->json(['message' => 'No tienes una tienda registrada.'], 404);
         }
 
-        $request->validate(['codigo_entrega' => 'required|string|size:4']);
+        $codigoEntrega = trim((string) $request->input('codigo_entrega', ''));
+        if (strlen($codigoEntrega) !== 4) {
+            return response()->json(['message' => 'El código debe tener exactamente 4 dígitos.'], 422);
+        }
 
         $pedido = Pedido::where('codigo', $codigo)
             ->where('tienda_id', $tienda->id)
@@ -69,7 +72,7 @@ class TiendaPedidosController extends Controller
             ], 429);
         }
 
-        if (!$pedido->verificarCodigoEntrega($request->input('codigo_entrega'))) {
+        if (!$pedido->verificarCodigoEntrega($codigoEntrega)) {
             $pedido->refresh();
             if ($pedido->codigo_bloqueado) {
                 return response()->json([
