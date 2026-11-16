@@ -61,7 +61,7 @@ void main() {
       expect(find.text('Precio en dólares (\$)*'), findsOneWidget);
       expect(find.text('Descripción (opcional)'), findsOneWidget);
       expect(find.text('Foto del producto (opcional)'), findsOneWidget);
-      expect(find.text('Guardar Producto'), findsOneWidget);
+      expect(find.byType(PKBotonPrimario), findsOneWidget);
     });
 
     testWidgets('FormTiendaScreen renderiza campos de creacion de tienda y logo', (WidgetTester tester) async {
