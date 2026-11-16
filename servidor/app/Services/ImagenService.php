@@ -3,16 +3,93 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ImagenService
 {
     /**
-     * Guarda y procesa una imagen reduciéndola a un máximo de 1080px por lado si es necesario.
-     * Retorna la URL pública accesible.
+     * Guarda y procesa una imagen. Si Cloudinary está configurado, la sube a Cloudinary
+     * y retorna la URL HTTPS permanente. De lo contrario, la guarda en el disco local 'public'.
      */
     public function procesarYGuardar(UploadedFile $archivo, string $directorio = 'fotos'): string
+    {
+        $cloudName = config('services.cloudinary.cloud_name') ?: env('CLOUDINARY_CLOUD_NAME');
+        $apiKey    = config('services.cloudinary.api_key') ?: env('CLOUDINARY_API_KEY');
+        $apiSecret = config('services.cloudinary.api_secret') ?: env('CLOUDINARY_API_SECRET');
+
+        if (!empty($cloudName) && !empty($apiKey) && !empty($apiSecret)) {
+            $urlCloudinary = $this->subirACloudinary($archivo, $directorio, $cloudName, $apiKey, $apiSecret);
+            if ($urlCloudinary) {
+                return $urlCloudinary;
+            }
+        }
+
+        // Fallback a almacenamiento local 'public' si Cloudinary no está configurado o falla
+        return $this->guardarLocalmente($archivo, $directorio);
+    }
+
+    /**
+     * Sube un archivo a Cloudinary usando su API REST oficial firmada.
+     */
+    protected function subirACloudinary(
+        UploadedFile $archivo,
+        string $directorio,
+        string $cloudName,
+        string $apiKey,
+        string $apiSecret
+    ): ?string {
+        try {
+            $timestamp = time();
+            $folder = 'puntokampus/' . trim($directorio, '/');
+
+            // Generar firma SHA-1 requerida por Cloudinary:
+            // Parámetros ordenados alfabéticamente concatenados con el api_secret
+            $params = [
+                'folder' => $folder,
+                'timestamp' => $timestamp,
+            ];
+            ksort($params);
+
+            $stringToSign = '';
+            foreach ($params as $k => $v) {
+                $stringToSign .= "{$k}={$v}&";
+            }
+            $stringToSign = rtrim($stringToSign, '&') . $apiSecret;
+            $signature = sha1($stringToSign);
+
+            $endpoint = "https://api.cloudinary.com/v1_1/{$cloudName}/image/upload";
+
+            $response = Http::timeout(30)
+                ->attach('file', file_get_contents($archivo->getRealPath()), $archivo->getClientOriginalName())
+                ->post($endpoint, [
+                    'api_key' => $apiKey,
+                    'timestamp' => $timestamp,
+                    'folder' => $folder,
+                    'signature' => $signature,
+                ]);
+
+            if ($response->successful()) {
+                $json = $response->json();
+                if (isset($json['secure_url'])) {
+                    return $json['secure_url'];
+                }
+            }
+
+            Log::error('Error al subir imagen a Cloudinary: ' . $response->body());
+        } catch (\Throwable $e) {
+            Log::error('Excepción al conectar con Cloudinary: ' . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Almacenamiento local con redimensionamiento a 1080px (respaldo offline).
+     */
+    protected function guardarLocalmente(UploadedFile $archivo, string $directorio): string
     {
         $extension = strtolower($archivo->getClientOriginalExtension());
         $nombreArchivo = Str::uuid() . '.' . ($extension === 'png' ? 'png' : 'jpg');
@@ -24,7 +101,6 @@ class ImagenService
         // Obtener dimensiones originales
         $info = @getimagesize($archivo->getRealPath());
         if (!$info) {
-            // Si no se puede leer como imagen binaria directa, guardar directamente en disco public
             $disk->putFileAs($directorioLimpio, $archivo, $nombreArchivo);
             return asset("storage/{$rutaRelativa}");
         }
@@ -46,7 +122,6 @@ class ImagenService
             $nuevoAncho = (int) round(($anchoOriginal / $altoOriginal) * 1080);
         }
 
-        // Crear imagen desde origen
         $origen = match ($tipo) {
             IMAGETYPE_JPEG => imagecreatefromjpeg($archivo->getRealPath()),
             IMAGETYPE_PNG => imagecreatefrompng($archivo->getRealPath()),
@@ -59,10 +134,8 @@ class ImagenService
             return asset("storage/{$rutaRelativa}");
         }
 
-        // Redimensionar
         $destino = imagecreatetruecolor($nuevoAncho, $nuevoAlto);
 
-        // Preservar transparencia para PNG
         if ($tipo === IMAGETYPE_PNG) {
             imagealphablending($destino, false);
             imagesavealpha($destino, true);
@@ -72,7 +145,6 @@ class ImagenService
 
         imagecopyresampled($destino, $origen, 0, 0, 0, 0, $nuevoAncho, $nuevoAlto, $anchoOriginal, $altoOriginal);
 
-        // Guardar temporalmente y volcar a Storage public
         $tempPath = tempnam(sys_get_temp_dir(), 'pk_img_');
         if ($tipo === IMAGETYPE_PNG) {
             imagepng($destino, $tempPath, 8);
@@ -89,4 +161,3 @@ class ImagenService
         return asset("storage/{$rutaRelativa}");
     }
 }
-

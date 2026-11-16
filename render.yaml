@@ -25,6 +25,12 @@ services:
         value: https://puntokampus-app.onrender.com
       - key: FILESYSTEM_DISK
         value: public
+      - key: CLOUDINARY_CLOUD_NAME
+        value: vreholxs
+      - key: CLOUDINARY_API_KEY
+        value: "323689359994426"
+      - key: CLOUDINARY_API_SECRET
+        value: sfrRaG2ge-XEXu0jJ_O6-6vm5Dc
       - key: APP_KEY
         value: base64:SHTBIKX9glFPQSAx3X4qNLTNd/pbkg+wlmYm1F5tzDU=
       - key: DB_CONNECTION
