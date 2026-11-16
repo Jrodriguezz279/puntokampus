@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../theme/theme.dart';
 import '../../constants/app_strings.dart';
 import '../../models/pedido.dart';
+import '../../models/producto.dart';
 import '../../models/tienda.dart';
 import '../../providers/tienda_provider.dart';
 import '../../providers/vitrina_provider.dart';
