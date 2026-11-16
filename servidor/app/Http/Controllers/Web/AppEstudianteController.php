@@ -226,7 +226,72 @@ class AppEstudianteController extends Controller
             ->latest('id')
             ->first();
 
-        return view('app.mi_tienda', compact('tienda', 'productos', 'pedidos', 'config', 'ultimaSolicitudPremium'));
+        $categorias = Categoria::orderBy('orden')->get();
+        $puntos = PuntoEntrega::where('activa', true)->orderBy('orden')->get();
+
+        return view('app.mi_tienda', compact('tienda', 'productos', 'pedidos', 'config', 'ultimaSolicitudPremium', 'categorias', 'puntos'));
+    }
+
+    /**
+     * Actualizar información de la tienda
+     */
+    public function actualizarTienda(Request $request): RedirectResponse
+    {
+        $usuario = Auth::user();
+        $tienda = Tienda::where('usuario_id', $usuario->id)->first();
+
+        if (!$tienda) {
+            return back()->withErrors(['general' => 'No tienes una tienda creada.']);
+        }
+
+        $datos = $request->validate([
+            'nombre'           => ['required', 'string', 'max:40'],
+            'descripcion'      => ['nullable', 'string', 'max:300'],
+            'categoria_1_id'   => ['required', 'exists:categorias,id'],
+            'categoria_2_id'   => ['nullable', 'different:categoria_1_id', 'exists:categorias,id'],
+            'punto_entrega_id' => ['nullable', 'exists:puntos_entrega,id'],
+            'horario'          => ['nullable', 'string', 'max:100'],
+            'whatsapp'         => ['required', 'string', 'max:20'],
+            'logo'             => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+        ]);
+
+        // Formatear WhatsApp
+        $rawWhatsapp = preg_replace('/[^\d]/', '', $datos['whatsapp']);
+        if (str_starts_with($rawWhatsapp, '09') && strlen($rawWhatsapp) === 10) {
+            $rawWhatsapp = '593' . substr($rawWhatsapp, 1);
+        }
+        $usuario->update([
+            'whatsapp' => $rawWhatsapp,
+            'mostrar_whatsapp' => true,
+        ]);
+
+        // Actualizar slug si cambió el nombre
+        if ($tienda->nombre !== $datos['nombre']) {
+            $slugBase = Str::slug($datos['nombre']);
+            $slug = $slugBase;
+            $counter = 1;
+            while (Tienda::where('slug', $slug)->where('id', '!=', $tienda->id)->exists()) {
+                $slug = "{$slugBase}-{$counter}";
+                $counter++;
+            }
+            $tienda->slug = $slug;
+        }
+
+        // Subir logo si se adjuntó
+        if ($request->hasFile('logo')) {
+            $url = $this->imagenService->procesarYGuardar($request->file('logo'), 'logos');
+            $tienda->logo_url = $url;
+        }
+
+        $tienda->nombre = $datos['nombre'];
+        $tienda->descripcion = $datos['descripcion'] ?? null;
+        $tienda->categoria_1_id = $datos['categoria_1_id'];
+        $tienda->categoria_2_id = $datos['categoria_2_id'] ?? null;
+        $tienda->punto_entrega_id = $datos['punto_entrega_id'] ?? null;
+        $tienda->horario = $datos['horario'] ?? null;
+        $tienda->save();
+
+        return redirect('/app/mi-tienda')->with('mensaje', 'Información de la tienda actualizada con éxito.');
     }
 
     /**

@@ -307,7 +307,10 @@
             </div>
 
             <!-- Botones de Acción Superior -->
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                <button type="button" onclick="cambiarPestana('editar-tienda')" class="btn btn-primary" style="font-size:0.85rem; min-height:38px; padding:0.4rem 1rem; width:auto;">
+                    ✏️ Editar Información de la Tienda
+                </button>
                 <a href="/app/tienda/{{ $tienda->slug }}" target="_blank" class="btn btn-secondary" style="font-size:0.85rem; min-height:38px; padding:0.4rem 0.9rem;">
                     👁️ Ver tienda pública
                 </a>
@@ -358,6 +361,9 @@
         </button>
         <button type="button" class="tab-btn" id="btn-tab-nuevo" onclick="cambiarPestana('nuevo')">
             ➕ Publicar Producto
+        </button>
+        <button type="button" class="tab-btn" id="btn-tab-editar-tienda" onclick="cambiarPestana('editar-tienda')">
+            ⚙️ Editar Tienda
         </button>
         <button type="button" class="tab-btn" id="btn-tab-premium" onclick="cambiarPestana('premium')">
             ⭐ Plan Premium Sacó 10
@@ -661,6 +667,93 @@
         </div>
     </div>
 
+    <!-- ========================================================
+         PESTAÑA 5: EDITAR INFORMACIÓN DE LA TIENDA
+         ======================================================== -->
+    <div id="pane-editar-tienda" class="tab-pane">
+        <div style="max-width: 680px; margin: 0 auto;">
+            <div class="card" style="padding: 1.75rem;">
+                <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:1.25rem;">
+                    <span style="font-size:1.6rem;">⚙️</span>
+                    <div>
+                        <h2 style="font-size: 1.25rem; font-weight: 800; margin:0;">Editar Información de la Tienda</h2>
+                        <span style="font-size:0.82rem; color:var(--text-muted);">Actualiza nombre, categorías, punto de entrega, contacto y horarios.</span>
+                    </div>
+                </div>
+
+                <form method="POST" action="/app/mi-tienda/actualizar" enctype="multipart/form-data">
+                    @csrf
+
+                    <div class="form-group">
+                        <label for="tienda_nombre">Nombre de la Tienda *</label>
+                        <input type="text" id="tienda_nombre" name="nombre" value="{{ old('nombre', $tienda->nombre) }}" required maxlength="40" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tienda_whatsapp">WhatsApp para pedidos *</label>
+                        <input type="text" id="tienda_whatsapp" name="whatsapp" value="{{ old('whatsapp', Auth::user()->whatsapp) }}" placeholder="Ej: 0991234567" required maxlength="20" class="form-control">
+                        <span style="font-size:0.75rem; color:var(--text-muted);">Los compradores se comunicarán a este número para coordinar la entrega.</span>
+                    </div>
+
+                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                        <div class="form-group" style="flex:1; min-width:200px;">
+                            <label for="tienda_categoria_1_id">Categoría Principal *</label>
+                            <select name="categoria_1_id" id="tienda_categoria_1_id" class="form-control" required>
+                                @foreach ($categorias as $cat)
+                                    <option value="{{ $cat->id }}" {{ old('categoria_1_id', $tienda->categoria_1_id) == $cat->id ? 'selected' : '' }}>
+                                        {{ $cat->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex:1; min-width:200px;">
+                            <label for="tienda_categoria_2_id">Segunda Categoría (opcional)</label>
+                            <select name="categoria_2_id" id="tienda_categoria_2_id" class="form-control">
+                                <option value="">Ninguna</option>
+                                @foreach ($categorias as $cat)
+                                    <option value="{{ $cat->id }}" {{ old('categoria_2_id', $tienda->categoria_2_id) == $cat->id ? 'selected' : '' }}>
+                                        {{ $cat->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tienda_punto_entrega_id">Punto de Entrega Habitual en el Campus *</label>
+                        <select name="punto_entrega_id" id="tienda_punto_entrega_id" class="form-control">
+                            @foreach ($puntos as $punto)
+                                <option value="{{ $punto->id }}" {{ old('punto_entrega_id', $tienda->punto_entrega_id) == $punto->id ? 'selected' : '' }}>
+                                    {{ $punto->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tienda_horario">Horario de Atención (opcional)</label>
+                        <input type="text" id="tienda_horario" name="horario" value="{{ old('horario', $tienda->horario) }}" placeholder="Ej: Lunes a Viernes de 10:00 a 14:00" maxlength="100" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tienda_descripcion">Descripción de la Tienda (opcional)</label>
+                        <textarea id="tienda_descripcion" name="descripcion" rows="3" maxlength="300" placeholder="¿Qué ofreces? Cuéntale a tus compañeros de la UTB..." class="form-control">{{ old('descripcion', $tienda->descripcion) }}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tienda_logo">Cambiar Logo de la Tienda (opcional)</label>
+                        <input type="file" id="tienda_logo" name="logo" accept="image/png,image/jpeg,image/jpg" class="form-control" style="padding:0.4rem;">
+                        <span style="font-size:0.75rem; color:var(--text-muted);">Imagen cuadrada (1:1), máx. 5MB. Si no seleccionas ningún archivo, se conserva el logo actual.</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="font-size:1rem; min-height:46px;">
+                        💾 Guardar Cambios de la Tienda
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: ACTUALIZAR LOGO DE LA TIENDA -->
     <div id="modalLogo" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; align-items:center; justify-content:center; padding:1rem;" onclick="if(event.target===this) cerrarModalLogo()">
         <div style="background:white; width:100%; max-width:440px; border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow-md);">
@@ -778,7 +871,7 @@
     // Activar pestaña según hash en la URL al cargar
     window.addEventListener('DOMContentLoaded', () => {
         const hash = window.location.hash.replace('#', '');
-        if (['pedidos', 'productos', 'nuevo', 'premium'].includes(hash)) {
+        if (['pedidos', 'productos', 'nuevo', 'premium', 'editar-tienda'].includes(hash)) {
             cambiarPestana(hash);
         }
     });
