@@ -1,283 +1,502 @@
 @extends('app.layout')
 
-@section('titulo', 'Vitrina — PuntoKampus UTB')
+@section('titulo', 'Vitrina del Campus — PuntoKampus UTB')
 
 @section('styles')
 <style>
-    /* =============================================
-       BUSCADOR
-       ============================================= */
-    .search-box {
-        position: relative;
-        margin-bottom: 1rem;
+    /* =========================================================
+       WARM EDITORIAL CAMPUS — VITRINA SHOWCASE
+       ========================================================= */
+
+    /* Hero / Editorial Banner */
+    .editorial-hero {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
     }
 
-    .search-input {
+    .editorial-eyebrow {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 14px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--accent);
+        background: var(--primary-light);
+        padding: 4px 10px;
+        border-radius: var(--radius-pill);
+        margin-bottom: 0.75rem;
+    }
+
+    .editorial-headline {
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 40px;
+        letter-spacing: -0.015em;
+        color: var(--text);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .editorial-subhead {
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 24px;
+        color: var(--text-muted);
+        max-width: 680px;
+        margin: 0;
+    }
+
+    @media (min-width: 768px) {
+        .editorial-headline {
+            font-size: 40px;
+            line-height: 48px;
+            letter-spacing: -0.02em;
+        }
+    }
+
+    /* Buscador Editorial */
+    .editorial-search-wrap {
+        margin-bottom: 1.25rem;
+    }
+
+    .editorial-search-form {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .editorial-search-input {
         width: 100%;
-        padding: 0.8rem 1rem 0.8rem 2.6rem;
-        border-radius: 25px;
+        height: 48px;
+        padding: 0 1rem 0 2.85rem;
+        border-radius: var(--radius-md);
         border: 1px solid var(--border);
-        background: white;
-        font-size: 0.95rem;
+        background: var(--surface);
+        color: var(--text);
+        font-size: 15px;
         font-family: inherit;
         outline: none;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .search-input:focus {
+    .editorial-search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .editorial-search-input:focus {
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(204, 78, 1, 0.15);
     }
 
-    .search-icon {
+    .editorial-search-icon {
         position: absolute;
-        left: 0.9rem;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 1rem;
+        left: 1rem;
+        font-size: 1.1rem;
         color: var(--text-muted);
         pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    /* =============================================
-       CATEGORÍAS
-       ============================================= */
-    .categories-row {
+    /* Chips de Categorías Warm Editorial */
+    .editorial-categories-row {
         display: flex;
         gap: 0.5rem;
         overflow-x: auto;
         padding-bottom: 0.5rem;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.75rem;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
     }
 
-    .categories-row::-webkit-scrollbar { display: none; }
+    .editorial-categories-row::-webkit-scrollbar { display: none; }
 
-    .category-chip {
+    .editorial-chip {
         flex-shrink: 0;
-        padding: 0.45rem 0.9rem;
-        border-radius: 20px;
-        background: white;
+        height: 32px;
+        padding: 0 14px;
+        border-radius: var(--radius-pill);
+        background: var(--surface);
         border: 1px solid var(--border);
-        font-size: 0.82rem;
-        font-weight: 600;
+        font-size: 13px;
+        font-weight: 500;
         font-family: inherit;
-        color: var(--text);
+        color: var(--text-muted);
         text-decoration: none;
-        transition: all 0.15s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        transition: all 0.15s ease;
         white-space: nowrap;
     }
 
-    .category-chip:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
-    .category-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
-
-    /* =============================================
-       SECTION HEADER
-       ============================================= */
-    .section-title {
-        font-size: 1rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
+    .editorial-chip:hover {
+        background: var(--bg);
+        border-color: var(--text-muted);
         color: var(--text);
     }
 
-    /* =============================================
-       STORE CARDS — mobile: list, desktop: grid
-       ============================================= */
-    .stores-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+    .editorial-chip.active {
+        background: var(--primary-light);
+        border-color: var(--primary);
+        color: var(--accent);
+        font-weight: 600;
     }
 
-    .store-card {
-        background: white;
-        border-radius: var(--radius);
-        padding: 1rem 1.1rem;
-        border: 1px solid var(--border);
+    /* Meta Bar de Resultados */
+    .editorial-meta-bar {
         display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .editorial-meta-count {
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 24px;
+        color: var(--text);
+        margin: 0;
+    }
+
+    .editorial-meta-tagline {
+        font-size: 13px;
+        font-weight: 400;
+        color: var(--text-muted);
+    }
+
+    /* =========================================================
+       SHOWCASE MODULES (STORE CARDS)
+       ========================================================= */
+    .editorial-grid {
+        display: grid;
+        grid-template-columns: 1fr;
         gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+        .editorial-grid {
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.25rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .editorial-grid {
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+    }
+
+    .showcase-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.35rem;
+        box-shadow: var(--shadow-level-1);
         text-decoration: none;
         color: inherit;
-        box-shadow: var(--shadow);
-        transition: transform 0.15s, box-shadow 0.15s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+        position: relative;
     }
 
-    .store-card:hover {
+    .showcase-card:hover {
         transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
+        box-shadow: var(--shadow-level-2);
+        border-color: var(--primary-light);
     }
 
-    .store-avatar {
-        width: 60px;
-        height: 60px;
-        border-radius: var(--radius-sm);
+    .showcase-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.9rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .showcase-avatar-slot {
+        width: 62px;
+        height: 62px;
+        border-radius: 12px;
         background: var(--primary-light);
-        color: var(--primary);
+        color: var(--accent);
+        border: 1px solid var(--border);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.6rem;
-        font-weight: 800;
+        font-weight: 700;
         flex-shrink: 0;
         overflow: hidden;
     }
 
-    .store-avatar img {
+    .showcase-avatar-slot img {
         width: 100%;
         height: 100%;
         object-fit: cover;
     }
 
-    .store-info { flex: 1; min-width: 0; }
+    .showcase-title-area {
+        flex: 1;
+        min-width: 0;
+    }
 
-    .store-header {
+    .showcase-name-row {
         display: flex;
         align-items: center;
         gap: 0.4rem;
-        margin-bottom: 0.25rem;
         flex-wrap: wrap;
+        margin-bottom: 0.25rem;
     }
 
-    .store-name {
-        font-size: 1rem;
-        font-weight: 700;
+    .showcase-name {
+        font-size: 17px;
+        font-weight: 600;
+        line-height: 22px;
+        color: var(--text);
+        margin: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .store-desc {
-        font-size: 0.82rem;
+    .showcase-card:hover .showcase-name {
+        color: var(--primary);
+    }
+
+    /* Insignias Warm Editorial */
+    .showcase-badge-saco10 {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        height: 26px;
+        padding: 0 9px;
+        border-radius: var(--radius-pill);
+        background: var(--primary-light);
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+
+    .showcase-badge-matriculado {
+        display: inline-flex;
+        align-items: center;
+        height: 26px;
+        padding: 0 9px;
+        border-radius: var(--radius-pill);
+        background: var(--surface-container-high, #efe6e1);
+        color: var(--on-surface-variant, #594238);
+        border: 1px solid var(--border);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+
+    .showcase-category-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--primary-dark);
+        margin: 0;
+    }
+
+    .showcase-body {
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 20px;
         color: var(--text-muted);
+        margin: 0 0 1rem 0;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        margin-bottom: 0.5rem;
     }
 
-    .store-footer {
+    .showcase-footer {
+        padding-top: 0.85rem;
+        border-top: 1px solid var(--border);
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 0.5rem;
-        font-size: 0.78rem;
+        font-size: 13px;
         color: var(--text-muted);
-        flex-wrap: wrap;
     }
 
-    /* =============================================
-       EMPTY STATE
-       ============================================= */
-    .empty-state {
+    .showcase-location {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 65%;
+    }
+
+    .showcase-cta {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--primary);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        white-space: nowrap;
+        transition: gap 0.15s ease;
+    }
+
+    .showcase-card:hover .showcase-cta {
+        gap: 0.4rem;
+    }
+
+    /* Estado Vacío Warm Editorial */
+    .editorial-empty {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 3.5rem 1.5rem;
         text-align: center;
-        padding: 3rem 1rem;
-        color: var(--text-muted);
+        box-shadow: var(--shadow-level-1);
     }
 
-    /* =============================================
-       DESKTOP GRID — ≥ 768px
-       ============================================= */
-    @media (min-width: 768px) {
-        .stores-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1rem;
-        }
+    .editorial-empty-icon {
+        font-size: 3.5rem;
+        margin-bottom: 0.85rem;
+        opacity: 0.9;
+    }
 
-        .store-card {
-            flex-direction: column;
-            gap: 0.75rem;
-            padding: 1.25rem;
-            align-items: flex-start;
-        }
+    .editorial-empty-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0 0 0.5rem 0;
+    }
 
-        .store-avatar {
-            width: 72px;
-            height: 72px;
-            font-size: 2rem;
-        }
-
-        .store-name { font-size: 1.05rem; white-space: normal; }
-
-        .store-desc {
-            -webkit-line-clamp: 3;
-            font-size: 0.85rem;
-        }
+    .editorial-empty-desc {
+        font-size: 14px;
+        color: var(--text-muted);
+        max-width: 440px;
+        margin: 0 auto 1.5rem auto;
     }
 </style>
 @endsection
 
 @section('content')
 
-    <!-- Buscador -->
-    <form method="GET" action="/app" class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" name="q" value="{{ $busqueda }}"
-               placeholder="Buscar comida, dulces, impresiones..." class="search-input">
-        @if ($categoriaId)
-            <input type="hidden" name="categoria" value="{{ $categoriaId }}">
-        @endif
-    </form>
+    <!-- HERO EDITORIAL DEL CAMPUS -->
+    <header class="editorial-hero">
+        <span class="editorial-eyebrow">Catálogo Oficial • Campus UTB</span>
+        <h1 class="editorial-headline">Vitrina de Emprendimientos</h1>
+        <p class="editorial-subhead">
+            Explora las iniciativas, alimentos caseros, servicios universitarios y proyectos creados por la comunidad estudiantil y docente de Babahoyo.
+        </p>
+    </header>
 
-    <!-- Fila de Categorías Deslizables -->
-    <div class="categories-row">
+    <!-- BARRA DE BÚSQUEDA EDITORIAL -->
+    <div class="editorial-search-wrap">
+        <form method="GET" action="/app" class="editorial-search-form">
+            <span class="editorial-search-icon">🔍</span>
+            <input type="text" name="q" value="{{ $busqueda }}"
+                   placeholder="Buscar por nombre, comida, dulces, papelería, servicios..."
+                   class="editorial-search-input" autofocus>
+            @if ($categoriaId)
+                <input type="hidden" name="categoria" value="{{ $categoriaId }}">
+            @endif
+        </form>
+    </div>
+
+    <!-- FILTROS POR CATEGORÍA (CHIPS WARM EDITORIAL) -->
+    <div class="editorial-categories-row">
         <a href="/app{{ $busqueda ? '?q='.$busqueda : '' }}"
-           class="category-chip {{ !$categoriaId ? 'active' : '' }}">
-            Todas
+           class="editorial-chip {{ !$categoriaId ? 'active' : '' }}">
+            ✨ Todas las categorías
         </a>
         @foreach ($categorias as $cat)
             <a href="/app?categoria={{ $cat->id }}{{ $busqueda ? '&q='.$busqueda : '' }}"
-               class="category-chip {{ $categoriaId == $cat->id ? 'active' : '' }}">
+               class="editorial-chip {{ $categoriaId == $cat->id ? 'active' : '' }}">
                 {{ $cat->nombre }}
             </a>
         @endforeach
     </div>
 
-    <!-- Título de Sección -->
-    <h2 class="section-title">
-        @if ($busqueda)
-            Resultados para "{{ $busqueda }}" ({{ $tiendas->total() }})
-        @else
-            Tiendas en el campus UTB ({{ $tiendas->total() }})
-        @endif
-    </h2>
+    <!-- BARRA DE METADATOS Y CONTEO -->
+    <div class="editorial-meta-bar">
+        <h2 class="editorial-meta-count">
+            @if ($busqueda)
+                Resultados para "{{ $busqueda }}" ({{ $tiendas->total() }})
+            @else
+                Iniciativas activas en el campus ({{ $tiendas->total() }})
+            @endif
+        </h2>
+        <span class="editorial-meta-tagline">
+            Entregas presenciales coordinadas dentro del campus
+        </span>
+    </div>
 
-    <!-- Lista / Grid de Tiendas -->
-    <div class="stores-list">
+    <!-- SHOWCASE MODULES: GRID EDITORIAL DE TIENDAS -->
+    <div class="editorial-grid">
         @forelse ($tiendas as $tienda)
-            <a href="/app/tienda/{{ $tienda->slug }}" class="store-card">
-                <div class="store-avatar">
-                    @if ($tienda->logo_url)
-                        <img src="{{ $tienda->logo_url }}" alt="{{ $tienda->nombre }}"
-                             onerror="this.onerror=null;this.parentElement.innerHTML='{{ mb_substr($tienda->nombre, 0, 1) }}';">
-                    @else
-                        {{ mb_substr($tienda->nombre, 0, 1) }}
-                    @endif
+            <a href="/app/tienda/{{ $tienda->slug }}" class="showcase-card">
+                <div>
+                    <div class="showcase-header">
+                        <div class="showcase-avatar-slot">
+                            @if ($tienda->logo_url)
+                                <img src="{{ $tienda->logo_url }}" alt="{{ $tienda->nombre }}"
+                                     onerror="this.onerror=null;this.parentElement.innerHTML='{{ mb_substr($tienda->nombre, 0, 1) }}';">
+                            @else
+                                {{ mb_substr($tienda->nombre, 0, 1) }}
+                            @endif
+                        </div>
+                        <div class="showcase-title-area">
+                            <div class="showcase-name-row">
+                                <h3 class="showcase-name">{{ $tienda->nombre }}</h3>
+                                @if ($tienda->plan === 'premium')
+                                    <span class="showcase-badge-saco10" title="Tienda verificada Plan Sacó 10">
+                                        ⭐ Sacó 10
+                                    </span>
+                                @else
+                                    <span class="showcase-badge-matriculado">
+                                        Matriculado
+                                    </span>
+                                @endif
+                            </div>
+                            <p class="showcase-category-label">
+                                🏷️ {{ $tienda->categoria1->nombre }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <p class="showcase-body">
+                        {{ $tienda->descripcion ?: 'Iniciativa y productos universitarios verificados en el campus de la Universidad Técnica de Babahoyo.' }}
+                    </p>
                 </div>
-                <div class="store-info">
-                    <div class="store-header">
-                        <span class="store-name">{{ $tienda->nombre }}</span>
-                        @if ($tienda->plan === 'premium')
-                            <span class="badge badge-saco10">⭐ Sacó 10</span>
-                        @else
-                            <span class="badge badge-matriculado">Matriculado</span>
-                        @endif
-                    </div>
-                    <p class="store-desc">{{ $tienda->descripcion ?: 'Tienda universitaria en el campus UTB.' }}</p>
-                    <div class="store-footer">
-                        <span>📍 {{ $tienda->puntoEntrega->nombre ?? 'Campus UTB' }}</span>
-                        <span>•</span>
-                        <span>🏷️ {{ $tienda->categoria1->nombre }}</span>
-                    </div>
+
+                <div class="showcase-footer">
+                    <span class="showcase-location" title="Punto de entrega habitual">
+                        📍 {{ $tienda->puntoEntrega->nombre ?? 'Campus UTB' }}
+                    </span>
+                    <span class="showcase-cta">
+                        Visitar tienda <span>→</span>
+                    </span>
                 </div>
             </a>
         @empty
-            <div class="empty-state">
-                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🏪</div>
-                <h3>No encontramos tiendas con ese criterio</h3>
-                <p style="font-size: 0.9rem; margin-top: 0.3rem;">Prueba con otra palabra o categoría.</p>
+            <div class="editorial-empty" style="grid-column: 1 / -1;">
+                <div class="editorial-empty-icon">🏪</div>
+                <h3 class="editorial-empty-title">No encontramos tiendas con ese criterio</h3>
+                <p class="editorial-empty-desc">
+                    Intenta con otra palabra clave o selecciona otra categoría para explorar más emprendimientos del campus.
+                </p>
+                <a href="/app" class="btn btn-primary" style="display:inline-flex; width:auto; height:44px; padding:0 24px;">
+                    Ver todas las tiendas
+                </a>
             </div>
         @endforelse
     </div>

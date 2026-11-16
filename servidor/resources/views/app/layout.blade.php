@@ -6,11 +6,12 @@
     <title>@yield('titulo', 'PuntoKampus — Marketplace UTB')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..800;1,9..40,400..800&display=swap" rel="stylesheet">
     <style>
         :root {
+            /* Warm Editorial Campus Palette */
             --primary: #CC4E01;
-            --primary-dark: #A83F00;
+            --primary-dark: #A43D00;
             --primary-light: #F7E3D6;
             --accent: #8A3500;
             --bg: #FAF5F2;
@@ -18,16 +19,26 @@
             --text: #171717;
             --text-muted: #77716D;
             --border: #D9D2CC;
-            --radius: 12px;
-            --radius-sm: 8px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+
+            /* Radii */
+            --radius: 16px;       /* 1rem - Cards & modules */
+            --radius-md: 12px;    /* 0.75rem - Buttons & Inputs */
+            --radius-sm: 8px;     /* 0.5rem - Small elements */
+            --radius-pill: 9999px;/* Chips & Badges */
+
+            /* Warm Minimalist Elevation Levels */
+            --shadow-level-1: 0 2px 8px -2px rgba(119, 113, 109, 0.08), 0 4px 16px -4px rgba(119, 113, 109, 0.04);
+            --shadow-level-2: 0 6px 16px -2px rgba(119, 113, 109, 0.12), 0 10px 24px -4px rgba(119, 113, 109, 0.06);
+            --shadow-level-3: 0 16px 36px -6px rgba(23, 23, 23, 0.14), 0 8px 16px -4px rgba(23, 23, 23, 0.06);
+
+            --shadow: var(--shadow-level-1);
+            --shadow-md: var(--shadow-level-2);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.5;
@@ -160,38 +171,46 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-height: 44px;
-            padding: 0.6rem 1.25rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
+            height: 48px;
+            padding: 0 20px;
+            border-radius: var(--radius-md);
+            font-size: 15px;
             font-weight: 600;
+            line-height: 20px;
+            letter-spacing: 0.005em;
             cursor: pointer;
             text-decoration: none;
             border: none;
-            gap: 0.4rem;
-            transition: all 0.2s;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
             font-family: inherit;
         }
 
         .btn-primary {
             background: var(--primary);
-            color: white;
+            color: var(--surface);
             width: 100%;
         }
 
-        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-primary:hover { background: #B34401; }
+        .btn-primary:active { transform: translateY(1px); background: #993B01; }
 
         .btn-accent {
             background: var(--accent);
-            color: white;
+            color: var(--surface);
         }
+        .btn-accent:hover { background: #732C00; }
 
         .btn-secondary {
-            background: #f3f4f6;
+            background: var(--surface);
             color: var(--text);
+            border: 1px solid var(--border);
         }
 
-        .btn-secondary:hover { background: #e5e7eb; }
+        .btn-secondary:hover {
+            background: var(--bg);
+            border-color: var(--text-muted);
+        }
 
         .badge {
             display: inline-block;
