@@ -82,49 +82,125 @@
     }
 
     /* =============================================
-       PRODUCTS COLUMN
+       PRODUCTS SECTION & GRID
        ============================================= */
-    .products-section h2 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 0.85rem;
+    .products-section {
+        flex: 1.6;
+        min-width: 0;
+    }
+
+    .products-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .products-section-header h2 {
+        font-size: 1.15rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .products-catalog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 1.15rem;
+    }
+
+    @media (max-width: 480px) {
+        .products-catalog-grid {
+            grid-template-columns: 1fr;
+        }
     }
 
     .product-card {
         background: white;
         border-radius: var(--radius);
-        padding: 1rem;
         border: 1px solid var(--border);
-        margin-bottom: 0.85rem;
-        display: flex;
-        gap: 1rem;
-        align-items: center;
         box-shadow: var(--shadow);
-        transition: box-shadow 0.15s;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.15s, box-shadow 0.15s;
     }
 
-    .product-card:hover { box-shadow: var(--shadow-md); }
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
 
     .product-photo {
-        width: 80px;
-        height: 80px;
-        border-radius: var(--radius-sm);
+        width: 100%;
+        height: 170px;
         background: #f3f4f6;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
+        font-size: 2.8rem;
         color: var(--text-muted);
-        flex-shrink: 0;
+        position: relative;
         overflow: hidden;
     }
 
-    .product-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .product-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 
-    .product-details { flex: 1; min-width: 0; }
-    .product-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.2rem; }
-    .product-desc { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-    .product-price { font-size: 1.1rem; font-weight: 800; color: #16a34a; }
+    .product-price-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.75);
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 800;
+        padding: 0.25rem 0.6rem;
+        border-radius: 8px;
+        backdrop-filter: blur(4px);
+    }
+
+    .product-details {
+        padding: 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .product-name {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: 0.35rem;
+        color: var(--text);
+    }
+
+    .product-desc {
+        font-size: 0.84rem;
+        color: var(--text-muted);
+        margin-bottom: 0.85rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.4;
+    }
+
+    .product-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    .product-price {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #16a34a;
+    }
 
     /* =============================================
        MODAL CHECKOUT
@@ -265,47 +341,58 @@
     </aside>
 
     {{-- ======================================================
-         LEFT COLUMN (main): Products list
+         LEFT COLUMN (main): Products catalog grid
          ====================================================== --}}
     <section class="products-section">
-        <h2>Productos disponibles ({{ $productos->count() }})</h2>
+        <div class="products-section-header">
+            <h2>Productos disponibles ({{ $productos->count() }})</h2>
+        </div>
 
-        @forelse ($productos as $producto)
-            <div class="product-card">
-                <div class="product-photo">
-                    @if ($producto->fotos->isNotEmpty() && $producto->fotos->first()->url)
-                        <img src="{{ $producto->fotos->first()->url }}" alt="{{ $producto->nombre }}"
-                             onerror="this.onerror=null;this.parentElement.innerHTML='🍪';">
-                    @else
-                        🍪
-                    @endif
-                </div>
-                <div class="product-details">
-                    <div class="product-name">{{ $producto->nombre }}</div>
-                    <div class="product-desc">{{ $producto->descripcion ?? 'Producto fresco y preparado para el campus.' }}</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="product-price">${{ number_format($producto->precio, 2) }}</span>
-                        @auth
-                            <button type="button"
-                                    class="btn btn-accent"
-                                    style="min-height:36px; padding:0.35rem 0.85rem; font-size:0.85rem;"
-                                    onclick="abrirPedido({{ $producto->id }}, '{{ addslashes($producto->nombre) }}', {{ $producto->precio }})">
-                                Pedir
-                            </button>
-                        @else
-                            <a href="/app/login" class="btn btn-secondary"
-                               style="min-height:36px; padding:0.35rem 0.85rem; font-size:0.85rem;">
-                                Entrar para pedir
-                            </a>
-                        @endauth
+        @if ($productos->isEmpty())
+            <div class="card" style="text-align:center; color:var(--text-muted); padding:3rem 1.5rem;">
+                <div style="font-size:2.5rem; margin-bottom:0.5rem;">🍪</div>
+                <h3 style="color:var(--text);">Esta tienda aún no tiene productos disponibles</h3>
+                <p style="font-size:0.88rem; margin-top:0.3rem;">Vuelve pronto o contacta al vendedor por WhatsApp.</p>
+            </div>
+        @else
+            <div class="products-catalog-grid">
+                @foreach ($productos as $producto)
+                    <div class="product-card">
+                        <div class="product-photo">
+                            @if ($producto->fotos->isNotEmpty() && $producto->fotos->first()->url)
+                                <img src="{{ $producto->fotos->first()->url }}" alt="{{ $producto->nombre }}"
+                                     onerror="this.onerror=null;this.parentElement.innerHTML='🍪';">
+                            @else
+                                🍪
+                            @endif
+                            <span class="product-price-badge">${{ number_format($producto->precio, 2) }}</span>
+                        </div>
+                        <div class="product-details">
+                            <div>
+                                <h3 class="product-name">{{ $producto->nombre }}</h3>
+                                <p class="product-desc">{{ $producto->descripcion ?: 'Producto fresco y preparado para la comunidad de la UTB.' }}</p>
+                            </div>
+                            <div class="product-footer">
+                                <span class="product-price">${{ number_format($producto->precio, 2) }}</span>
+                                @auth
+                                    <button type="button"
+                                            class="btn btn-primary"
+                                            style="min-height:36px; padding:0.35rem 1rem; font-size:0.88rem; width:auto;"
+                                            onclick="abrirPedido({{ $producto->id }}, '{{ addslashes($producto->nombre) }}', {{ $producto->precio }})">
+                                        Pedir 🛍️
+                                    </button>
+                                @else
+                                    <a href="/app/login" class="btn btn-secondary"
+                                       style="min-height:36px; padding:0.35rem 0.85rem; font-size:0.82rem; width:auto;">
+                                        Entrar para pedir
+                                    </a>
+                                @endauth
+                            </div>
+                        </div>
                     </div>
-                </div>
+                @endforeach
             </div>
-        @empty
-            <div class="card" style="text-align:center; color:var(--text-muted); padding:2rem;">
-                Esta tienda aún no tiene productos disponibles.
-            </div>
-        @endforelse
+        @endif
     </section>
 
 </div>{{-- end .tienda-layout --}}
