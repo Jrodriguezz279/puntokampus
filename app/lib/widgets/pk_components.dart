@@ -139,6 +139,8 @@ class PKCampoEtiquetado extends StatelessWidget {
   final VoidCallback? onTap;
   final void Function(String)? onChanged;
   final TextStyle? style;
+  final Iterable<String>? autofillHints;
+  final TextInputAction? textInputAction;
 
   const PKCampoEtiquetado({
     super.key,
@@ -157,6 +159,8 @@ class PKCampoEtiquetado extends StatelessWidget {
     this.onTap,
     this.onChanged,
     this.style,
+    this.autofillHints,
+    this.textInputAction,
   });
 
   @override
@@ -178,6 +182,8 @@ class PKCampoEtiquetado extends StatelessWidget {
           onChanged: onChanged,
           style: style ?? PKTextStyles.cuerpo,
           validator: validator,
+          autofillHints: autofillHints,
+          textInputAction: textInputAction,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: prefixIcon,

@@ -24,12 +24,25 @@ Route::prefix('app')->group(function () {
     Route::get('/', [AppEstudianteController::class, 'vitrina']);
     Route::get('/tienda/{slug}', [AppEstudianteController::class, 'verTienda']);
 
-    // Autenticación por Código UTB de 6 dígitos (sin contraseñas)
+    // Autenticación con Contraseña y Códigos UTB
     Route::get('/login', [AppEstudianteController::class, 'loginView'])->name('login');
+    Route::post('/login/entrar', [AppEstudianteController::class, 'entrarWeb']);
     Route::post('/login/codigo', [AppEstudianteController::class, 'solicitarCodigo']);
     Route::get('/login/verificar', [AppEstudianteController::class, 'verificarView']);
     Route::post('/login/verificar', [AppEstudianteController::class, 'verificarCodigo']);
     Route::get('/login-rapido/{tipo}', [AppEstudianteController::class, 'loginRapido']);
+
+    // Registro de Cuenta Nueva con Código y Creación de Contraseña
+    Route::get('/registro', [AppEstudianteController::class, 'registroView']);
+    Route::post('/registro/codigo', [AppEstudianteController::class, 'solicitarCodigoRegistro']);
+    Route::get('/registro/verificar', [AppEstudianteController::class, 'verificarRegistroView']);
+    Route::post('/registro/verificar', [AppEstudianteController::class, 'completarRegistroWeb']);
+
+    // Olvidé mi Contraseña vía Código al Correo
+    Route::get('/olvide-contrasena', [AppEstudianteController::class, 'olvideContrasenaView']);
+    Route::post('/olvide-contrasena/codigo', [AppEstudianteController::class, 'solicitarCodigoRecuperacionWeb']);
+    Route::get('/olvide-contrasena/recuperar', [AppEstudianteController::class, 'recuperarContrasenaView']);
+    Route::post('/olvide-contrasena/recuperar', [AppEstudianteController::class, 'procesarRecuperacionWeb']);
 
     // Rutas con Sesión Activa (Compradores y Vendedores)
     Route::middleware('auth')->group(function () {

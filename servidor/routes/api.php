@@ -31,9 +31,13 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
-    // Rutas públicas de Autenticación (R1, R2, R3)
+    // Rutas públicas de Autenticación (R1, R2, R3, R4)
+    Route::post('/auth/entrar', [AuthController::class, 'entrar']);
+    Route::post('/auth/login', [AuthController::class, 'entrar']);
     Route::post('/auth/codigo', [AuthController::class, 'solicitarCodigo']);
     Route::post('/auth/verificar', [AuthController::class, 'verificarCodigo']);
+    Route::post('/auth/codigo-recuperacion', [AuthController::class, 'solicitarRecuperacion']);
+    Route::post('/auth/recuperar', [AuthController::class, 'recuperarContrasena']);
 
     // Rutas públicas de Vitrina (H09, H10, H11, H12)
     Route::get('/categorias', [VitrinaController::class, 'categorias']);

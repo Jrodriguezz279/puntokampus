@@ -38,10 +38,25 @@ void main() {
       expect(find.text('Ver la vitrina sin sesión'), findsOneWidget);
     });
 
-    testWidgets('CorreoScreen renderiza campo de correo y boton continuar', (WidgetTester tester) async {
+    testWidgets('CorreoScreen renderiza campos de correo, contrasena y boton entrar', (WidgetTester tester) async {
       await tester.pumpWidget(envolverConProviders(const CorreoScreen()));
 
       expect(find.text('Acceso con correo UTB'), findsOneWidget);
+      expect(find.byType(TextFormField), findsNWidgets(2));
+      expect(find.text('Entrar'), findsOneWidget);
+    });
+
+    testWidgets('RegistroScreen renderiza formulario de registro', (WidgetTester tester) async {
+      await tester.pumpWidget(envolverConProviders(const RegistroScreen()));
+
+      expect(find.text('Crear cuenta UTB'), findsOneWidget);
+      expect(find.byType(TextFormField), findsOneWidget);
+    });
+
+    testWidgets('OlvidePasswordScreen renderiza formulario de recuperacion', (WidgetTester tester) async {
+      await tester.pumpWidget(envolverConProviders(const OlvidePasswordScreen()));
+
+      expect(find.text('Recuperar contraseña'), findsOneWidget);
       expect(find.byType(TextFormField), findsOneWidget);
     });
 

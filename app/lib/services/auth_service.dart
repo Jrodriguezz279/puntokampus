@@ -3,18 +3,16 @@ import 'api_service.dart';
 import 'storage_service.dart';
 
 class AuthService {
-  // P02: Solicitar código de 6 dígitos
-  static Future<void> solicitarCodigo(String correo) async {
-    await ApiService.post('/auth/codigo', body: {
+  // Iniciar sesión con correo y contraseña
+  static Future<Map<String, dynamic>> login({
+    required String correo,
+    required String contrasena,
+    String? dispositivo,
+  }) async {
+    final response = await ApiService.post('/auth/entrar', body: {
       'correo': correo.trim().toLowerCase(),
-    }, requiresAuth: false);
-  }
-
-  // P03: Verificar código de 6 dígitos y obtener Token Sanctum
-  static Future<Map<String, dynamic>> verificarCodigo(String correo, String codigo) async {
-    final response = await ApiService.post('/auth/verificar', body: {
-      'correo': correo.trim().toLowerCase(),
-      'codigo': codigo.trim(),
+      'contrasena': contrasena,
+      if (dispositivo != null) 'dispositivo': dispositivo,
     }, requiresAuth: false);
 
     final data = (response is Map<String, dynamic>) ? response : <String, dynamic>{};
@@ -28,6 +26,62 @@ class AuthService {
     }
 
     return data;
+  }
+
+  // P02: Solicitar código de 6 dígitos
+  static Future<void> solicitarCodigo(String correo) async {
+    await ApiService.post('/auth/codigo', body: {
+      'correo': correo.trim().toLowerCase(),
+    }, requiresAuth: false);
+  }
+
+  // P03: Verificar código de 6 dígitos y opcionalmente establecer contraseña
+  static Future<Map<String, dynamic>> verificarCodigo(
+    String correo,
+    String codigo, {
+    String? contrasena,
+    String? dispositivo,
+  }) async {
+    final body = {
+      'correo': correo.trim().toLowerCase(),
+      'codigo': codigo.trim(),
+      if (contrasena != null && contrasena.isNotEmpty) 'contrasena': contrasena,
+      if (dispositivo != null) 'dispositivo': dispositivo,
+    };
+
+    final response = await ApiService.post('/auth/verificar', body: body, requiresAuth: false);
+
+    final data = (response is Map<String, dynamic>) ? response : <String, dynamic>{};
+    if (data.containsKey('token')) {
+      final token = data['token'] as String;
+      await StorageService.saveToken(token);
+    }
+    if (data.containsKey('usuario') && data['usuario'] is Map<String, dynamic>) {
+      final user = Usuario.fromJson(data['usuario'] as Map<String, dynamic>);
+      await StorageService.saveUsuario(user);
+    }
+
+    return data;
+  }
+
+  // Solicitar código para restablecer contraseña
+  static Future<void> solicitarRecuperacion(String correo) async {
+    await ApiService.post('/auth/codigo-recuperacion', body: {
+      'correo': correo.trim().toLowerCase(),
+    }, requiresAuth: false);
+  }
+
+  // Restablecer contraseña con código
+  static Future<void> recuperarContrasena({
+    required String correo,
+    required String codigo,
+    required String nuevaContrasena,
+  }) async {
+    await ApiService.post('/auth/recuperar', body: {
+      'correo': correo.trim().toLowerCase(),
+      'codigo': codigo.trim(),
+      'contrasena': nuevaContrasena,
+    }, requiresAuth: false);
   }
 
   // P04 / P13: Obtener perfil del usuario actual

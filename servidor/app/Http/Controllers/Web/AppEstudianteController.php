@@ -93,7 +93,7 @@ class AppEstudianteController extends Controller
     }
 
     /**
-     * P01 / P02: Pantalla de Login con Correo
+     * P01 / P02: Pantalla de Login con Correo y Contraseña
      */
     public function loginView(): View
     {
@@ -101,7 +101,215 @@ class AppEstudianteController extends Controller
     }
 
     /**
-     * Procesar solicitud de código de 6 dígitos
+     * Procesar inicio de sesión web con correo institucional y contraseña
+     */
+    public function entrarWeb(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'correo'     => ['required', 'email'],
+            'contrasena' => ['required', 'string'],
+        ]);
+
+        $correo = strtolower(trim($request->input('correo')));
+        $contrasena = $request->input('contrasena');
+
+        $usuario = Usuario::where('correo', $correo)->first();
+        if ($usuario && $usuario->estado === 'desactivada') {
+            return back()->withErrors(['correo' => 'Tu cuenta está desactivada. Escribe al equipo para más información.'])->withInput();
+        }
+
+        $valida = false;
+        if ($usuario && !empty($usuario->password)) {
+            $valida = Hash::check($contrasena, $usuario->password);
+        }
+
+        // Acceso de prueba / demostración
+        if (!$valida && ($contrasena === 'PuntoKampus2026!' || $contrasena === '123456')) {
+            if ($usuario && in_array($correo, ['maria.compradora@est.utb.edu.ec', 'carlos.vendedor@est.utb.edu.ec', 'admin@utb.edu.ec'])) {
+                $valida = true;
+            }
+        }
+
+        if (!$usuario || !$valida) {
+            return back()->withErrors(['contrasena' => 'El correo o la contraseña son incorrectos.'])->withInput();
+        }
+
+        Auth::login($usuario);
+
+        return redirect('/app')->with('mensaje', "¡Bienvenido/a de nuevo, {$usuario->nombres}!");
+    }
+
+    /**
+     * Pantalla de Registro
+     */
+    public function registroView(): View
+    {
+        return view('app.registro');
+    }
+
+    /**
+     * Solicitar código para registro de cuenta nueva
+     */
+    public function solicitarCodigoRegistro(Request $request): RedirectResponse
+    {
+        $request->validate(['correo' => ['required', 'email']]);
+        $correo = strtolower(trim($request->input('correo')));
+
+        if (!$this->authService->esCorreoUtbValido($correo)) {
+            return back()->withErrors(['correo' => 'Solo se puede registrar con un correo de la UTB (termina en utb.edu.ec).'])->withInput();
+        }
+
+        try {
+            $this->authService->solicitarCodigo($correo, 'acceso');
+        } catch (\Throwable $e) {
+            return back()->withErrors(['correo' => $e->getMessage()])->withInput();
+        }
+
+        session([
+            'registro_correo' => $correo,
+            'codigo_demo' => '123456',
+        ]);
+
+        return redirect('/app/registro/verificar');
+    }
+
+    /**
+     * Pantalla de verificación para registro
+     */
+    public function verificarRegistroView(): View
+    {
+        $correo = session('registro_correo');
+        if (!$correo) {
+            return redirect('/app/registro');
+        }
+        $codigoDemo = session('codigo_demo');
+        return view('app.registro_verificar', compact('correo', 'codigoDemo'));
+    }
+
+    /**
+     * Completar registro con código y contraseña
+     */
+    public function completarRegistroWeb(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'codigo'     => ['required', 'string', 'size:6'],
+            'contrasena' => ['required', 'string', 'min:6'],
+            'nombres'    => ['nullable', 'string', 'max:150'],
+        ]);
+
+        $correo = session('registro_correo');
+        if (!$correo) {
+            return redirect('/app/registro');
+        }
+
+        try {
+            $resultado = $this->authService->verificarCodigo(
+                $correo,
+                $request->input('codigo'),
+                'web',
+                $request->input('contrasena'),
+                'acceso'
+            );
+
+            $usuario = $resultado['usuario'];
+            if ($request->filled('nombres')) {
+                $usuario->nombres = trim($request->input('nombres'));
+                $usuario->save();
+            }
+
+            Auth::login($usuario);
+            session()->forget(['registro_correo', 'codigo_demo']);
+
+            return redirect('/app')->with('mensaje', "¡Cuenta creada exitosamente! Bienvenido/a, {$usuario->nombres}.");
+        } catch (\Throwable $e) {
+            return back()->withErrors(['codigo' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Pantalla de Olvidé mi Contraseña
+     */
+    public function olvideContrasenaView(): View
+    {
+        return view('app.olvide_contrasena');
+    }
+
+    /**
+     * Solicitar código para restablecer contraseña
+     */
+    public function solicitarCodigoRecuperacionWeb(Request $request): RedirectResponse
+    {
+        $request->validate(['correo' => ['required', 'email']]);
+        $correo = strtolower(trim($request->input('correo')));
+
+        if (!$this->authService->esCorreoUtbValido($correo)) {
+            return back()->withErrors(['correo' => 'Solo se puede solicitar con un correo de la UTB (termina en utb.edu.ec).'])->withInput();
+        }
+
+        $usuario = Usuario::where('correo', $correo)->first();
+        if (!$usuario || $usuario->estado === 'desactivada') {
+            return back()->withErrors(['correo' => 'No encontramos una cuenta activa con este correo institucional.'])->withInput();
+        }
+
+        try {
+            $this->authService->solicitarCodigoRecuperacion($correo);
+        } catch (\Throwable $e) {
+            return back()->withErrors(['correo' => $e->getMessage()])->withInput();
+        }
+
+        session([
+            'recuperar_correo' => $correo,
+            'codigo_demo' => '123456',
+        ]);
+
+        return redirect('/app/olvide-contrasena/recuperar');
+    }
+
+    /**
+     * Pantalla para ingresar código y nueva contraseña
+     */
+    public function recuperarContrasenaView(): View
+    {
+        $correo = session('recuperar_correo');
+        if (!$correo) {
+            return redirect('/app/olvide-contrasena');
+        }
+        $codigoDemo = session('codigo_demo');
+        return view('app.recuperar_contrasena', compact('correo', 'codigoDemo'));
+    }
+
+    /**
+     * Procesar cambio de contraseña con código
+     */
+    public function procesarRecuperacionWeb(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'codigo'     => ['required', 'string', 'size:6'],
+            'contrasena' => ['required', 'string', 'min:6'],
+        ]);
+
+        $correo = session('recuperar_correo');
+        if (!$correo) {
+            return redirect('/app/olvide-contrasena');
+        }
+
+        try {
+            $this->authService->recuperarContrasena(
+                $correo,
+                $request->input('codigo'),
+                $request->input('contrasena')
+            );
+
+            session()->forget(['recuperar_correo', 'codigo_demo']);
+
+            return redirect('/app/login')->with('mensaje', '¡Tu contraseña ha sido actualizada con éxito! Inicia sesión con tu nueva contraseña.');
+        } catch (\Throwable $e) {
+            return back()->withErrors(['codigo' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Procesar solicitud de código de 6 dígitos (modo compatible legacy)
      */
     public function solicitarCodigo(Request $request): RedirectResponse
     {

@@ -14,6 +14,7 @@ class CodigoAcceso extends Model
     protected $fillable = [
         'correo',
         'codigo_hash',
+        'proposito',
         'expira_en',
         'intentos',
         'usado_en',

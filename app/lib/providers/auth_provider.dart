@@ -33,6 +33,27 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> login(String correo, String contrasena) async {
+    _cargando = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final res = await AuthService.login(correo: correo, contrasena: contrasena);
+      _token = res['token'] as String?;
+      if (res.containsKey('usuario') && res['usuario'] is Map<String, dynamic>) {
+        _usuario = Usuario.fromJson(res['usuario'] as Map<String, dynamic>);
+      }
+      _cargando = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _cargando = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> solicitarCodigo(String correo) async {
     _cargando = true;
     _error = null;
@@ -50,16 +71,54 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> verificarCodigo(String correo, String codigo) async {
+  Future<bool> verificarCodigo(String correo, String codigo, {String? contrasena}) async {
     _cargando = true;
     _error = null;
     notifyListeners();
     try {
-      final res = await AuthService.verificarCodigo(correo, codigo);
+      final res = await AuthService.verificarCodigo(correo, codigo, contrasena: contrasena);
       _token = res['token'] as String?;
-      if (res.containsKey('usuario')) {
+      if (res.containsKey('usuario') && res['usuario'] is Map<String, dynamic>) {
         _usuario = Usuario.fromJson(res['usuario'] as Map<String, dynamic>);
       }
+      _cargando = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _cargando = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> solicitarRecuperacion(String correo) async {
+    _cargando = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await AuthService.solicitarRecuperacion(correo);
+      _cargando = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _cargando = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> recuperarContrasena(String correo, String codigo, String nuevaContrasena) async {
+    _cargando = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await AuthService.recuperarContrasena(
+        correo: correo,
+        codigo: codigo,
+        nuevaContrasena: nuevaContrasena,
+      );
       _cargando = false;
       notifyListeners();
       return true;
