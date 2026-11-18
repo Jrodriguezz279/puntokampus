@@ -43,6 +43,7 @@ Route::prefix('app')->group(function () {
     Route::post('/olvide-contrasena/codigo', [AppEstudianteController::class, 'solicitarCodigoRecuperacionWeb']);
     Route::get('/olvide-contrasena/recuperar', [AppEstudianteController::class, 'recuperarContrasenaView']);
     Route::post('/olvide-contrasena/recuperar', [AppEstudianteController::class, 'procesarRecuperacionWeb']);
+    Route::get('/pedidos/{codigo}/confirmar', [AppEstudianteController::class, 'confirmarEntregaWeb']);
 
     // Rutas con Sesión Activa (Compradores y Vendedores)
     Route::middleware('auth')->group(function () {

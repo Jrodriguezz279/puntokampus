@@ -740,13 +740,16 @@ class AppEstudianteController extends Controller
     {
         $usuario = Auth::user();
 
+        $minima = now('America/Guayaquil')->addMinutes(25)->toDateTimeString();
+        $maxima = now('America/Guayaquil')->addDays(7)->toDateTimeString();
+
         $datos = $request->validate([
             'tienda_id'        => ['required', 'exists:tiendas,id'],
             'producto_id'      => ['required', 'exists:productos,id'],
             'cantidad'         => ['required', 'integer', 'min:1', 'max:20'],
             'punto_entrega_id' => ['required', 'exists:puntos_entrega,id'],
             'forma_pago'       => ['required', 'in:efectivo,transferencia,deuna'],
-            'hora_entrega'     => ['required', 'date', 'after:+29 minutes', 'before:+7 days'],
+            'hora_entrega'     => ['required', 'date', "after:{$minima}", "before:{$maxima}"],
             'nota'             => ['nullable', 'string', 'max:200'],
         ], [
             'hora_entrega.after'  => 'La hora de entrega debe ser de al menos 30 minutos en el futuro.',
@@ -877,8 +880,10 @@ class AppEstudianteController extends Controller
 
         $codigoRaw = trim((string) $request->input('codigo_entrega', ''));
 
-        // Tramo 2: Soporta tanto los 4 dígitos directos como el payload escaneado del QR "PK:<codigo>:<pin>"
-        if (preg_match('/PK:[^:]+:(\d{4})/', $codigoRaw, $matches)) {
+        // Tramo 2: Soporta URL con ?c=1234, payload escaneado del QR "PK:<codigo>:<pin>" o 4 dígitos directos
+        if (preg_match('/[?&]c=(\d{4})/', $codigoRaw, $matches)) {
+            $codigoEntrega = $matches[1];
+        } elseif (preg_match('/PK:[^:]+:(\d{4})/', $codigoRaw, $matches)) {
             $codigoEntrega = $matches[1];
         } elseif (preg_match('/^(\d{4})$/', $codigoRaw, $matches)) {
             $codigoEntrega = $matches[1];
@@ -938,6 +943,44 @@ class AppEstudianteController extends Controller
             'Content-Type'  => 'image/svg+xml',
             'Cache-Control' => 'no-cache, private',
         ]);
+    }
+
+    /**
+     * Tramo 2: Confirmación directa por escaneo de código QR desde la cámara del vendedor
+     */
+    public function confirmarEntregaWeb(Request $request, string $codigo): RedirectResponse
+    {
+        $pedido = Pedido::where('codigo', $codigo)->firstOrFail();
+        $usuario = Auth::user();
+
+        // Si no ha iniciado sesión, guardar URL de destino y redirigir al login
+        if (!$usuario) {
+            session(['url.intended' => $request->fullUrl()]);
+            return redirect('/app/login')->with('mensaje', 'Inicia sesión como vendedor para confirmar la entrega del pedido.');
+        }
+
+        // Verificar que el usuario sea el dueño de la tienda del pedido
+        if ($pedido->tienda->usuario_id !== $usuario->id) {
+            return redirect('/app')->withErrors(['general' => 'No tienes permiso para confirmar este pedido. Solo el vendedor de la tienda puede hacerlo.']);
+        }
+
+        if ($pedido->estado === 'entregado') {
+            return redirect('/app/mi-tienda')->with('mensaje', "El pedido #{$codigo} ya fue marcado como entregado.");
+        }
+
+        $codigoIngresado = trim((string) $request->query('c', ''));
+        $codigoReal = $pedido->codigo_entrega_descifrado;
+
+        if (empty($codigoIngresado) || $codigoIngresado !== $codigoReal) {
+            return redirect('/app/mi-tienda')->withErrors(['general' => 'Código de entrega QR incorrecto o inválido.']);
+        }
+
+        $pedido->update([
+            'estado'             => 'entregado',
+            'estado_cambiado_en' => now(),
+        ]);
+
+        return redirect('/app/mi-tienda')->with('mensaje', "🎉 ¡Excelente! Pedido #{$pedido->codigo} confirmado y entregado con éxito mediante el escaneo de código QR.");
     }
 
     /**

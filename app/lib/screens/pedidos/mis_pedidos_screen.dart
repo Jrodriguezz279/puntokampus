@@ -279,7 +279,7 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
             ),
             const SizedBox(height: PKSpacing.sm),
             Text(
-              'Muéstrale este QR o el código de 4 dígitos al vendedor.',
+              'Muéstrale este código QR al vendedor para que lo escanee con la cámara de su celular, o dile el código de 4 dígitos.',
               textAlign: TextAlign.center,
               style: PKTextStyles.etiqueta,
             ),

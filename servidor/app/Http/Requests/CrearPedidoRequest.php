@@ -13,11 +13,14 @@ class CrearPedidoRequest extends FormRequest
 
     public function rules(): array
     {
+        $minima = now('America/Guayaquil')->addMinutes(25)->toDateTimeString();
+        $maxima = now('America/Guayaquil')->addDays(7)->toDateTimeString();
+
         return [
             'items'                   => ['required', 'array', 'min:1'],
             'items.*.producto_id'     => ['required', 'integer', 'exists:productos,id'],
             'items.*.cantidad'        => ['required', 'integer', 'min:1', 'max:20'],
-            'hora_entrega'            => ['required', 'date', 'after:+29 minutes', 'before:+7 days'],
+            'hora_entrega'            => ['required', 'date', "after:{$minima}", "before:{$maxima}"],
             'punto_entrega_id'        => ['required', 'integer', 'exists:puntos_entrega,id'],
             'forma_pago'              => ['required', 'string', 'in:efectivo,transferencia,deuna'],
             'nota'                    => ['nullable', 'string', 'max:200'],

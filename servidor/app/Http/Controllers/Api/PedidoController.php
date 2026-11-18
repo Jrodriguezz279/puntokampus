@@ -140,9 +140,9 @@ class PedidoController extends Controller
 
     /**
      * GET /api/v1/pedidos/{codigo}/qr
-     * Retorna imagen SVG del código QR de confirmación de entrega (Tramo 2)
+     * Retorna imagen del código QR de confirmación de entrega (PNG para app móvil / SVG opcional)
      */
-    public function verQr(string $codigo)
+    public function verQr(\Illuminate\Http\Request $request, string $codigo)
     {
         $pedido = Pedido::where('codigo', $codigo)->firstOrFail();
         $codigoEntrega = '0000';
@@ -154,11 +154,21 @@ class PedidoController extends Controller
             }
         }
 
-        $payload = "PK:{$pedido->codigo}:{$codigoEntrega}";
-        $svg = \App\Services\QrService::generarSvg($payload, 280);
+        // URL directa para que la cámara del celular del vendedor la reconozca al instante
+        $payload = url("/app/pedidos/{$pedido->codigo}/confirmar?c={$codigoEntrega}");
 
-        return response($svg, 200, [
-            'Content-Type' => 'image/svg+xml',
+        $formato = $request->query('formato', 'png');
+        if ($formato === 'svg') {
+            $svg = \App\Services\QrService::generarSvg($payload, 280);
+            return response($svg, 200, [
+                'Content-Type' => 'image/svg+xml',
+                'Cache-Control' => 'no-cache, private',
+            ]);
+        }
+
+        $png = \App\Services\QrService::generarPng($payload, 280);
+        return response($png, 200, [
+            'Content-Type' => 'image/png',
             'Cache-Control' => 'no-cache, private',
         ]);
     }

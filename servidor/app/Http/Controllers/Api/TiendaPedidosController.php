@@ -48,8 +48,12 @@ class TiendaPedidosController extends Controller
         }
 
         $codigoEntrega = trim((string) $request->input('codigo_entrega', ''));
-        // Soporte QR (Tramo 2): Si viene con prefijo PK:CODIGO:1234 extraemos los 4 dígitos
-        if (str_contains($codigoEntrega, ':')) {
+        // Soporte QR (Tramo 2): Soporta URL con ?c=1234, payload PK:CODIGO:1234 o 4 dígitos
+        if (preg_match('/[?&]c=(\d{4})/', $codigoEntrega, $m)) {
+            $codigoEntrega = $m[1];
+        } elseif (preg_match('/PK:[^:]+:(\d{4})/', $codigoEntrega, $m)) {
+            $codigoEntrega = $m[1];
+        } elseif (str_contains($codigoEntrega, ':')) {
             $partes = explode(':', $codigoEntrega);
             $codigoEntrega = end($partes);
         }

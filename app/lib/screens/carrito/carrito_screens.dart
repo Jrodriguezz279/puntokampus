@@ -292,6 +292,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       },
     );
     if (picked != null) {
+      final now = DateTime.now();
+      final esHoy = _fechaEntrega.year == now.year &&
+          _fechaEntrega.month == now.month &&
+          _fechaEntrega.day == now.day;
+
+      final dtSeleccionado = DateTime(
+        _fechaEntrega.year,
+        _fechaEntrega.month,
+        _fechaEntrega.day,
+        picked.hour,
+        picked.minute,
+      );
+
+      final minima = now.add(const Duration(minutes: 30));
+
+      if (esHoy && dtSeleccionado.isBefore(minima)) {
+        if (!context.mounted) return;
+        pkSnackError(context, 'Debes programar la entrega al menos 30 minutos después de la hora actual.');
+        setState(() {
+          _horaEntrega = TimeOfDay(hour: minima.hour, minute: minima.minute);
+        });
+        return;
+      }
+
       setState(() => _horaEntrega = picked);
     }
   }
@@ -343,7 +367,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() => _enviando = true);
 
     try {
-      final horaString = fechaHora.toIso8601String();
+      final horaString = '${fechaHora.year.toString().padLeft(4, '0')}-'
+          '${fechaHora.month.toString().padLeft(2, '0')}-'
+          '${fechaHora.day.toString().padLeft(2, '0')} '
+          '${fechaHora.hour.toString().padLeft(2, '0')}:'
+          '${fechaHora.minute.toString().padLeft(2, '0')}:00';
 
       final res = await PedidoService.crearPedido(
         tiendaId: cart.tiendaId!,

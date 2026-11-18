@@ -87,6 +87,34 @@ class Pedido extends Model
     }
 
     /**
+     * Retorna el código de entrega descifrado o null.
+     */
+    public function getCodigoEntregaDescifradoAttribute(): ?string
+    {
+        if (empty($this->codigo_entrega)) {
+            return null;
+        }
+
+        try {
+            return \Illuminate\Support\Facades\Crypt::decryptString($this->codigo_entrega);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Payload URL para el código QR de confirmación (directamente escaneable por cualquier cámara).
+     */
+    public function getQrPayloadAttribute(): ?string
+    {
+        $pin = $this->codigo_entrega_descifrado;
+        if (!$pin) {
+            return null;
+        }
+        return url("/app/pedidos/{$this->codigo}/confirmar?c={$pin}");
+    }
+
+    /**
      * Verifica el código de entrega ingresado por el vendedor.
      * Incrementa intentos y bloquea tras 5 fallidos.
      */

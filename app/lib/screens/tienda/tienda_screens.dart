@@ -1091,8 +1091,12 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
     final controller = _codigoControllers.putIfAbsent(p.codigo, () => TextEditingController());
     var codigo = (codigoManual ?? controller.text).trim();
 
-    // Tramo 2: Soporte para payload QR "PK:CODIGO:1234" o 4 dígitos directos
-    if (codigo.contains(':')) {
+    // Tramo 2: Soporte para URL con ?c=1234, payload QR "PK:CODIGO:1234" o 4 dígitos directos
+    final regexUrl = RegExp(r'[?&]c=(\d{4})');
+    final matchUrl = regexUrl.firstMatch(codigo);
+    if (matchUrl != null) {
+      codigo = matchUrl.group(1)!;
+    } else if (codigo.contains(':')) {
       final partes = codigo.split(':');
       codigo = partes.last.trim();
     }
@@ -1319,9 +1323,9 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
                                       children: [
                                         Row(
                                           children: [
-                                            const Text('🔑 ', style: TextStyle(fontSize: 16)),
+                                            const Text('📱 ', style: TextStyle(fontSize: 16)),
                                             Text(
-                                              'Confirmar entrega con código',
+                                              'Confirmar entrega con QR o código',
                                               style: PKTextStyles.etiqueta.copyWith(
                                                 fontWeight: FontWeight.w800,
                                                 color: const Color(0xFFA43D00),
@@ -1331,8 +1335,8 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'Pide el código de 4 dígitos al comprador e ingrésalo aquí:',
-                                          style: PKTextStyles.etiqueta.copyWith(color: PKColors.secundario),
+                                          'Escanea el QR del comprador con la cámara de tu celular, o ingresa los 4 dígitos que él ve en su pantalla:',
+                                          style: PKTextStyles.etiqueta.copyWith(color: PKColors.secundario, fontSize: 12),
                                         ),
                                         const SizedBox(height: PKSpacing.sm),
                                         Row(

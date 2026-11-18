@@ -35,9 +35,11 @@ jobs:
         working-directory: app
         run: |
           cp android/app/src/main/AndroidManifest.xml /tmp/AndroidManifest.xml
+          cp android/app/build.gradle /tmp/build.gradle
           rm -rf android
           flutter create --org ec.edu.utb --project-name puntokampus --platforms=android .
           cp /tmp/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+          cp /tmp/build.gradle android/app/build.gradle
           echo "android.lint.abortOnError=false" >> android/gradle.properties
 
       - name: 📦 Instalar dependencias de Flutter

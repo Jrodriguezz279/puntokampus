@@ -62,6 +62,6 @@ class PedidoService {
 
   // Tramo 2: Obtener URL del QR de un pedido (para comprador)
   static String getQrUrl(String codigoPedido) {
-    return '${ApiConstants.baseUrl}/pedidos/$codigoPedido/qr';
+    return '${ApiConstants.baseUrl}/pedidos/$codigoPedido/qr?formato=png';
   }
 }
