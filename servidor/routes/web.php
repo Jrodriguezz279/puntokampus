@@ -48,11 +48,13 @@ Route::prefix('app')->group(function () {
     Route::middleware('auth')->group(function () {
         // Modo Comprador
         Route::get('/mis-pedidos', [AppEstudianteController::class, 'misPedidos']);
+        Route::get('/pedidos/{codigo}/qr', [AppEstudianteController::class, 'verQrWeb']);
         Route::post('/pedidos', [AppEstudianteController::class, 'crearPedido']);
         Route::post('/tienda/{slug}/reportar', [AppEstudianteController::class, 'reportarTienda']);
 
         // Modo Vendedor ("Mi Tienda")
         Route::get('/mi-tienda', [AppEstudianteController::class, 'miTienda']);
+        Route::post('/mi-tienda/toggle-pedidos', [AppEstudianteController::class, 'toggleRecibiendoPedidos']);
         Route::post('/mi-tienda/crear', [AppEstudianteController::class, 'guardarTienda']);
         Route::post('/mi-tienda/actualizar', [AppEstudianteController::class, 'actualizarTienda']);
         Route::post('/mi-tienda/logo', [AppEstudianteController::class, 'subirLogo']);

@@ -215,6 +215,62 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
 
               const SizedBox(height: PKSpacing.base),
 
+              // Tramo 2: Interruptor "Recibiendo pedidos"
+              PKTarjeta(
+                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.md, vertical: PKSpacing.sm),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(PKSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: t.puedeRecibirPedidos ? const Color(0xFFE8F5E9) : const Color(0xFFFFEDED),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        t.puedeRecibirPedidos ? Icons.storefront : Icons.pause_circle_outline,
+                        color: t.puedeRecibirPedidos ? const Color(0xFF196C28) : const Color(0xFFBA1A1A),
+                      ),
+                    ),
+                    const SizedBox(width: PKSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            t.recibiendoPedidos ? 'Recibiendo pedidos' : 'No estoy recibiendo pedidos',
+                            style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            t.recibiendoPedidos
+                                ? (t.estaAbierto ? 'Abierta ahora en campus' : (t.siguienteApertura != null ? 'Abre ${t.siguienteApertura}' : 'Aceptando pedidos'))
+                                : 'Tu tienda está pausada en la vitrina',
+                            style: PKTextStyles.etiqueta.copyWith(
+                              color: t.puedeRecibirPedidos ? const Color(0xFF196C28) : const Color(0xFFBA1A1A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: t.recibiendoPedidos,
+                      activeColor: PKColors.primario,
+                      onChanged: (val) async {
+                        await tiendaProv.toggleRecibiendoPedidos();
+                        if (context.mounted) {
+                          pkSnackOk(
+                            context,
+                            val ? 'Tu tienda ahora recibe pedidos' : 'Has pausado los pedidos',
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: PKSpacing.base),
+
               // Botón Pedidos Recibidos
               PKTarjeta(
                 padding: EdgeInsets.zero,
@@ -331,15 +387,54 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                                       const SizedBox(height: 3),
                                       Row(
                                         children: [
-                                          Text(
-                                            '\$${prod.precio.toStringAsFixed(2)}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                              color: PKColors.primario,
-                                              fontFamily: 'DMSans',
+                                          if (prod.tieneDescuento) ...[
+                                            Text(
+                                              '\$${prod.precioEfectivo.toStringAsFixed(2)}',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                                color: PKColors.primario,
+                                                fontFamily: 'DMSans',
+                                              ),
                                             ),
-                                          ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '\$${prod.precio.toStringAsFixed(2)}',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                decoration: TextDecoration.lineThrough,
+                                                color: PKColors.secundario,
+                                                fontFamily: 'DMSans',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFCC4E01),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                '-${prod.porcentajeDescuento.toStringAsFixed(0)}%',
+                                                style: const TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                  fontFamily: 'DMSans',
+                                                ),
+                                              ),
+                                            ),
+                                          ] else ...[
+                                            Text(
+                                              '\$${prod.precio.toStringAsFixed(2)}',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                                color: PKColors.primario,
+                                                fontFamily: 'DMSans',
+                                              ),
+                                            ),
+                                          ],
                                           const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -426,6 +521,10 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
   final _descripcionController = TextEditingController();
   final _horarioController = TextEditingController();
   final _whatsappController = TextEditingController();
+  final _horaAperturaController = TextEditingController();
+  final _horaCierreController = TextEditingController();
+  bool _recibiendoPedidos = true;
+  List<int> _diasAtencion = [1, 2, 3, 4, 5];
   int? _cat1Id;
   int? _puntoId;
   Uint8List? _logoBytes;
@@ -444,6 +543,12 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
       _descripcionController.text = widget.tienda!.descripcion ?? '';
       _horarioController.text = widget.tienda!.horario ?? '';
       _whatsappController.text = widget.tienda!.whatsapp ?? '';
+      _horaAperturaController.text = widget.tienda!.horaApertura ?? '';
+      _horaCierreController.text = widget.tienda!.horaCierre ?? '';
+      _recibiendoPedidos = widget.tienda!.recibiendoPedidos;
+      if (widget.tienda!.diasAtencion != null && widget.tienda!.diasAtencion!.isNotEmpty) {
+        _diasAtencion = List<int>.from(widget.tienda!.diasAtencion!);
+      }
       _cat1Id = widget.tienda!.categoria1?.id;
       _puntoId = widget.tienda!.puntoEntrega?.id;
     }
@@ -455,6 +560,8 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
     _descripcionController.dispose();
     _horarioController.dispose();
     _whatsappController.dispose();
+    _horaAperturaController.dispose();
+    _horaCierreController.dispose();
     super.dispose();
   }
 
@@ -473,6 +580,10 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
       puntoEntregaId: puntoId,
       horario: _horarioController.text.trim(),
       whatsapp: _whatsappController.text.trim(),
+      recibiendoPedidos: _recibiendoPedidos,
+      diasAtencion: _diasAtencion,
+      horaApertura: _horaAperturaController.text.trim().isNotEmpty ? _horaAperturaController.text.trim() : null,
+      horaCierre: _horaCierreController.text.trim().isNotEmpty ? _horaCierreController.text.trim() : null,
     );
 
     if (!mounted) return;
@@ -609,11 +720,63 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
                     controller: _horarioController,
                   ),
                   const SizedBox(height: PKSpacing.base),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: PKCampoEtiquetado(
+                          etiqueta: 'Hora apertura',
+                          hint: '08:00',
+                          controller: _horaAperturaController,
+                        ),
+                      ),
+                      const SizedBox(width: PKSpacing.md),
+                      Expanded(
+                        child: PKCampoEtiquetado(
+                          etiqueta: 'Hora cierre',
+                          hint: '18:00',
+                          controller: _horaCierreController,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: PKSpacing.base),
+                  Text('Días de atención en campus', style: PKTextStyles.etiqueta),
+                  const SizedBox(height: PKSpacing.xs),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      for (final entry in {1: 'Lun', 2: 'Mar', 3: 'Mié', 4: 'Jue', 5: 'Vie', 6: 'Sáb', 7: 'Dom'}.entries)
+                        FilterChip(
+                          label: Text(entry.value, style: const TextStyle(fontSize: 12, fontFamily: 'DMSans')),
+                          selected: _diasAtencion.contains(entry.key),
+                          onSelected: (sel) {
+                            setState(() {
+                              if (sel) {
+                                _diasAtencion.add(entry.key);
+                              } else {
+                                _diasAtencion.remove(entry.key);
+                              }
+                            });
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: PKSpacing.base),
                   PKCampoEtiquetado(
                     etiqueta: 'WhatsApp para pedidos',
                     hint: 'Ej. 0987654321',
                     keyboardType: TextInputType.phone,
                     controller: _whatsappController,
+                  ),
+                  const SizedBox(height: PKSpacing.base),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Recibiendo pedidos', style: TextStyle(fontWeight: FontWeight.w600, fontFamily: 'DMSans')),
+                    subtitle: const Text('Desactívalo si deseas pausar la tienda temporalmente.', style: TextStyle(fontSize: 12, color: PKColors.secundario, fontFamily: 'DMSans')),
+                    value: _recibiendoPedidos,
+                    activeColor: PKColors.primario,
+                    onChanged: (val) => setState(() => _recibiendoPedidos = val),
                   ),
                 ],
               ),
@@ -641,10 +804,12 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
   final _nombreController = TextEditingController();
   final _descController = TextEditingController();
   final _precioController = TextEditingController();
+  final _precioDescuentoController = TextEditingController();
   Uint8List? _fotoBytes;
   String? _fotoNombre;
   bool _guardando = false;
   bool _disponible = true;
+  bool _descuentoActivo = false;
 
   bool get _esEdicion => widget.productoExistente != null;
 
@@ -656,6 +821,10 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
       _nombreController.text = p.nombre;
       _descController.text = p.descripcion ?? '';
       _precioController.text = p.precio.toStringAsFixed(2);
+      if (p.precioDescuento != null && p.precioDescuento! > 0) {
+        _precioDescuentoController.text = p.precioDescuento!.toStringAsFixed(2);
+        _descuentoActivo = p.descuentoActivo;
+      }
       _disponible = p.disponible;
     }
   }
@@ -665,12 +834,15 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
     _nombreController.dispose();
     _descController.dispose();
     _precioController.dispose();
+    _precioDescuentoController.dispose();
     super.dispose();
   }
 
   void _guardar() async {
     final precio = double.tryParse(_precioController.text.trim().replaceAll(',', '.')) ?? 0.0;
     final nombre = _nombreController.text.trim();
+    final precioDesc = double.tryParse(_precioDescuentoController.text.trim().replaceAll(',', '.'));
+    final tieneDescuento = _descuentoActivo && precioDesc != null && precioDesc > 0 && precioDesc < precio;
 
     if (nombre.isEmpty) {
       pkSnackError(context, 'Ingresa el nombre del producto.');
@@ -696,6 +868,8 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
           nombre: nombre,
           descripcion: _descController.text.trim(),
           precio: precio,
+          precioDescuento: tieneDescuento ? precioDesc : null,
+          descuentoActivo: tieneDescuento,
           disponible: _disponible,
         );
 
@@ -715,6 +889,12 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
         // Modo creación
         final prod = await TiendaService.crearProducto(
           nombre: nombre,
+          descripcion: _descController.text.trim(),
+          precio: precio,
+          precioDescuento: tieneDescuento ? precioDesc : null,
+          descuentoActivo: tieneDescuento,
+          disponible: _disponible,
+        );
           descripcion: _descController.text.trim(),
           precio: precio,
           disponible: _disponible,
@@ -799,6 +979,33 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
                 hint: '1.25',
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 controller: _precioController,
+              ),
+              const SizedBox(height: PKSpacing.base),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: PKCampoEtiquetado(
+                      etiqueta: 'Precio con descuento (\$)',
+                      hint: 'Ej. 0.99',
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      controller: _precioDescuentoController,
+                    ),
+                  ),
+                  const SizedBox(width: PKSpacing.md),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 24),
+                      child: SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Activar oferta', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'DMSans')),
+                        value: _descuentoActivo,
+                        activeColor: const Color(0xFFCC4E01),
+                        onChanged: (val) => setState(() => _descuentoActivo = val),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: PKSpacing.base),
               PKCampoEtiquetado(
@@ -886,7 +1093,13 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
 
   Future<void> _confirmarEntrega(Pedido p, [String? codigoManual]) async {
     final controller = _codigoControllers.putIfAbsent(p.codigo, () => TextEditingController());
-    final codigo = (codigoManual ?? controller.text).trim();
+    var codigo = (codigoManual ?? controller.text).trim();
+
+    // Tramo 2: Soporte para payload QR "PK:CODIGO:1234" o 4 dígitos directos
+    if (codigo.contains(':')) {
+      final partes = codigo.split(':');
+      codigo = partes.last.trim();
+    }
 
     if (codigo.length != 4 || !RegExp(r'^\d{4}$').hasMatch(codigo)) {
       pkSnackError(context, 'El código debe tener exactamente 4 dígitos numéricos.');
@@ -931,22 +1144,18 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Ingresa el código de 4 dígitos dado por el comprador (${p.nombreComprador ?? "Estudiante"}):',
+              'Ingresa el código de 4 dígitos o escanea el QR del comprador (${p.nombreComprador ?? "Estudiante"}):',
               style: PKTextStyles.cuerpo,
             ),
             const SizedBox(height: PKSpacing.base),
             TextField(
               controller: dialogController,
               autofocus: true,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(4),
-              ],
+              keyboardType: TextInputType.text,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 28,
-                letterSpacing: 8,
+                fontSize: 24,
+                letterSpacing: 4,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFFA43D00),
                 fontFamily: 'DMSans',
@@ -968,9 +1177,12 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              final code = dialogController.text.trim();
+              var code = dialogController.text.trim();
+              if (code.contains(':')) {
+                code = code.split(':').last.trim();
+              }
               if (code.length != 4) {
-                pkSnackError(context, 'Ingresa los 4 dígitos numéricos.');
+                pkSnackError(context, 'Ingresa los 4 dígitos numéricos o código QR.');
                 return;
               }
               Navigator.pop(ctx);

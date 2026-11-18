@@ -54,10 +54,19 @@ class MiProductoController extends Controller
         $tienda = $this->obtenerTienda($request);
         $datos = $request->validated();
 
+        $descuentoActivo = false;
+        if (isset($datos['descuento_activo'])) {
+            $descuentoActivo = (bool) $datos['descuento_activo'];
+        } elseif (isset($datos['precio_descuento']) && $datos['precio_descuento'] > 0 && $datos['precio_descuento'] < $datos['precio']) {
+            $descuentoActivo = true;
+        }
+
         $producto = $tienda->productos()->create([
             'nombre' => $datos['nombre'],
             'descripcion' => $datos['descripcion'] ?? null,
             'precio' => $datos['precio'],
+            'precio_descuento' => $datos['precio_descuento'] ?? null,
+            'descuento_activo' => $descuentoActivo,
             'disponible' => $datos['disponible'] ?? true,
         ]);
 
@@ -81,7 +90,13 @@ class MiProductoController extends Controller
         $tienda = $this->obtenerTienda($request);
         $producto = $tienda->productos()->whereNull('eliminado_en')->findOrFail($id);
 
-        $producto->update($request->validated());
+        $datos = $request->validated();
+        if (array_key_exists('precio_descuento', $datos)) {
+            $precioBase = $datos['precio'] ?? $producto->precio;
+            $datos['descuento_activo'] = ($datos['precio_descuento'] !== null && $datos['precio_descuento'] > 0 && $datos['precio_descuento'] < $precioBase);
+        }
+
+        $producto->update($datos);
 
         if ($request->hasFile('foto')) {
             $url = $this->imagenService->procesarYGuardar($request->file('foto'), 'productos');

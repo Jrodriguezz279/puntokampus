@@ -320,6 +320,41 @@
             </div>
         </div>
 
+        <!-- TRAMO 2: INTERRUPTOR RECIBIENDO PEDIDOS -->
+        @if ($tienda->recibiendo_pedidos)
+            <div style="background:#f0fdf4; border:1.5px solid #86efac; border-radius:var(--radius-sm); padding:0.75rem 1rem; margin-top:0.85rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="font-size:1.3rem;">🟢</span>
+                    <div>
+                        <strong style="color:#15803d; font-size:0.95rem;">Recibiendo pedidos activamente</strong>
+                        <div style="font-size:0.8rem; color:#166534;">Los compradores pueden realizar pedidos dentro de tu horario configurado.</div>
+                    </div>
+                </div>
+                <form method="POST" action="/app/mi-tienda/toggle-pedidos" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="btn btn-secondary" style="background:#fee2e2; border-color:#fca5a5; color:#991b1b; font-size:0.82rem; padding:0.35rem 0.8rem; min-height:34px;">
+                        ⏸️ Activar "No estoy recibiendo pedidos"
+                    </button>
+                </form>
+            </div>
+        @else
+            <div style="background:#fef2f2; border:1.5px solid #fca5a5; border-radius:var(--radius-sm); padding:0.75rem 1rem; margin-top:0.85rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="font-size:1.3rem;">⏸️</span>
+                    <div>
+                        <strong style="color:#b91c1c; font-size:0.95rem;">Interruptor activado: No estás recibiendo pedidos</strong>
+                        <div style="font-size:0.8rem; color:#991b1b;">Tu tienda aparece como pausada para nuevos pedidos. {{ $tienda->siguienteAperturaTexto() }}</div>
+                    </div>
+                </div>
+                <form method="POST" action="/app/mi-tienda/toggle-pedidos" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="btn btn-primary" style="background:#16a34a; border-color:#15803d; font-size:0.82rem; padding:0.35rem 0.8rem; min-height:34px;">
+                        ▶️ Reanudar recepción de pedidos
+                    </button>
+                </form>
+            </div>
+        @endif
+
         <p style="font-size:0.9rem; color:var(--text); margin-bottom:1rem;">
             {{ $tienda->descripcion ?: 'Tienda universitaria activa en el campus de la UTB.' }}
         </p>
@@ -508,8 +543,19 @@
                             @else
                                 🍪
                             @endif
-                            <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:white; font-size:0.75rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:6px;">
-                                ${{ number_format($prod->precio, 2) }}
+                            <div style="position:absolute; top:8px; right:8px; display:flex; gap:0.25rem;">
+                                @if ($prod->tiene_descuento)
+                                    <span style="background:#ba1a1a; color:white; font-size:0.75rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:6px;">
+                                        -{{ round($prod->descuento_porcentaje) }}%
+                                    </span>
+                                    <span style="background:rgba(0,0,0,0.7); color:white; font-size:0.75rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:6px;">
+                                        ${{ number_format($prod->precio_efectivo, 2) }}
+                                    </span>
+                                @else
+                                    <span style="background:rgba(0,0,0,0.7); color:white; font-size:0.75rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:6px;">
+                                        ${{ number_format($prod->precio, 2) }}
+                                    </span>
+                                @endif
                             </div>
                         </div>
                         <div class="product-mgmt-body">
@@ -521,7 +567,7 @@
                             </div>
                             <div class="product-mgmt-actions">
                                 <button type="button" class="btn btn-secondary" style="flex:1; min-height:34px; font-size:0.82rem; padding:0.3rem;"
-                                        onclick="abrirEditarProducto({{ $prod->id }}, '{{ addslashes($prod->nombre) }}', '{{ addslashes($prod->descripcion ?? '') }}', {{ $prod->precio }}, '{{ $prod->fotos->first()?->url ?? '' }}')">
+                                        onclick="abrirEditarProducto({{ $prod->id }}, '{{ addslashes($prod->nombre) }}', '{{ addslashes($prod->descripcion ?? '') }}', {{ $prod->precio }}, '{{ $prod->fotos->first()?->url ?? '' }}', {{ $prod->precio_descuento ?: 'null' }})">
                                     ✏️ Editar
                                 </button>
                                 <form method="POST" action="/app/mi-tienda/producto/{{ $prod->id }}/eliminar" onsubmit="return confirm('¿Eliminar {{ addslashes($prod->nombre) }}?');" style="margin:0;">
@@ -557,11 +603,16 @@
                     </div>
 
                     <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                        <div class="form-group" style="flex:1; min-width:140px;">
-                            <label for="precio">Precio en Dólares ($) *</label>
+                        <div class="form-group" style="flex:1; min-width:130px;">
+                            <label for="precio">Precio Normal ($) *</label>
                             <input type="number" id="precio" name="precio" step="0.05" min="0.25" max="50" placeholder="1.25" class="form-control" required>
                         </div>
-                        <div class="form-group" style="flex:1.5; min-width:200px;">
+                        <div class="form-group" style="flex:1; min-width:130px;">
+                            <label for="precio_descuento">Precio Oferta ($) (opcional)</label>
+                            <input type="number" id="precio_descuento" name="precio_descuento" step="0.01" min="0.01" max="50" placeholder="Ej: 1.00" class="form-control">
+                            <span style="font-size:0.72rem; color:var(--text-muted);">Menor al precio normal para activar oferta.</span>
+                        </div>
+                        <div class="form-group" style="flex:1.5; min-width:180px;">
                             <label for="foto">Foto del Producto (opcional)</label>
                             <input type="file" id="foto" name="foto" accept="image/png,image/jpeg,image/jpg" class="form-control" style="padding:0.4rem;">
                         </div>
@@ -730,8 +781,34 @@
                         </select>
                     </div>
 
+                    <div class="form-group" style="background:#f9fafb; border:1px solid var(--border); padding:0.85rem; border-radius:var(--radius-sm);">
+                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-weight:700; margin:0;">
+                            <input type="checkbox" name="recibiendo_pedidos" value="1" {{ old('recibiendo_pedidos', $tienda->recibiendo_pedidos) ? 'checked' : '' }} style="width:18px; height:18px;">
+                            <span>Aceptar pedidos activamente en la tienda</span>
+                        </label>
+                        <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:0.25rem;">
+                            Desmárcalo si quieres poner tu tienda en pausa ("No estoy recibiendo pedidos").
+                        </span>
+                    </div>
+
                     <div class="form-group">
-                        <label for="tienda_horario">Horario de Atención (opcional)</label>
+                        <label for="tienda_dias_atencion">Días de Atención (opcional)</label>
+                        <input type="text" id="tienda_dias_atencion" name="dias_atencion" value="{{ old('dias_atencion', $tienda->dias_atencion) }}" placeholder="Ej: Lunes a Viernes, o Lun a Sáb" class="form-control">
+                    </div>
+
+                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                        <div class="form-group" style="flex:1; min-width:130px;">
+                            <label for="tienda_hora_apertura">Hora Apertura (HH:MM)</label>
+                            <input type="time" id="tienda_hora_apertura" name="hora_apertura" value="{{ old('hora_apertura', $tienda->hora_apertura) }}" class="form-control">
+                        </div>
+                        <div class="form-group" style="flex:1; min-width:130px;">
+                            <label for="tienda_hora_cierre">Hora Cierre (HH:MM)</label>
+                            <input type="time" id="tienda_hora_cierre" name="hora_cierre" value="{{ old('hora_cierre', $tienda->hora_cierre) }}" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tienda_horario">Texto de Horario resumido (opcional)</label>
                         <input type="text" id="tienda_horario" name="horario" value="{{ old('horario', $tienda->horario) }}" placeholder="Ej: Lunes a Viernes de 10:00 a 14:00" maxlength="100" class="form-control">
                     </div>
 
@@ -794,9 +871,13 @@
                     <input type="text" id="edit_descripcion" name="descripcion" class="form-control" maxlength="300">
                 </div>
                 <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                    <div class="form-group" style="flex:1; min-width:130px;">
+                    <div class="form-group" style="flex:1; min-width:120px;">
                         <label for="edit_precio">Precio ($) *</label>
                         <input type="number" id="edit_precio" name="precio" step="0.05" min="0.25" max="50" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="flex:1; min-width:120px;">
+                        <label for="edit_precio_descuento">Precio Oferta ($)</label>
+                        <input type="number" id="edit_precio_descuento" name="precio_descuento" step="0.01" min="0.01" max="50" placeholder="Opcional" class="form-control">
                     </div>
                     <div class="form-group" style="flex:1.5; min-width:180px;">
                         <label for="edit_foto">Cambiar Foto (opcional)</label>
@@ -845,11 +926,12 @@
     }
 
     // Modal Editar Producto
-    function abrirEditarProducto(id, nombre, descripcion, precio, fotoUrl) {
+    function abrirEditarProducto(id, nombre, descripcion, precio, fotoUrl, precioDescuento = null) {
         document.getElementById('formEditarProducto').action = '/app/mi-tienda/producto/' + id;
         document.getElementById('edit_nombre').value = nombre;
         document.getElementById('edit_descripcion').value = descripcion;
         document.getElementById('edit_precio').value = precio;
+        document.getElementById('edit_precio_descuento').value = (precioDescuento && precioDescuento > 0) ? precioDescuento : '';
 
         const preview = document.getElementById('edit_foto_preview');
         const img = document.getElementById('edit_foto_img');

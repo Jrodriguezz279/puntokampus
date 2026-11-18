@@ -108,6 +108,26 @@ class StoreCard extends StatelessWidget {
                               style: PKTextStyles.etiqueta,
                             ),
                           ],
+                          // Tramo 2: badge "Pausada"
+                          if (!tienda.puedeRecibirPedidos) ...[
+                            const SizedBox(width: PKSpacing.sm),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFEDED),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                '⏸ Pausada',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFBA1A1A),
+                                  fontFamily: 'DMSans',
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -209,10 +229,47 @@ class ProductCard extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: PKSpacing.xs),
-                      Text(
-                        '\$${producto.precio.toStringAsFixed(2)}',
-                        style: PKTextStyles.precio,
-                      ),
+                      // Tramo 2: precio con descuento
+                      if (producto.tieneDescuento) ...[
+                        Row(
+                          children: [
+                            Text(
+                              '\$${producto.precioEfectivo.toStringAsFixed(2)}',
+                              style: PKTextStyles.precio,
+                            ),
+                            const SizedBox(width: PKSpacing.sm),
+                            Text(
+                              '\$${producto.precio.toStringAsFixed(2)}',
+                              style: PKTextStyles.etiqueta.copyWith(
+                                decoration: TextDecoration.lineThrough,
+                                color: PKColors.secundario,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFCC4E01),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '-${producto.porcentajeDescuento.toStringAsFixed(0)}%',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontFamily: 'DMSans',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ] else ...[
+                        Text(
+                          '\$${producto.precio.toStringAsFixed(2)}',
+                          style: PKTextStyles.precio,
+                        ),
+                      ],
                     ],
                   ),
                 ),

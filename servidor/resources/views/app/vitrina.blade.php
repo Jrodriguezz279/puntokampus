@@ -385,6 +385,117 @@
         max-width: 440px;
         margin: 0 auto 1.5rem auto;
     }
+
+    /* =========================================================
+       TRAMO 2: CARRUSEL EN LA VITRINA
+       ========================================================= */
+    .campus-carousel-section {
+        margin-bottom: 2rem;
+    }
+
+    .campus-carousel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.85rem;
+    }
+
+    .campus-carousel-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .campus-carousel-controls {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    .carousel-nav-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        transition: all 0.15s ease;
+    }
+
+    .carousel-nav-btn:hover {
+        background: var(--primary-light);
+        border-color: var(--primary);
+        color: var(--accent);
+    }
+
+    .campus-carousel-track {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding: 0.25rem 0.25rem 0.75rem 0.25rem;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .campus-carousel-track::-webkit-scrollbar { display: none; }
+
+    .carousel-slide {
+        flex: 0 0 280px;
+        scroll-snap-align: start;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.15rem;
+        box-shadow: var(--shadow-level-1);
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+        position: relative;
+    }
+
+    @media (min-width: 640px) {
+        .carousel-slide { flex: 0 0 320px; }
+    }
+
+    .carousel-slide:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-level-2);
+        border-color: var(--primary);
+    }
+
+    .badge-descuento {
+        background: #ba1a1a;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: var(--radius-pill);
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .badge-pausada {
+        background: #fee2e2;
+        color: #991b1b;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: var(--radius-pill);
+        display: inline-flex;
+        align-items: center;
+    }
 </style>
 @endsection
 
@@ -426,6 +537,88 @@
         @endforeach
     </div>
 
+    <!-- TRAMO 2: CARRUSEL EN LA VITRINA (DESTACADOS SACÓ 10 & OFERTAS) -->
+    @if (($carruselTiendas && $carruselTiendas->isNotEmpty()) || ($carruselOfertas && $carruselOfertas->isNotEmpty()))
+        <section class="campus-carousel-section">
+            <div class="campus-carousel-header">
+                <h2 class="campus-carousel-title">
+                    <span>✨</span> Destacados & Ofertas del Campus
+                </h2>
+                <div class="campus-carousel-controls">
+                    <button type="button" class="carousel-nav-btn" onclick="desplazarCarrusel(-1)" aria-label="Anterior">←</button>
+                    <button type="button" class="carousel-nav-btn" onclick="desplazarCarrusel(1)" aria-label="Siguiente">→</button>
+                </div>
+            </div>
+
+            <div class="campus-carousel-track" id="campusCarouselTrack">
+                {{-- Tiendas Premium Destacadas --}}
+                @foreach ($carruselTiendas as $cTienda)
+                    <a href="/app/tienda/{{ $cTienda->slug }}" class="carousel-slide" style="border-left: 3px solid var(--primary);">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                                <div style="display:flex; gap:0.6rem; align-items:center;">
+                                    <div style="width:44px; height:44px; border-radius:10px; background:var(--primary-light); overflow:hidden; display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--accent);">
+                                        @if ($cTienda->logo_url)
+                                            <img src="{{ $cTienda->logo_url }}" alt="{{ $cTienda->nombre }}" style="width:100%; height:100%; object-fit:cover;">
+                                        @else
+                                            {{ mb_substr($cTienda->nombre, 0, 1) }}
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <h3 style="font-size:15px; font-weight:700; margin:0; color:var(--text); line-height:1.2;">{{ $cTienda->nombre }}</h3>
+                                        <span style="font-size:12px; color:var(--primary-dark);">🏷️ {{ $cTienda->categoria1->nombre ?? 'Campus' }}</span>
+                                    </div>
+                                </div>
+                                <span class="showcase-badge-saco10" style="height:22px; font-size:10px;">⭐ Sacó 10</span>
+                            </div>
+                            <p style="font-size:13px; color:var(--text-muted); margin:0 0 0.5rem 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                                {{ $cTienda->descripcion ?: 'Emprendimiento universitario destacado en la UTB.' }}
+                            </p>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-muted); padding-top:0.5rem; border-top:1px solid var(--border);">
+                            @if (!$cTienda->recibiendo_pedidos)
+                                <span class="badge-pausada">⏸️ Pedidos pausados</span>
+                            @else
+                                <span style="color:#15803d; font-weight:600;">🟢 Recibiendo pedidos</span>
+                            @endif
+                            <span style="color:var(--primary); font-weight:600;">Ver tienda →</span>
+                        </div>
+                    </a>
+                @endforeach
+
+                {{-- Productos con Descuento Activo --}}
+                @foreach ($carruselOfertas as $cOferta)
+                    <a href="/app/tienda/{{ $cOferta->tienda->slug }}" class="carousel-slide" style="border-left: 3px solid #ba1a1a;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+                                <span class="badge-descuento">🔥 {{ round($cOferta->descuento_porcentaje) }}% OFF</span>
+                                <span style="font-size:11px; color:var(--text-muted);">{{ $cOferta->tienda->nombre }}</span>
+                            </div>
+                            <div style="display:flex; gap:0.6rem; align-items:center; margin-bottom:0.5rem;">
+                                @if ($cOferta->fotos->isNotEmpty())
+                                    <img src="{{ $cOferta->fotos->first()->url }}" alt="{{ $cOferta->nombre }}" style="width:50px; height:50px; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+                                @else
+                                    <div style="width:50px; height:50px; border-radius:8px; background:var(--primary-light); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">🍪</div>
+                                @endif
+                                <div style="flex:1; min-width:0;">
+                                    <h3 style="font-size:14px; font-weight:700; margin:0; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ $cOferta->nombre }}</h3>
+                                    <div style="margin-top:0.2rem;">
+                                        <s style="font-size:12px; color:var(--text-muted);">${{ number_format($cOferta->precio, 2) }}</s>
+                                        <strong style="font-size:15px; color:#ba1a1a; margin-left:0.25rem;">${{ number_format($cOferta->precio_efectivo, 2) }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-muted); padding-top:0.5rem; border-top:1px solid var(--border);">
+                            <span>📍 {{ $cOferta->tienda->puntoEntrega->nombre ?? 'Campus UTB' }}</span>
+                            <span style="color:var(--primary); font-weight:600;">Pedir ahora →</span>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     <!-- BARRA DE METADATOS Y CONTEO -->
     <div class="editorial-meta-bar">
         <h2 class="editorial-meta-count">
@@ -466,9 +659,17 @@
                                         Matriculado
                                     </span>
                                 @endif
+                                @if (!$tienda->recibiendo_pedidos)
+                                    <span class="badge-pausada" title="La tienda no está recibiendo pedidos">
+                                        ⏸️ Pausada
+                                    </span>
+                                @endif
                             </div>
                             <p class="showcase-category-label">
                                 🏷️ {{ $tienda->categoria1->nombre }}
+                                @if ($tienda->dias_atencion)
+                                    • {{ $tienda->dias_atencion }}
+                                @endif
                             </p>
                         </div>
                     </div>
@@ -479,8 +680,11 @@
                 </div>
 
                 <div class="showcase-footer">
-                    <span class="showcase-location" title="Punto de entrega habitual">
+                    <span class="showcase-location" title="Punto de entrega y horario">
                         📍 {{ $tienda->puntoEntrega->nombre ?? 'Campus UTB' }}
+                        @if ($tienda->hora_apertura && $tienda->hora_cierre)
+                            • ⏰ {{ $tienda->hora_apertura }}-{{ $tienda->hora_cierre }}
+                        @endif
                     </span>
                     <span class="showcase-cta">
                         Visitar tienda <span>→</span>
@@ -501,4 +705,15 @@
         @endforelse
     </div>
 
+@endsection
+
+@section('scripts')
+<script>
+    function desplazarCarrusel(dir) {
+        const track = document.getElementById('campusCarouselTrack');
+        if (track) {
+            track.scrollBy({ left: dir * 310, behavior: 'smooth' });
+        }
+    }
+</script>
 @endsection

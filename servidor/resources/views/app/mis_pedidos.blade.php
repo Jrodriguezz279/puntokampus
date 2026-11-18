@@ -99,7 +99,7 @@
                 🏪 {{ $pedido->tienda->nombre }}
             </div>
 
-            {{-- R17: Código de entrega para el comprador --}}
+            {{-- R17 / Tramo 2: Código de entrega y QR para el comprador --}}
             @if ($pedido->estado === 'pendiente' && !empty($pedido->codigo_entrega_descifrado))
                 <div style="background:#FFF8F5; border:1.5px solid #CC4E01; border-radius:10px; padding:0.85rem; margin:0.75rem 0; text-align:center;">
                     <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#A73C00; font-weight:700; display:block;">
@@ -108,9 +108,14 @@
                     <div style="font-size:2rem; font-weight:900; letter-spacing:8px; color:#CC4E01; margin:0.3rem 0;">
                         {{ $pedido->codigo_entrega_descifrado }}
                     </div>
-                    <span style="font-size:0.78rem; color:#A73C00;">
-                        Muéstrale o dicta este código al vendedor cuando recibas tu pedido en persona.
+                    <span style="font-size:0.78rem; color:#A73C00; display:block; margin-bottom:0.6rem;">
+                        Muéstrale este código al vendedor o permite que escanee tu QR al recibir tu pedido.
                     </span>
+                    <button type="button" class="btn btn-secondary"
+                            style="min-height:34px; font-size:0.82rem; padding:0.3rem 0.85rem; display:inline-flex; align-items:center; gap:0.35rem; width:auto; margin:0 auto;"
+                            onclick="mostrarModalQr('{{ $pedido->codigo }}', '{{ $pedido->codigo_entrega_descifrado }}')">
+                        📱 Ver Código QR
+                    </button>
                 </div>
             @endif
 
@@ -149,4 +154,44 @@
     @endforelse
     </div>
 
+    <!-- MODAL QR DE ENTREGA (TRAMO 2) -->
+    <div id="modalQrPedido" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; align-items:center; justify-content:center; padding:1rem;" onclick="if(event.target===this) cerrarModalQr()">
+        <div style="background:white; width:100%; max-width:380px; border-radius:var(--radius); padding:1.75rem 1.5rem; text-align:center; box-shadow:var(--shadow-md);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="font-size:1.15rem; font-weight:800; margin:0; color:var(--text);">📱 Código QR de Entrega</h3>
+                <button type="button" onclick="cerrarModalQr()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted);">✕</button>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                Muéstrale este código QR al vendedor para que lo escanee y confirme la entrega presencial en el campus.
+            </p>
+            <div style="background:#f9fafb; padding:1rem; border-radius:12px; display:inline-block; margin-bottom:1rem; border:1px solid #e5e7eb;">
+                <img id="imgQrModal" src="" alt="Código QR" style="width:230px; height:230px; display:block; margin:0 auto;">
+            </div>
+            <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.25rem;">
+                O si prefieres, dícale este código:
+            </div>
+            <div id="pinQrModal" style="font-size:2rem; font-weight:900; letter-spacing:6px; color:#CC4E01; margin-bottom:0.5rem;">
+                0000
+            </div>
+            <button type="button" onclick="cerrarModalQr()" class="btn btn-secondary" style="width:100%; min-height:38px;">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
+@endsection
+
+@section('scripts')
+<script>
+    function mostrarModalQr(codigo, pin) {
+        document.getElementById('imgQrModal').src = '/app/pedidos/' + codigo + '/qr';
+        document.getElementById('pinQrModal').innerText = pin;
+        document.getElementById('modalQrPedido').style.display = 'flex';
+    }
+
+    function cerrarModalQr() {
+        document.getElementById('modalQrPedido').style.display = 'none';
+        document.getElementById('imgQrModal').src = '';
+    }
+</script>
 @endsection

@@ -36,6 +36,10 @@ class TiendaProvider extends ChangeNotifier {
     required int puntoEntregaId,
     required String horario,
     String? whatsapp,
+    bool? recibiendoPedidos,
+    List<int>? diasAtencion,
+    String? horaApertura,
+    String? horaCierre,
   }) async {
     _cargando = true;
     _error = null;
@@ -51,6 +55,10 @@ class TiendaProvider extends ChangeNotifier {
         puntoEntregaId: puntoEntregaId,
         horario: horario,
         whatsapp: whatsapp,
+        recibiendoPedidos: recibiendoPedidos,
+        diasAtencion: diasAtencion,
+        horaApertura: horaApertura,
+        horaCierre: horaCierre,
         esCreacion: esNueva,
       );
       _cargando = false;
@@ -64,10 +72,24 @@ class TiendaProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> toggleRecibiendoPedidos() async {
+    try {
+      final nuevoEstado = await TiendaService.toggleRecibiendoPedidos();
+      await cargarMiTienda();
+      return nuevoEstado;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return _miTienda?.recibiendoPedidos ?? false;
+    }
+  }
+
   Future<bool> crearProducto({
     required String nombre,
     required String descripcion,
     required double precio,
+    double? precioDescuento,
+    bool? descuentoActivo,
     bool disponible = true,
   }) async {
     _cargando = true;
@@ -77,6 +99,8 @@ class TiendaProvider extends ChangeNotifier {
         nombre: nombre,
         descripcion: descripcion,
         precio: precio,
+        precioDescuento: precioDescuento,
+        descuentoActivo: descuentoActivo,
         disponible: disponible,
       );
       await cargarMiTienda();
@@ -94,6 +118,8 @@ class TiendaProvider extends ChangeNotifier {
     required String nombre,
     required String descripcion,
     required double precio,
+    double? precioDescuento,
+    bool? descuentoActivo,
     bool disponible = true,
   }) async {
     _cargando = true;
@@ -104,6 +130,8 @@ class TiendaProvider extends ChangeNotifier {
         nombre: nombre,
         descripcion: descripcion,
         precio: precio,
+        precioDescuento: precioDescuento,
+        descuentoActivo: descuentoActivo,
         disponible: disponible,
       );
       await cargarMiTienda();

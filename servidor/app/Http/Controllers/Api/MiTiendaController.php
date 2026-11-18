@@ -89,6 +89,10 @@ class MiTiendaController extends Controller
             'categoria_1_id' => $datos['categoria_1_id'],
             'categoria_2_id' => $datos['categoria_2_id'] ?? null,
             'horario' => $datos['horario'] ?? null,
+            'recibiendo_pedidos' => $datos['recibiendo_pedidos'] ?? true,
+            'dias_atencion' => $datos['dias_atencion'] ?? null,
+            'hora_apertura' => $datos['hora_apertura'] ?? null,
+            'hora_cierre' => $datos['hora_cierre'] ?? null,
             'punto_entrega_id' => $datos['punto_entrega_id'] ?? null,
             'plan' => 'gratis',
             'estado' => 'activa',
@@ -136,14 +140,29 @@ class MiTiendaController extends Controller
         }
 
         // Actualizar tienda
-        $tienda->update([
+        $camposActualizar = [
             'nombre' => $datos['nombre'],
             'descripcion' => $datos['descripcion'] ?? null,
             'categoria_1_id' => $datos['categoria_1_id'],
             'categoria_2_id' => $datos['categoria_2_id'] ?? null,
             'horario' => $datos['horario'] ?? null,
             'punto_entrega_id' => $datos['punto_entrega_id'] ?? null,
-        ]);
+        ];
+
+        if (array_key_exists('recibiendo_pedidos', $datos)) {
+            $camposActualizar['recibiendo_pedidos'] = (bool) $datos['recibiendo_pedidos'];
+        }
+        if (array_key_exists('dias_atencion', $datos)) {
+            $camposActualizar['dias_atencion'] = $datos['dias_atencion'];
+        }
+        if (array_key_exists('hora_apertura', $datos)) {
+            $camposActualizar['hora_apertura'] = $datos['hora_apertura'];
+        }
+        if (array_key_exists('hora_cierre', $datos)) {
+            $camposActualizar['hora_cierre'] = $datos['hora_cierre'];
+        }
+
+        $tienda->update($camposActualizar);
 
         $tienda->load(['categoria1', 'categoria2', 'puntoEntrega', 'usuario', 'productos.fotos']);
 
@@ -189,6 +208,27 @@ class MiTiendaController extends Controller
 
         return response()->json([
             'portada_url' => $url,
+        ]);
+    }
+
+    /**
+     * POST /api/v1/mi-tienda/toggle-pedidos
+     */
+    public function togglePedidos(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $tienda = $request->user()->tienda;
+        if (!$tienda) {
+            abort(404, 'No tienes una tienda creada.');
+        }
+
+        $tienda->update([
+            'recibiendo_pedidos' => !$tienda->recibiendo_pedidos,
+        ]);
+
+        return response()->json([
+            'mensaje' => $tienda->recibiendo_pedidos ? 'Tu tienda ahora recibe pedidos.' : 'Tu tienda ha pausado los pedidos.',
+            'recibiendo_pedidos' => $tienda->recibiendo_pedidos,
+            'tienda' => new TiendaResource($tienda->fresh()),
         ]);
     }
 }

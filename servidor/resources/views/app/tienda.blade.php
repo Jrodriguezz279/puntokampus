@@ -303,9 +303,21 @@
                     {{ $tienda->descripcion ?: 'Tienda oficial de estudiante UTB.' }}
                 </p>
 
+                @if (!$tienda->recibiendo_pedidos)
+                    <div style="background:#fef2f2; border:1.5px solid #fca5a5; color:#991b1b; padding:0.75rem 0.9rem; border-radius:8px; margin:0.6rem 0; font-size:0.85rem;">
+                        <strong>⏸️ Tienda pausada</strong><br>
+                        No está recibiendo pedidos en este momento. {{ $tienda->siguienteAperturaTexto() }}
+                    </div>
+                @endif
+
                 <div class="meta-tags">
                     <span class="meta-tag">📍 {{ $tienda->puntoEntrega->nombre ?? 'Campus' }}</span>
-                    @if ($tienda->horario)
+                    @if ($tienda->dias_atencion)
+                        <span class="meta-tag">📅 {{ $tienda->dias_atencion }}</span>
+                    @endif
+                    @if ($tienda->hora_apertura && $tienda->hora_cierre)
+                        <span class="meta-tag">⏰ {{ $tienda->hora_apertura }} - {{ $tienda->hora_cierre }}</span>
+                    @elseif ($tienda->horario)
                         <span class="meta-tag">⏰ {{ $tienda->horario }}</span>
                     @endif
                     <span class="meta-tag">🏷️ {{ $tienda->categoria1->nombre }}</span>
@@ -365,7 +377,16 @@
                             @else
                                 🍪
                             @endif
-                            <span class="product-price-badge">${{ number_format($producto->precio, 2) }}</span>
+                            @if ($producto->tiene_descuento)
+                                <span class="badge" style="background:#ba1a1a; color:white; font-size:0.75rem; font-weight:700; position:absolute; top:10px; left:10px; padding:3px 7px; border-radius:6px;">
+                                    🔥 {{ round($producto->descuento_porcentaje) }}% OFF
+                                </span>
+                                <span class="product-price-badge" style="background:rgba(186,26,26,0.9);">
+                                    ${{ number_format($producto->precio_efectivo, 2) }}
+                                </span>
+                            @else
+                                <span class="product-price-badge">${{ number_format($producto->precio, 2) }}</span>
+                            @endif
                         </div>
                         <div class="product-details">
                             <div>
@@ -373,14 +394,30 @@
                                 <p class="product-desc">{{ $producto->descripcion ?: 'Producto fresco y preparado para la comunidad de la UTB.' }}</p>
                             </div>
                             <div class="product-footer">
-                                <span class="product-price">${{ number_format($producto->precio, 2) }}</span>
+                                <div>
+                                    @if ($producto->tiene_descuento)
+                                        <s style="font-size:0.85rem; color:var(--text-muted); display:block;">${{ number_format($producto->precio, 2) }}</s>
+                                        <span class="product-price" style="color:#ba1a1a;">${{ number_format($producto->precio_efectivo, 2) }}</span>
+                                    @else
+                                        <span class="product-price">${{ number_format($producto->precio, 2) }}</span>
+                                    @endif
+                                </div>
                                 @auth
-                                    <button type="button"
-                                            class="btn btn-primary"
-                                            style="min-height:36px; padding:0.35rem 1rem; font-size:0.88rem; width:auto;"
-                                            onclick="abrirPedido({{ $producto->id }}, '{{ addslashes($producto->nombre) }}', {{ $producto->precio }})">
-                                        Pedir 🛍️
-                                    </button>
+                                    @if (!$tienda->recibiendo_pedidos)
+                                        <button type="button"
+                                                class="btn btn-secondary"
+                                                style="min-height:36px; padding:0.35rem 0.8rem; font-size:0.82rem; opacity:0.6; cursor:not-allowed;"
+                                                title="La tienda no está recibiendo pedidos" disabled>
+                                            Pausada ⏸️
+                                        </button>
+                                    @else
+                                        <button type="button"
+                                                class="btn btn-primary"
+                                                style="min-height:36px; padding:0.35rem 1rem; font-size:0.88rem; width:auto;"
+                                                onclick="abrirPedido({{ $producto->id }}, '{{ addslashes($producto->nombre) }}', {{ $producto->precio_efectivo }}, {{ $producto->tiene_descuento ? 'true' : 'false' }}, {{ $producto->precio }})">
+                                            Pedir 🛍️
+                                        </button>
+                                    @endif
                                 @else
                                     <a href="/app/login" class="btn btn-secondary"
                                        style="min-height:36px; padding:0.35rem 0.85rem; font-size:0.82rem; width:auto;">
@@ -515,9 +552,13 @@
 <script>
     let precioUnitarioActual = 0;
 
-    function abrirPedido(id, nombre, precio) {
+    function abrirPedido(id, nombre, precio, tieneDescuento = false, precioOriginal = 0) {
         document.getElementById('modalProductoId').value = id;
-        document.getElementById('modalProductoNombre').innerText = 'Pedir: ' + nombre;
+        let titulo = 'Pedir: ' + nombre;
+        if (tieneDescuento) {
+            titulo += ' (Oferta)';
+        }
+        document.getElementById('modalProductoNombre').innerText = titulo;
         document.getElementById('cantidad').value = 1;
         precioUnitarioActual = precio;
         actualizarTotal();

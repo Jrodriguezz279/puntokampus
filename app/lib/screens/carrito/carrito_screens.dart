@@ -148,7 +148,27 @@ class CarritoScreen extends StatelessWidget {
                             children: [
                               Text(item.producto.nombre, style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15)),
                               const SizedBox(height: 2),
-                              Text('\$${item.producto.precio.toStringAsFixed(2)} c/u', style: PKTextStyles.etiqueta),
+                              Row(
+                                children: [
+                                  Text(
+                                    '\$${item.producto.precioEfectivo.toStringAsFixed(2)} c/u',
+                                    style: PKTextStyles.etiqueta.copyWith(
+                                      color: item.producto.tieneDescuento ? const Color(0xFFCC4E01) : null,
+                                      fontWeight: item.producto.tieneDescuento ? FontWeight.bold : null,
+                                    ),
+                                  ),
+                                  if (item.producto.tieneDescuento) ...[
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '\$${item.producto.precio.toStringAsFixed(2)}',
+                                      style: PKTextStyles.etiqueta.copyWith(
+                                        decoration: TextDecoration.lineThrough,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ],
                           ),
                         ),

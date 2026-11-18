@@ -55,6 +55,24 @@ class PedidoController extends Controller
             ], 422);
         }
 
+        // Validación: Interruptor "No estoy recibiendo pedidos"
+        if (isset($tienda->recibiendo_pedidos) && !$tienda->recibiendo_pedidos) {
+            return response()->json([
+                'message' => 'Esta tienda ha pausado la recepción de pedidos temporalmente ("No estoy recibiendo pedidos").',
+            ], 422);
+        }
+
+        // Validación: Horario por días y franja (los pedidos solo se aceptan dentro del horario o desde la siguiente apertura)
+        if (!empty($tienda->hora_apertura) && !empty($tienda->hora_cierre)) {
+            $horaEntrega = \Carbon\Carbon::parse($request->input('hora_entrega'))->timezone('America/Guayaquil');
+            $horaEntregaStr = $horaEntrega->format('H:i');
+            if ($horaEntregaStr < $tienda->hora_apertura || $horaEntregaStr > $tienda->hora_cierre) {
+                return response()->json([
+                    'message' => "Esta tienda solo acepta pedidos dentro de su horario ({$tienda->hora_apertura} a {$tienda->hora_cierre}) o desde su siguiente apertura.",
+                ], 422);
+            }
+        }
+
         // 4. R12: Autoregalo prohibido (el comprador no puede ser el dueño de la tienda)
         if ($tienda->usuario_id === $comprador->id) {
             return response()->json([
@@ -62,14 +80,14 @@ class PedidoController extends Controller
             ], 422);
         }
 
-        // 5. R14: Calcular total en el servidor con los precios actuales en BD
+        // 5. R14: Calcular total en el servidor con los precios actuales en BD (incluye descuentos)
         $total = 0;
         $itemsParaGuardar = [];
 
         foreach ($itemsInput as $itemInput) {
             $producto = $productos->firstWhere('id', $itemInput['producto_id']);
             $cantidad = (int) $itemInput['cantidad'];
-            $precio = (float) $producto->precio;
+            $precio = (float) $producto->precio_efectivo;
             $subtotal = round($precio * $cantidad, 2);
             $total += $subtotal;
 
@@ -118,5 +136,30 @@ class PedidoController extends Controller
         return (new PedidoResource($pedido))
             ->response()
             ->setStatusCode(201);
+    }
+
+    /**
+     * GET /api/v1/pedidos/{codigo}/qr
+     * Retorna imagen SVG del código QR de confirmación de entrega (Tramo 2)
+     */
+    public function verQr(string $codigo)
+    {
+        $pedido = Pedido::where('codigo', $codigo)->firstOrFail();
+        $codigoEntrega = '0000';
+        if (!empty($pedido->codigo_entrega)) {
+            try {
+                $codigoEntrega = Crypt::decryptString($pedido->codigo_entrega);
+            } catch (\Throwable $e) {
+                $codigoEntrega = '0000';
+            }
+        }
+
+        $payload = "PK:{$pedido->codigo}:{$codigoEntrega}";
+        $svg = \App\Services\QrService::generarSvg($payload, 280);
+
+        return response($svg, 200, [
+            'Content-Type' => 'image/svg+xml',
+            'Cache-Control' => 'no-cache, private',
+        ]);
     }
 }

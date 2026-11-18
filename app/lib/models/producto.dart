@@ -27,6 +27,8 @@ class Producto {
   final String nombre;
   final String? descripcion;
   final double precio;
+  final double? precioDescuento;
+  final bool descuentoActivo;
   final bool disponible;
   final List<ProductoFoto> fotos;
 
@@ -36,9 +38,20 @@ class Producto {
     required this.nombre,
     this.descripcion,
     required this.precio,
+    this.precioDescuento,
+    this.descuentoActivo = false,
     this.disponible = true,
     this.fotos = const [],
   });
+
+  // --- Tramo 2: Descuentos ---
+  bool get tieneDescuento =>
+      descuentoActivo && precioDescuento != null && precioDescuento! > 0 && precioDescuento! < precio;
+
+  double get precioEfectivo => tieneDescuento ? precioDescuento! : precio;
+
+  double get porcentajeDescuento =>
+      tieneDescuento ? ((precio - precioDescuento!) / precio * 100) : 0.0;
 
   factory Producto.fromJson(Map<String, dynamic> json) {
     var rawFotos = json['fotos'] as List<dynamic>? ?? [];
@@ -53,6 +66,12 @@ class Producto {
       nombre: json['nombre']?.toString() ?? '',
       descripcion: json['descripcion']?.toString(),
       precio: (json['precio'] != null) ? double.tryParse(json['precio'].toString()) ?? 0.0 : 0.0,
+      precioDescuento: json['precio_descuento'] != null
+          ? double.tryParse(json['precio_descuento'].toString())
+          : null,
+      descuentoActivo: json['descuento_activo'] == true ||
+          json['descuento_activo'] == 1 ||
+          json['descuento_activo']?.toString() == 'true',
       disponible: json['disponible'] == true || json['disponible'] == 1 || json['disponible']?.toString() == 'true',
       fotos: fotosList,
     );

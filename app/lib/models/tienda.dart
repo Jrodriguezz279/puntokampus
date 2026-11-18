@@ -18,6 +18,13 @@ class Tienda {
   final Categoria? categoria2;
   final PuntoEntrega? puntoEntrega;
   final List<Producto> productos;
+  // Tramo 2: Horario por días/franja e interruptor de pedidos
+  final bool recibiendoPedidos;
+  final String? diasAtencion;
+  final String? horaApertura;
+  final String? horaCierre;
+  final bool estaAbierto;
+  final String? siguienteApertura;
 
   Tienda({
     required this.id,
@@ -35,10 +42,17 @@ class Tienda {
     this.categoria2,
     this.puntoEntrega,
     this.productos = const [],
+    this.recibiendoPedidos = true,
+    this.diasAtencion,
+    this.horaApertura,
+    this.horaCierre,
+    this.estaAbierto = true,
+    this.siguienteApertura,
   });
 
   bool get esPremium => plan.toLowerCase() == 'premium';
   bool get estaActiva => estado.toLowerCase() == 'activa';
+  bool get puedeRecibirPedidos => estaActiva && recibiendoPedidos;
 
   factory Tienda.fromJson(Map<String, dynamic> json) {
     var rawProds = json['productos'] as List<dynamic>? ?? [];
@@ -69,6 +83,13 @@ class Tienda {
           ? PuntoEntrega.fromJson(json['punto_entrega'] as Map<String, dynamic>)
           : null,
       productos: prodsList,
+      // Tramo 2
+      recibiendoPedidos: json['recibiendo_pedidos'] == true || json['recibiendo_pedidos'] == 1 || json['recibiendo_pedidos']?.toString() == 'true',
+      diasAtencion: json['dias_atencion']?.toString(),
+      horaApertura: json['hora_apertura']?.toString(),
+      horaCierre: json['hora_cierre']?.toString(),
+      estaAbierto: json['esta_abierto'] == true || json['esta_abierto'] == 1 || json['esta_abierto']?.toString() == 'true',
+      siguienteApertura: json['siguiente_apertura']?.toString(),
     );
   }
 }

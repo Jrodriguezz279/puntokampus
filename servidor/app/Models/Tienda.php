@@ -21,6 +21,10 @@ class Tienda extends Model
         'categoria_1_id',
         'categoria_2_id',
         'horario',
+        'recibiendo_pedidos',
+        'dias_atencion',
+        'hora_apertura',
+        'hora_cierre',
         'punto_entrega_id',
         'plan',
         'premium_hasta',
@@ -32,9 +36,58 @@ class Tienda extends Model
     protected function casts(): array
     {
         return [
+            'recibiendo_pedidos' => 'boolean',
             'premium_hasta' => 'date',
             'dada_de_baja_en' => 'datetime',
         ];
+    }
+
+    /**
+     * Verifica si la tienda se encuentra abierta y recibiendo pedidos en este momento.
+     */
+    public function estaAbiertoAhora(): bool
+    {
+        if (isset($this->recibiendo_pedidos) && !$this->recibiendo_pedidos) {
+            return false;
+        }
+
+        if (empty($this->hora_apertura) || empty($this->hora_cierre)) {
+            return true;
+        }
+
+        $ahora = now()->timezone('America/Guayaquil');
+        $horaActual = $ahora->format('H:i');
+
+        if (!empty($this->dias_atencion)) {
+            $diasConfig = strtolower($this->dias_atencion);
+            $diaSemana = $ahora->dayOfWeekIso; // 1 = Lunes, 7 = Domingo
+
+            if (str_contains($diasConfig, 'lunes a viernes') && !in_array($diaSemana, [1, 2, 3, 4, 5])) {
+                return false;
+            }
+            if (str_contains($diasConfig, 'lunes a sabado') && !in_array($diaSemana, [1, 2, 3, 4, 5, 6])) {
+                return false;
+            }
+        }
+
+        return $horaActual >= $this->hora_apertura && $horaActual <= $this->hora_cierre;
+    }
+
+    /**
+     * Devuelve una descripción legible de la siguiente apertura.
+     */
+    public function siguienteAperturaTexto(): string
+    {
+        if (isset($this->recibiendo_pedidos) && !$this->recibiendo_pedidos) {
+            return 'Pausada (No recibe pedidos)';
+        }
+
+        if (!empty($this->hora_apertura)) {
+            $dias = !empty($this->dias_atencion) ? $this->dias_atencion : 'su próximo día hábil';
+            return "Abre a las {$this->hora_apertura} ({$dias})";
+        }
+
+        return 'En su próximo horario habitual';
     }
 
     public function usuario()

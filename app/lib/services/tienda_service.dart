@@ -28,9 +28,13 @@ class TiendaService {
     required int puntoEntregaId,
     required String horario,
     String? whatsapp,
+    bool? recibiendoPedidos,
+    List<int>? diasAtencion,
+    String? horaApertura,
+    String? horaCierre,
     bool esCreacion = true,
   }) async {
-    final body = {
+    final Map<String, dynamic> body = {
       'nombre': nombre,
       'descripcion': descripcion,
       'categoria_1_id': categoria1Id,
@@ -39,6 +43,10 @@ class TiendaService {
       'horario': horario,
       'whatsapp': whatsapp,
     };
+    if (recibiendoPedidos != null) body['recibiendo_pedidos'] = recibiendoPedidos;
+    if (diasAtencion != null) body['dias_atencion'] = diasAtencion;
+    if (horaApertura != null) body['hora_apertura'] = horaApertura;
+    if (horaCierre != null) body['hora_cierre'] = horaCierre;
 
     final response = esCreacion
         ? await ApiService.post('/mi-tienda', body: body)
@@ -48,19 +56,31 @@ class TiendaService {
     return Tienda.fromJson(data as Map<String, dynamic>);
   }
 
+  // Tramo 2: Toggle recibir pedidos
+  static Future<bool> toggleRecibiendoPedidos() async {
+    final response = await ApiService.post('/mi-tienda/toggle-pedidos');
+    return response['recibiendo_pedidos'] == true;
+  }
+
   // P16: Crear producto
   static Future<Producto> crearProducto({
     required String nombre,
     required String descripcion,
     required double precio,
+    double? precioDescuento,
+    bool? descuentoActivo,
     bool disponible = true,
   }) async {
-    final response = await ApiService.post('/mi-tienda/productos', body: {
+    final Map<String, dynamic> body = {
       'nombre': nombre,
       'descripcion': descripcion,
       'precio': precio,
       'disponible': disponible,
-    });
+    };
+    if (precioDescuento != null) body['precio_descuento'] = precioDescuento;
+    if (descuentoActivo != null) body['descuento_activo'] = descuentoActivo;
+
+    final response = await ApiService.post('/mi-tienda/productos', body: body);
 
     final data = (response is Map<String, dynamic> && response.containsKey('producto')) ? response['producto'] : response;
     return Producto.fromJson(data as Map<String, dynamic>);
@@ -71,8 +91,22 @@ class TiendaService {
     String? nombre,
     String? descripcion,
     double? precio,
+    double? precioDescuento,
+    bool? descuentoActivo,
     bool? disponible,
   }) async {
+    final Map<String, dynamic> body = {};
+    if (nombre != null) body['nombre'] = nombre;
+    if (descripcion != null) body['descripcion'] = descripcion;
+    if (precio != null) body['precio'] = precio;
+    if (precioDescuento != null) body['precio_descuento'] = precioDescuento;
+    if (descuentoActivo != null) body['descuento_activo'] = descuentoActivo;
+    if (disponible != null) body['disponible'] = disponible;
+
+    final response = await ApiService.put('/mi-tienda/productos/$productoId', body: body);
+    final data = (response is Map<String, dynamic> && response.containsKey('producto')) ? response['producto'] : response;
+    return Producto.fromJson(data as Map<String, dynamic>);
+  }
     final Map<String, dynamic> body = {};
     if (nombre != null) body['nombre'] = nombre;
     if (descripcion != null) body['descripcion'] = descripcion;

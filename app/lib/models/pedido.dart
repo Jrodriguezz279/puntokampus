@@ -49,6 +49,9 @@ class Pedido {
   /// Solo visible para el comprador dueño del pedido cuando está en estado "pendiente".
   final String? codigoEntrega;
   final bool codigoBloqueado;
+  // Tramo 2: QR
+  final String? qrUrl;
+  final String? qrPayload;
 
   Pedido({
     required this.id,
@@ -69,6 +72,8 @@ class Pedido {
     this.creadoEn,
     this.codigoEntrega,
     this.codigoBloqueado = false,
+    this.qrUrl,
+    this.qrPayload,
   });
 
   bool get esPendiente => estado.trim().toLowerCase() == 'pendiente';
@@ -98,6 +103,8 @@ class Pedido {
       creadoEn: json['created_at'] as String?,
       codigoEntrega: json['codigo_entrega'] as String?,
       codigoBloqueado: json['codigo_bloqueado'] == true || json['codigo_bloqueado'] == 1,
+      qrUrl: json['qr_url']?.toString(),
+      qrPayload: json['qr_payload']?.toString(),
     );
   }
 }
@@ -111,5 +118,5 @@ class CartItem {
     this.cantidad = 1,
   });
 
-  double get subtotal => producto.precio * cantidad;
+  double get subtotal => producto.precioEfectivo * cantidad;
 }

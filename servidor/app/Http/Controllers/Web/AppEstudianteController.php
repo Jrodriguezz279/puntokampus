@@ -16,6 +16,7 @@ use App\Models\Tienda;
 use App\Models\Usuario;
 use App\Services\AuthService;
 use App\Services\ImagenService;
+use App\Services\QrService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class AppEstudianteController extends Controller
 {
@@ -65,10 +67,36 @@ class AppEstudianteController extends Controller
             });
         }
 
-        $tiendas = $query->orderByRaw("plan = 'premium' DESC")->paginate(20);
+        // Premium primero en su categoría / vitrina
+        $tiendas = $query->orderByRaw("CASE WHEN plan = 'premium' THEN 0 ELSE 1 END")
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
         $categorias = Categoria::orderBy('orden')->get();
 
-        return view('app.vitrina', compact('tiendas', 'categorias', 'categoriaId', 'busqueda'));
+        // Tramo 2: Tiendas destacadas (Premium) y ofertas para el Carrusel de la Vitrina
+        $carruselTiendas = Tienda::where('estado', 'activa')
+            ->where('plan', 'premium')
+            ->with(['categoria1', 'productos' => function ($q) {
+                $q->whereNull('eliminado_en')->where('disponible', true);
+            }])
+            ->take(6)
+            ->get();
+
+        $carruselOfertas = Producto::whereNull('eliminado_en')
+            ->where('disponible', true)
+            ->where('descuento_activo', true)
+            ->with(['tienda', 'fotos'])
+            ->take(6)
+            ->get();
+
+        return view('app.vitrina', compact(
+            'tiendas',
+            'categorias',
+            'categoriaId',
+            'busqueda',
+            'carruselTiendas',
+            'carruselOfertas'
+        ));
     }
 
     /**
@@ -453,14 +481,18 @@ class AppEstudianteController extends Controller
         }
 
         $datos = $request->validate([
-            'nombre'           => ['required', 'string', 'max:40'],
-            'descripcion'      => ['nullable', 'string', 'max:300'],
-            'categoria_1_id'   => ['required', 'exists:categorias,id'],
-            'categoria_2_id'   => ['nullable', 'different:categoria_1_id', 'exists:categorias,id'],
-            'punto_entrega_id' => ['nullable', 'exists:puntos_entrega,id'],
-            'horario'          => ['nullable', 'string', 'max:100'],
-            'whatsapp'         => ['required', 'string', 'max:20'],
-            'logo'             => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'nombre'             => ['required', 'string', 'max:40'],
+            'descripcion'        => ['nullable', 'string', 'max:300'],
+            'categoria_1_id'     => ['required', 'exists:categorias,id'],
+            'categoria_2_id'     => ['nullable', 'different:categoria_1_id', 'exists:categorias,id'],
+            'punto_entrega_id'   => ['nullable', 'exists:puntos_entrega,id'],
+            'horario'            => ['nullable', 'string', 'max:100'],
+            'dias_atencion'      => ['nullable', 'string', 'max:100'],
+            'hora_apertura'      => ['nullable', 'string', 'max:10'],
+            'hora_cierre'        => ['nullable', 'string', 'max:10'],
+            'recibiendo_pedidos' => ['nullable', 'boolean'],
+            'whatsapp'           => ['required', 'string', 'max:20'],
+            'logo'               => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
         ]);
 
         // Formatear WhatsApp
@@ -497,6 +529,10 @@ class AppEstudianteController extends Controller
         $tienda->categoria_2_id = $datos['categoria_2_id'] ?? null;
         $tienda->punto_entrega_id = $datos['punto_entrega_id'] ?? null;
         $tienda->horario = $datos['horario'] ?? null;
+        $tienda->dias_atencion = $datos['dias_atencion'] ?? null;
+        $tienda->hora_apertura = $datos['hora_apertura'] ?? null;
+        $tienda->hora_cierre = $datos['hora_cierre'] ?? null;
+        $tienda->recibiendo_pedidos = $request->has('recibiendo_pedidos') ? (bool) $request->input('recibiendo_pedidos') : true;
         $tienda->save();
 
         return redirect('/app/mi-tienda')->with('mensaje', 'Información de la tienda actualizada con éxito.');
@@ -514,14 +550,18 @@ class AppEstudianteController extends Controller
         }
 
         $datos = $request->validate([
-            'nombre'           => ['required', 'string', 'max:40'],
-            'descripcion'      => ['nullable', 'string', 'max:300'],
-            'categoria_1_id'   => ['required', 'exists:categorias,id'],
-            'categoria_2_id'   => ['nullable', 'different:categoria_1_id', 'exists:categorias,id'],
-            'punto_entrega_id' => ['nullable', 'exists:puntos_entrega,id'],
-            'horario'          => ['nullable', 'string', 'max:100'],
-            'whatsapp'         => ['required', 'string', 'max:20'],
-            'logo'             => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'nombre'             => ['required', 'string', 'max:40'],
+            'descripcion'        => ['nullable', 'string', 'max:300'],
+            'categoria_1_id'     => ['required', 'exists:categorias,id'],
+            'categoria_2_id'     => ['nullable', 'different:categoria_1_id', 'exists:categorias,id'],
+            'punto_entrega_id'   => ['nullable', 'exists:puntos_entrega,id'],
+            'horario'            => ['nullable', 'string', 'max:100'],
+            'dias_atencion'      => ['nullable', 'string', 'max:100'],
+            'hora_apertura'      => ['nullable', 'string', 'max:10'],
+            'hora_cierre'        => ['nullable', 'string', 'max:10'],
+            'recibiendo_pedidos' => ['nullable', 'boolean'],
+            'whatsapp'           => ['required', 'string', 'max:20'],
+            'logo'               => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
         ]);
 
         // Formatear WhatsApp
@@ -548,17 +588,21 @@ class AppEstudianteController extends Controller
         }
 
         Tienda::create([
-            'usuario_id'       => $usuario->id,
-            'nombre'           => $datos['nombre'],
-            'slug'             => $slug,
-            'descripcion'      => $datos['descripcion'] ?? null,
-            'categoria_1_id'   => $datos['categoria_1_id'],
-            'categoria_2_id'   => $datos['categoria_2_id'] ?? null,
-            'punto_entrega_id' => $datos['punto_entrega_id'] ?? null,
-            'horario'          => $datos['horario'] ?? null,
-            'logo_url'         => $logoUrl,
-            'plan'             => 'gratis',
-            'estado'           => 'activa',
+            'usuario_id'         => $usuario->id,
+            'nombre'             => $datos['nombre'],
+            'slug'               => $slug,
+            'descripcion'        => $datos['descripcion'] ?? null,
+            'categoria_1_id'     => $datos['categoria_1_id'],
+            'categoria_2_id'     => $datos['categoria_2_id'] ?? null,
+            'punto_entrega_id'   => $datos['punto_entrega_id'] ?? null,
+            'horario'            => $datos['horario'] ?? null,
+            'dias_atencion'      => $datos['dias_atencion'] ?? null,
+            'hora_apertura'      => $datos['hora_apertura'] ?? null,
+            'hora_cierre'        => $datos['hora_cierre'] ?? null,
+            'recibiendo_pedidos' => $request->has('recibiendo_pedidos') ? (bool) $request->input('recibiendo_pedidos') : true,
+            'logo_url'           => $logoUrl,
+            'plan'               => 'gratis',
+            'estado'             => 'activa',
         ]);
 
         return redirect('/app/mi-tienda')->with('mensaje', '¡Tu tienda ha sido creada y publicada con éxito!');
@@ -595,18 +639,25 @@ class AppEstudianteController extends Controller
         $tienda = Tienda::where('usuario_id', $usuario->id)->firstOrFail();
 
         $datos = $request->validate([
-            'nombre'      => ['required', 'string', 'max:80'],
-            'descripcion' => ['nullable', 'string', 'max:300'],
-            'precio'      => ['required', 'numeric', 'min:0.25', 'max:50'],
-            'foto'        => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'nombre'           => ['required', 'string', 'max:80'],
+            'descripcion'      => ['nullable', 'string', 'max:300'],
+            'precio'           => ['required', 'numeric', 'min:0.25', 'max:50'],
+            'precio_descuento' => ['nullable', 'numeric', 'min:0.01', 'lt:precio'],
+            'foto'             => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+        ], [
+            'precio_descuento.lt' => 'El precio con descuento debe ser menor al precio normal.',
         ]);
 
+        $tieneDescuento = !empty($datos['precio_descuento']) && (float) $datos['precio_descuento'] > 0;
+
         $producto = Producto::create([
-            'tienda_id'   => $tienda->id,
-            'nombre'      => $datos['nombre'],
-            'descripcion' => $datos['descripcion'] ?? null,
-            'precio'      => $datos['precio'],
-            'disponible'  => true,
+            'tienda_id'        => $tienda->id,
+            'nombre'           => $datos['nombre'],
+            'descripcion'      => $datos['descripcion'] ?? null,
+            'precio'           => $datos['precio'],
+            'precio_descuento' => $tieneDescuento ? $datos['precio_descuento'] : null,
+            'descuento_activo' => $tieneDescuento,
+            'disponible'       => true,
         ]);
 
         if ($request->hasFile('foto')) {
@@ -621,7 +672,7 @@ class AppEstudianteController extends Controller
     }
 
     /**
-     * P16: Actualizar producto existente (incluyendo foto y disponibilidad)
+     * P16: Actualizar producto existente (incluyendo foto, disponibilidad y descuento)
      */
     public function actualizarProducto(Request $request, int $id): RedirectResponse
     {
@@ -630,18 +681,25 @@ class AppEstudianteController extends Controller
         $producto = Producto::where('tienda_id', $tienda->id)->whereNull('eliminado_en')->findOrFail($id);
 
         $datos = $request->validate([
-            'nombre'      => ['required', 'string', 'max:80'],
-            'descripcion' => ['nullable', 'string', 'max:300'],
-            'precio'      => ['required', 'numeric', 'min:0.25', 'max:50'],
-            'disponible'  => ['nullable', 'boolean'],
-            'foto'        => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'nombre'           => ['required', 'string', 'max:80'],
+            'descripcion'      => ['nullable', 'string', 'max:300'],
+            'precio'           => ['required', 'numeric', 'min:0.25', 'max:50'],
+            'precio_descuento' => ['nullable', 'numeric', 'min:0.01', 'lt:precio'],
+            'disponible'       => ['nullable', 'boolean'],
+            'foto'             => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+        ], [
+            'precio_descuento.lt' => 'El precio con descuento debe ser menor al precio normal.',
         ]);
 
+        $tieneDescuento = !empty($datos['precio_descuento']) && (float) $datos['precio_descuento'] > 0;
+
         $producto->update([
-            'nombre'      => $datos['nombre'],
-            'descripcion' => $datos['descripcion'] ?? null,
-            'precio'      => $datos['precio'],
-            'disponible'  => $request->has('disponible') ? (bool) $request->input('disponible') : true,
+            'nombre'           => $datos['nombre'],
+            'descripcion'      => $datos['descripcion'] ?? null,
+            'precio'           => $datos['precio'],
+            'precio_descuento' => $tieneDescuento ? $datos['precio_descuento'] : null,
+            'descuento_activo' => $tieneDescuento,
+            'disponible'       => $request->has('disponible') ? (bool) $request->input('disponible') : true,
         ]);
 
         if ($request->hasFile('foto')) {
@@ -701,13 +759,37 @@ class AppEstudianteController extends Controller
             return back()->withErrors(['pedido' => 'No puedes hacer pedidos a tu propia tienda.']);
         }
 
+        // Tramo 2: Tienda no recibiendo pedidos
+        if (!$tienda->recibiendo_pedidos) {
+            $msg = 'La tienda ha pausado la recepción de pedidos temporalmente.';
+            $proxima = $tienda->siguienteAperturaTexto();
+            if ($proxima) {
+                $msg .= " {$proxima}.";
+            }
+            return back()->withErrors(['pedido' => $msg]);
+        }
+
+        // Tramo 2: Validar franja horaria de entrega si está configurada
+        if (!empty($tienda->hora_apertura) && !empty($tienda->hora_cierre)) {
+            $horaEntregaStr = Carbon::parse($datos['hora_entrega'])->format('H:i');
+            if ($horaEntregaStr < $tienda->hora_apertura || $horaEntregaStr > $tienda->hora_cierre) {
+                return back()->withErrors([
+                    'hora_entrega' => "El horario de atención es de {$tienda->hora_apertura} a {$tienda->hora_cierre}" .
+                        ($tienda->dias_atencion ? " ({$tienda->dias_atencion})" : '') .
+                        ". Por favor selecciona una hora dentro del horario o desde la siguiente apertura."
+                ]);
+            }
+        }
+
         $producto = Producto::where('id', $datos['producto_id'])
             ->where('tienda_id', $tienda->id)
             ->whereNull('eliminado_en')
             ->where('disponible', true)
             ->firstOrFail();
 
-        $subtotal = round($producto->precio * $datos['cantidad'], 2);
+        // Tramo 2: Descuentos para Premium / Productos con descuento activo
+        $precioUnitario = $producto->precio_efectivo;
+        $subtotal = round($precioUnitario * $datos['cantidad'], 2);
         $total = $subtotal;
 
         // Generar código único PK-XXXXXX
@@ -715,7 +797,7 @@ class AppEstudianteController extends Controller
         // R17: Generar código numérico de 4 dígitos para entrega
         $codigoEntrega = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
-        $pedido = DB::transaction(function () use ($usuario, $tienda, $datos, $total, $codigo, $producto, $subtotal, $codigoEntrega) {
+        $pedido = DB::transaction(function () use ($usuario, $tienda, $datos, $total, $codigo, $producto, $subtotal, $precioUnitario, $codigoEntrega) {
             $nuevoPedido = Pedido::create([
                 'codigo'           => $codigo,
                 'comprador_id'     => $usuario->id,
@@ -735,7 +817,7 @@ class AppEstudianteController extends Controller
                 'pedido_id'       => $nuevoPedido->id,
                 'producto_id'     => $producto->id,
                 'nombre_producto' => $producto->nombre,
-                'precio_unitario' => $producto->precio,
+                'precio_unitario' => $precioUnitario,
                 'cantidad'        => $datos['cantidad'],
                 'subtotal'        => $subtotal,
             ]);
@@ -784,7 +866,7 @@ class AppEstudianteController extends Controller
     }
 
     /**
-     * R17: Confirmar entrega con código por el vendedor
+     * R17: Confirmar entrega con código o escaneo QR por el vendedor
      */
     public function confirmarEntrega(Request $request, string $codigo): RedirectResponse
     {
@@ -792,12 +874,20 @@ class AppEstudianteController extends Controller
         $tienda = Tienda::where('usuario_id', $usuario->id)->firstOrFail();
         $pedido = Pedido::where('codigo', $codigo)->where('tienda_id', $tienda->id)->firstOrFail();
 
-        $request->validate([
-            'codigo_entrega' => ['required', 'string', 'size:4'],
-        ], [
-            'codigo_entrega.required' => 'Ingresa el código de 4 dígitos.',
-            'codigo_entrega.size'     => 'El código debe tener exactamente 4 dígitos.',
-        ]);
+        $codigoRaw = trim((string) $request->input('codigo_entrega', ''));
+
+        // Tramo 2: Soporta tanto los 4 dígitos directos como el payload escaneado del QR "PK:<codigo>:<pin>"
+        if (preg_match('/PK:[^:]+:(\d{4})/', $codigoRaw, $matches)) {
+            $codigoEntrega = $matches[1];
+        } elseif (preg_match('/^(\d{4})$/', $codigoRaw, $matches)) {
+            $codigoEntrega = $matches[1];
+        } else {
+            $codigoEntrega = $codigoRaw;
+        }
+
+        if (strlen($codigoEntrega) !== 4 || !ctype_digit($codigoEntrega)) {
+            return back()->withErrors(['general' => 'El código de entrega debe ser de 4 dígitos numéricos o un código QR válido.']);
+        }
 
         if ($pedido->estado !== 'pendiente') {
             return back()->withErrors(['general' => "Solo se puede confirmar entrega de pedidos pendientes. Estado: '{$pedido->estado}'."]);
@@ -807,7 +897,7 @@ class AppEstudianteController extends Controller
             return back()->withErrors(['general' => 'Código bloqueado tras 5 intentos fallidos. Contacta al administrador para desbloquear.']);
         }
 
-        if (!$pedido->verificarCodigoEntrega($request->input('codigo_entrega'))) {
+        if (!$pedido->verificarCodigoEntrega($codigoEntrega)) {
             $pedido->refresh();
             if ($pedido->codigo_bloqueado) {
                 return back()->withErrors(['general' => 'Código bloqueado tras 5 intentos fallidos. Contacta al administrador.']);
@@ -824,6 +914,43 @@ class AppEstudianteController extends Controller
         ]);
 
         return back()->with('mensaje', "¡Pedido {$codigo} marcado como Entregado con éxito!");
+    }
+
+    /**
+     * Tramo 2: Ver código QR del pedido (solo para el comprador)
+     */
+    public function verQrWeb(string $codigo): Response
+    {
+        $usuario = Auth::user();
+        $pedido = Pedido::where('codigo', $codigo)
+            ->where('comprador_id', $usuario->id)
+            ->firstOrFail();
+
+        $payload = $pedido->qr_payload;
+        if (!$payload) {
+            abort(404, 'Código QR no disponible o pedido ya entregado.');
+        }
+
+        $svg = QrService::generarSvg($payload, 280);
+
+        return response($svg, 200, [
+            'Content-Type'  => 'image/svg+xml',
+            'Cache-Control' => 'no-cache, private',
+        ]);
+    }
+
+    /**
+     * Tramo 2: Alternar rápidamente interruptor "recibiendo pedidos"
+     */
+    public function toggleRecibiendoPedidos(): RedirectResponse
+    {
+        $usuario = Auth::user();
+        $tienda = Tienda::where('usuario_id', $usuario->id)->firstOrFail();
+        $tienda->recibiendo_pedidos = !$tienda->recibiendo_pedidos;
+        $tienda->save();
+
+        $estado = $tienda->recibiendo_pedidos ? 'activada (recibiendo pedidos con normalidad)' : 'pausada (no estás recibiendo pedidos)';
+        return back()->with('mensaje', "Tu tienda ahora está {$estado}.");
     }
 
     /**

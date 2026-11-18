@@ -59,6 +59,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/mi-tienda', [MiTiendaController::class, 'show']);
         Route::post('/mi-tienda', [MiTiendaController::class, 'store']);
         Route::put('/mi-tienda', [MiTiendaController::class, 'update']);
+        Route::post('/mi-tienda/toggle-pedidos', [MiTiendaController::class, 'togglePedidos']);
         Route::post('/mi-tienda/logo', [MiTiendaController::class, 'subirLogo']);
         Route::post('/mi-tienda/portada', [MiTiendaController::class, 'subirPortada']);
 
@@ -76,6 +77,7 @@ Route::prefix('v1')->group(function () {
 
         // Pedidos (H13, R11, R12, R14, R15)
         Route::post('/pedidos', [PedidoController::class, 'store']);
+        Route::get('/pedidos/{codigo}/qr', [PedidoController::class, 'verQr']);
 
         // Mis Pedidos como Comprador (H14, H15, R16)
         Route::get('/mis-pedidos', [MisPedidosController::class, 'index']);

@@ -48,6 +48,13 @@ class TiendaPedidosController extends Controller
         }
 
         $codigoEntrega = trim((string) $request->input('codigo_entrega', ''));
+        // Soporte QR (Tramo 2): Si viene con prefijo PK:CODIGO:1234 extraemos los 4 dígitos
+        if (str_contains($codigoEntrega, ':')) {
+            $partes = explode(':', $codigoEntrega);
+            $codigoEntrega = end($partes);
+        }
+        $codigoEntrega = trim($codigoEntrega);
+
         if (strlen($codigoEntrega) !== 4) {
             return response()->json(['message' => 'El código debe tener exactamente 4 dígitos.'], 422);
         }

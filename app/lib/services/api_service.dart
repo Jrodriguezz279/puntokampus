@@ -46,6 +46,9 @@ class ApiService {
     return Uri.parse(urlString).replace(queryParameters: queryParams);
   }
 
+  /// Devuelve los headers de autenticación para usar en widgets externos (ej: Image.network)
+  static Future<Map<String, String>> getAuthHeaders() => _getHeaders(requiresAuth: true);
+
   static Future<dynamic> get(String endpoint, {Map<String, String>? queryParams, bool requiresAuth = true}) async {
     try {
       final uri = _buildUri(endpoint, queryParams);

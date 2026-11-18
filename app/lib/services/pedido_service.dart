@@ -58,4 +58,9 @@ class PedidoService {
   static Future<void> cancelarPedidoVendedor(String codigo) async {
     await ApiService.put('/mi-tienda/pedidos/$codigo/cancelar');
   }
+
+  // Tramo 2: Obtener URL del QR de un pedido (para comprador)
+  static String getQrUrl(String codigoPedido) {
+    return '${ApiConstants.baseUrl}/pedidos/$codigoPedido/qr';
+  }
 }

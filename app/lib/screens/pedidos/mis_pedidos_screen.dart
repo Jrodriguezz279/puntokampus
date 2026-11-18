@@ -3,8 +3,8 @@ import '../../theme/theme.dart';
 import '../../constants/app_strings.dart';
 import '../../models/pedido.dart';
 import '../../services/pedido_service.dart';
+import '../../services/api_service.dart';
 import '../../widgets/pk_components.dart';
-
 // ══════════════════════════════════════════════════════════════════════════════
 // MIS PEDIDOS — P12 Historial de Mis Pedidos (Comprador)
 // Cumple con docs/DISENO-VISUAL.md
@@ -137,7 +137,7 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
                                   ],
                                   // R17: Mostrar código de entrega solo cuando está pendiente
                                   if (p.esPendiente && p.codigoEntrega != null)
-                                    _buildCodigoEntrega(p.codigoEntrega!),
+                                    _buildCodigoEntrega(context, p),
                                   const SizedBox(height: PKSpacing.sm),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -166,7 +166,10 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
     );
   }
 
-  Widget _buildCodigoEntrega(String codigo) {
+  Widget _buildCodigoEntrega(BuildContext context, Pedido pedido) {
+    final codigo = pedido.codigoEntrega!;
+    final qrUrl = PedidoService.getQrUrl(pedido.codigo);
+
     return Container(
       margin: const EdgeInsets.only(top: PKSpacing.sm, bottom: PKSpacing.xs),
       padding: const EdgeInsets.all(PKSpacing.base),
@@ -198,6 +201,19 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
               color: PKColors.primario,
             ),
           ),
+          const SizedBox(height: PKSpacing.sm),
+          // Tramo 2: Botón ver QR
+          OutlinedButton.icon(
+            onPressed: () => _mostrarQr(context, codigo, qrUrl),
+            icon: const Icon(Icons.qr_code_2, size: 18),
+            label: const Text('Ver código QR'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: PKColors.primario,
+              side: const BorderSide(color: PKColors.primario),
+              textStyle: const TextStyle(fontFamily: 'DMSans', fontWeight: FontWeight.w600, fontSize: 13),
+              padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: 6),
+            ),
+          ),
           const SizedBox(height: PKSpacing.xs),
           Text(
             'Muéstrale este código al vendedor cuando recibas tu pedido.',
@@ -207,4 +223,69 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
       ),
     );
   }
-}
+
+  void _mostrarQr(BuildContext context, String codigo, String qrUrl) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: PKColors.tarjeta,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(PKSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Tu código QR de entrega', style: PKTextStyles.tituloSeccion),
+            const SizedBox(height: PKSpacing.base),
+            Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                color: PKColors.fondo,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: PKColors.borde),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: FutureBuilder<Map<String, String>>(
+                future: ApiService.getAuthHeaders(),
+                builder: (ctx, snap) {
+                  if (!snap.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  return Image.network(
+                    qrUrl,
+                    fit: BoxFit.contain,
+                    headers: snap.data!,
+                    loadingBuilder: (_, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(child: CircularProgressIndicator());
+                    },
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Icon(Icons.qr_code_2, size: 80, color: PKColors.secundario),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: PKSpacing.base),
+            Text(
+              codigo,
+              style: PKTextStyles.tituloPantalla.copyWith(
+                letterSpacing: 8,
+                fontSize: 36,
+                color: PKColors.primario,
+              ),
+            ),
+            const SizedBox(height: PKSpacing.sm),
+            Text(
+              'Muéstrale este QR o el código de 4 dígitos al vendedor.',
+              textAlign: TextAlign.center,
+              style: PKTextStyles.etiqueta,
+            ),
+            const SizedBox(height: PKSpacing.xl),
+          ],
+        ),
+      ),
+    );
+  }

@@ -163,6 +163,12 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
 
             const SliverToBoxAdapter(child: SizedBox(height: PKSpacing.base)),
 
+            // --- Tramo 2: Carrusel de Destacados ---
+            if (!vitrina.cargando && vitrina.tiendas.any((t) => t.esPremium || t.puedeRecibirPedidos))
+              SliverToBoxAdapter(
+                child: _CarruselDestacados(tiendas: vitrina.tiendas),
+              ),
+
             // Título de la sección
             SliverToBoxAdapter(
               child: Padding(
@@ -228,6 +234,134 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
       ),
     );
   }
+}
+
+// ─── Carrusel Destacados (Tramo 2) ──────────────────────────────────────────
+class _CarruselDestacados extends StatelessWidget {
+  final List<Tienda> tiendas;
+  const _CarruselDestacados({required this.tiendas});
+
+  @override
+  Widget build(BuildContext context) {
+    // Prioridad: premium primero, luego abiertas
+    final destacadas = [...tiendas.where((t) => t.esPremium), ...tiendas.where((t) => !t.esPremium && t.puedeRecibirPedidos)];
+    if (destacadas.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCC4E01),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  '⭐ DESTACADOS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                    fontFamily: 'DMSans',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 130,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
+            itemCount: destacadas.length,
+            itemBuilder: (context, index) {
+              final t = destacadas[index];
+              return GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => TiendaScreen(slug: t.slug)),
+                ),
+                child: Container(
+                  width: 160,
+                  margin: const EdgeInsets.only(right: PKSpacing.md, bottom: PKSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: PKColors.tarjeta,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: t.esPremium ? const Color(0xFFCC4E01) : PKColors.borde,
+                      width: t.esPremium ? 1.5 : 1,
+                    ),
+                    boxShadow: PKShadows.tarjeta,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(PKSpacing.md),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: PKColors.primarioSuave,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: PKColors.borde),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: (t.logoUrl != null && t.logoUrl!.isNotEmpty)
+                                  ? Image.network(t.logoUrl!, fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => _inicial(t.nombre))
+                                  : _inicial(t.nombre),
+                            ),
+                            const SizedBox(width: 6),
+                            if (t.esPremium)
+                              const Icon(Icons.star_rounded, color: Color(0xFFCC4E01), size: 16),
+                          ],
+                        ),
+                        const SizedBox(height: PKSpacing.sm),
+                        Text(
+                          t.nombre,
+                          style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 13),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        if (!t.puedeRecibirPedidos)
+                          const Text('⏸ Pausada',
+                            style: TextStyle(fontSize: 11, color: Color(0xFFBA1A1A), fontFamily: 'DMSans'),
+                          )
+                        else if (t.categoria1 != null)
+                          Text(t.categoria1!.nombre,
+                            style: PKTextStyles.etiqueta,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: PKSpacing.sm),
+      ],
+    );
+  }
+
+  Widget _inicial(String nombre) => Center(
+    child: Text(
+      nombre.isNotEmpty ? nombre[0].toUpperCase() : 'T',
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PKColors.primario, fontFamily: 'DMSans'),
+    ),
+  );
 }
 
 // ─── P07: Detalle de Tienda y Catálogo ─────────────────────────────────────────
@@ -415,6 +549,36 @@ class _TiendaScreenState extends State<TiendaScreen> {
                     const SizedBox(height: PKSpacing.xs),
                     Text('⏰ Horario: ${t.horario}', style: PKTextStyles.etiqueta),
                   ],
+                  if (!t.puedeRecibirPedidos) ...[
+                    const SizedBox(height: PKSpacing.sm),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFEDED),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFFCDD2)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: Color(0xFFBA1A1A), size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              !t.recibiendoPedidos
+                                  ? 'Esta tienda ha pausado sus pedidos temporalmente.'
+                                  : 'Fuera de horario de atención. Abre ${t.siguienteApertura ?? "próximamente"}.',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFFBA1A1A),
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'DMSans',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -458,6 +622,10 @@ class _TiendaScreenState extends State<TiendaScreen> {
                       );
                     },
                     onAddToCart: () {
+                      if (!t.puedeRecibirPedidos) {
+                        pkSnackError(context, 'Esta tienda no está recibiendo pedidos en este momento.');
+                        return;
+                      }
                       final agregado = cart.agregarProducto(prod, t);
                       if (!agregado) {
                         showDialog(
@@ -552,9 +720,11 @@ class _ProductoScreenState extends State<ProductoScreen> {
             const SizedBox(width: PKSpacing.base),
             Expanded(
               child: PKBotonPrimario(
-                texto: p.disponible ? 'Agregar \$${(p.precio * _cantidad).toStringAsFixed(2)}' : 'Agotado',
+                texto: !widget.tienda.puedeRecibirPedidos
+                    ? 'Tienda en pausa'
+                    : (p.disponible ? 'Agregar \$${(p.precioEfectivo * _cantidad).toStringAsFixed(2)}' : 'Agotado'),
                 icono: Icons.add_shopping_cart,
-                onPressed: p.disponible
+                onPressed: (p.disponible && widget.tienda.puedeRecibirPedidos)
                     ? () {
                         cart.agregarProducto(p, widget.tienda, cantidad: _cantidad);
                         Navigator.pop(context);
@@ -591,7 +761,40 @@ class _ProductoScreenState extends State<ProductoScreen> {
             const SizedBox(height: PKSpacing.base),
             Text(p.nombre, style: PKTextStyles.tituloPantalla.copyWith(fontSize: 22)),
             const SizedBox(height: PKSpacing.sm),
-            Text('\$${p.precio.toStringAsFixed(2)}', style: PKTextStyles.precioGrande),
+            if (p.tieneDescuento) ...[
+              Row(
+                children: [
+                  Text('\$${p.precioEfectivo.toStringAsFixed(2)}', style: PKTextStyles.precioGrande),
+                  const SizedBox(width: PKSpacing.sm),
+                  Text(
+                    '\$${p.precio.toStringAsFixed(2)}',
+                    style: PKTextStyles.tituloTarjeta.copyWith(
+                      decoration: TextDecoration.lineThrough,
+                      color: PKColors.secundario,
+                    ),
+                  ),
+                  const SizedBox(width: PKSpacing.sm),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCC4E01),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${p.porcentajeDescuento.toStringAsFixed(0)}% OFF',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              Text('\$${p.precio.toStringAsFixed(2)}', style: PKTextStyles.precioGrande),
+            ],
             const SizedBox(height: PKSpacing.base),
             if (p.descripcion != null && p.descripcion!.isNotEmpty) ...[
               Text('Descripción', style: PKTextStyles.tituloTarjeta),
