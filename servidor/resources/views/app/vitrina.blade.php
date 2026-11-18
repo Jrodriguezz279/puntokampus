@@ -588,6 +588,7 @@
 
                 {{-- Productos con Descuento Activo --}}
                 @foreach ($carruselOfertas as $cOferta)
+                    @if($cOferta->tienda)
                     <a href="/app/tienda/{{ $cOferta->tienda->slug }}" class="carousel-slide" style="border-left: 3px solid #ba1a1a;">
                         <div>
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
@@ -610,10 +611,11 @@
                             </div>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-muted); padding-top:0.5rem; border-top:1px solid var(--border);">
-                            <span>📍 {{ $cOferta->tienda->puntoEntrega->nombre ?? 'Campus UTB' }}</span>
+                            <span>📍 {{ $cOferta->tienda->puntoEntrega?->nombre ?? 'Campus UTB' }}</span>
                             <span style="color:var(--primary); font-weight:600;">Pedir ahora →</span>
                         </div>
                     </a>
+                    @endif
                 @endforeach
             </div>
         </section>

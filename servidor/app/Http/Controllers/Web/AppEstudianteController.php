@@ -69,7 +69,7 @@ class AppEstudianteController extends Controller
 
         // Premium primero en su categoría / vitrina
         $tiendas = $query->orderByRaw("CASE WHEN plan = 'premium' THEN 0 ELSE 1 END")
-            ->orderBy('created_at', 'desc')
+            ->orderBy('creado_en', 'desc')
             ->paginate(20);
         $categorias = Categoria::orderBy('orden')->get();
 
@@ -85,7 +85,8 @@ class AppEstudianteController extends Controller
         $carruselOfertas = Producto::whereNull('eliminado_en')
             ->where('disponible', true)
             ->where('descuento_activo', true)
-            ->with(['tienda', 'fotos'])
+            ->whereHas('tienda', fn($q) => $q->where('estado', 'activa'))
+            ->with(['tienda.puntoEntrega', 'fotos'])
             ->take(6)
             ->get();
 
