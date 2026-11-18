@@ -107,16 +107,6 @@ class TiendaService {
     final data = (response is Map<String, dynamic> && response.containsKey('producto')) ? response['producto'] : response;
     return Producto.fromJson(data as Map<String, dynamic>);
   }
-    final Map<String, dynamic> body = {};
-    if (nombre != null) body['nombre'] = nombre;
-    if (descripcion != null) body['descripcion'] = descripcion;
-    if (precio != null) body['precio'] = precio;
-    if (disponible != null) body['disponible'] = disponible;
-
-    final response = await ApiService.put('/mi-tienda/productos/$productoId', body: body);
-    final data = (response is Map<String, dynamic> && response.containsKey('producto')) ? response['producto'] : response;
-    return Producto.fromJson(data as Map<String, dynamic>);
-  }
 
   // P16: Eliminar producto
   static Future<void> eliminarProducto(int productoId) async {

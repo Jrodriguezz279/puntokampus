@@ -895,10 +895,6 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
           descuentoActivo: tieneDescuento,
           disponible: _disponible,
         );
-          descripcion: _descController.text.trim(),
-          precio: precio,
-          disponible: _disponible,
-        );
 
         if (_fotoBytes != null && _fotoNombre != null) {
           try {

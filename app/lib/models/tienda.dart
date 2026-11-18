@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../constants/api_constants.dart';
 import 'categoria.dart';
 import 'producto.dart';
@@ -20,7 +21,7 @@ class Tienda {
   final List<Producto> productos;
   // Tramo 2: Horario por días/franja e interruptor de pedidos
   final bool recibiendoPedidos;
-  final String? diasAtencion;
+  final List<int>? diasAtencion;
   final String? horaApertura;
   final String? horaCierre;
   final bool estaAbierto;
@@ -85,7 +86,17 @@ class Tienda {
       productos: prodsList,
       // Tramo 2
       recibiendoPedidos: json['recibiendo_pedidos'] == true || json['recibiendo_pedidos'] == 1 || json['recibiendo_pedidos']?.toString() == 'true',
-      diasAtencion: json['dias_atencion']?.toString(),
+      diasAtencion: (json['dias_atencion'] is List)
+          ? (json['dias_atencion'] as List)
+              .map((d) => int.tryParse(d.toString()) ?? 0)
+              .where((d) => d > 0)
+              .toList()
+          : (json['dias_atencion'] != null && json['dias_atencion'].toString().startsWith('[')
+              ? (jsonDecode(json['dias_atencion'].toString()) as List<dynamic>?)
+                  ?.map((d) => int.tryParse(d.toString()) ?? 0)
+                  .where((d) => d > 0)
+                  .toList()
+              : null),
       horaApertura: json['hora_apertura']?.toString(),
       horaCierre: json['hora_cierre']?.toString(),
       estaAbierto: json['esta_abierto'] == true || json['esta_abierto'] == 1 || json['esta_abierto']?.toString() == 'true',
