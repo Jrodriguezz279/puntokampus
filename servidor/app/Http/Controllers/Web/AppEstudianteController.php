@@ -937,10 +937,10 @@ class AppEstudianteController extends Controller
             abort(404, 'Código QR no disponible o pedido ya entregado.');
         }
 
-        $svg = QrService::generarSvg($payload, 280);
+        $png = QrService::generarPng($payload, 280);
 
-        return response($svg, 200, [
-            'Content-Type'  => 'image/svg+xml',
+        return response($png, 200, [
+            'Content-Type'  => 'image/png',
             'Cache-Control' => 'no-cache, private',
         ]);
     }
