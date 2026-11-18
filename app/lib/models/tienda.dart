@@ -86,17 +86,33 @@ class Tienda {
       productos: prodsList,
       // Tramo 2
       recibiendoPedidos: json['recibiendo_pedidos'] == true || json['recibiendo_pedidos'] == 1 || json['recibiendo_pedidos']?.toString() == 'true',
-      diasAtencion: (json['dias_atencion'] is List)
-          ? (json['dias_atencion'] as List)
-              .map((d) => int.tryParse(d.toString()) ?? 0)
-              .where((d) => d > 0)
-              .toList()
-          : (json['dias_atencion'] != null && json['dias_atencion'].toString().startsWith('[')
-              ? (jsonDecode(json['dias_atencion'].toString()) as List<dynamic>?)
-                  ?.map((d) => int.tryParse(d.toString()) ?? 0)
-                  .where((d) => d > 0)
-                  .toList()
-              : null),
+      diasAtencion: () {
+        final raw = json['dias_atencion'];
+        if (raw == null) return null;
+        if (raw is List) {
+          return raw.map((d) => int.tryParse(d.toString()) ?? 0).where((d) => d > 0).toList();
+        }
+        final str = raw.toString().trim();
+        if (str.startsWith('[')) {
+          try {
+            return (jsonDecode(str) as List<dynamic>?)
+                ?.map((d) => int.tryParse(d.toString()) ?? 0)
+                .where((d) => d > 0)
+                .toList();
+          } catch (_) {}
+        }
+        final lower = str.toLowerCase();
+        if (lower.contains('lunes a viernes') || lower.contains('lun a vie')) {
+          return [1, 2, 3, 4, 5];
+        }
+        if (lower.contains('lunes a sabado') || lower.contains('lun a sab') || lower.contains('lunes a sábado')) {
+          return [1, 2, 3, 4, 5, 6];
+        }
+        if (lower.contains('todos') || lower.contains('diario')) {
+          return [1, 2, 3, 4, 5, 6, 7];
+        }
+        return null;
+      }(),
       horaApertura: json['hora_apertura']?.toString(),
       horaCierre: json['hora_cierre']?.toString(),
       estaAbierto: json['esta_abierto'] == true || json['esta_abierto'] == 1 || json['esta_abierto']?.toString() == 'true',

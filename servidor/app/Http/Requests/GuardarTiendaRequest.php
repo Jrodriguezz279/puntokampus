@@ -23,7 +23,7 @@ class GuardarTiendaRequest extends FormRequest
             'categoria_2_id' => ['nullable', 'different:categoria_1_id', 'exists:categorias,id'],
             'horario' => ['nullable', 'string', 'max:100'],
             'recibiendo_pedidos' => ['nullable', 'boolean'],
-            'dias_atencion' => ['nullable', 'string', 'max:100'],
+            'dias_atencion' => ['nullable'],
             'hora_apertura' => ['nullable', 'string', 'max:10'],
             'hora_cierre' => ['nullable', 'string', 'max:10'],
             'punto_entrega_id' => ['nullable', 'exists:puntos_entrega,id'],

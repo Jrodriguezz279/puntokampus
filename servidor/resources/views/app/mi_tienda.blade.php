@@ -793,7 +793,7 @@
 
                     <div class="form-group">
                         <label for="tienda_dias_atencion">Días de Atención (opcional)</label>
-                        <input type="text" id="tienda_dias_atencion" name="dias_atencion" value="{{ old('dias_atencion', $tienda->dias_atencion) }}" placeholder="Ej: Lunes a Viernes, o Lun a Sáb" class="form-control">
+                        <input type="text" id="tienda_dias_atencion" name="dias_atencion" value="{{ old('dias_atencion', $tienda->diasAtencionLegible()) }}" placeholder="Ej: Lunes a Viernes, o Lun a Sáb" class="form-control">
                     </div>
 
                     <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">

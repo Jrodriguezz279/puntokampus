@@ -313,7 +313,7 @@
                 <div class="meta-tags">
                     <span class="meta-tag">📍 {{ $tienda->puntoEntrega->nombre ?? 'Campus' }}</span>
                     @if ($tienda->dias_atencion)
-                        <span class="meta-tag">📅 {{ $tienda->dias_atencion }}</span>
+                        <span class="meta-tag">📅 {{ $tienda->diasAtencionLegible() }}</span>
                     @endif
                     @if ($tienda->hora_apertura && $tienda->hora_cierre)
                         <span class="meta-tag">⏰ {{ $tienda->hora_apertura }} - {{ $tienda->hora_cierre }}</span>

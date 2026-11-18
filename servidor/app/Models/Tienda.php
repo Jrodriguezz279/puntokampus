@@ -59,18 +59,55 @@ class Tienda extends Model
         $horaActual = $ahora->format('H:i');
 
         if (!empty($this->dias_atencion)) {
-            $diasConfig = strtolower($this->dias_atencion);
+            $diasConfig = strtolower(trim($this->dias_atencion));
             $diaSemana = $ahora->dayOfWeekIso; // 1 = Lunes, 7 = Domingo
 
-            if (str_contains($diasConfig, 'lunes a viernes') && !in_array($diaSemana, [1, 2, 3, 4, 5])) {
-                return false;
-            }
-            if (str_contains($diasConfig, 'lunes a sabado') && !in_array($diaSemana, [1, 2, 3, 4, 5, 6])) {
-                return false;
+            if (str_starts_with($diasConfig, '[')) {
+                $diasArray = json_decode($diasConfig, true);
+                if (is_array($diasArray) && !empty($diasArray)) {
+                    if (!in_array($diaSemana, array_map('intval', $diasArray))) {
+                        return false;
+                    }
+                }
+            } else {
+                if (str_contains($diasConfig, 'lunes a viernes') && !in_array($diaSemana, [1, 2, 3, 4, 5])) {
+                    return false;
+                }
+                if (str_contains($diasConfig, 'lunes a sabado') && !in_array($diaSemana, [1, 2, 3, 4, 5, 6])) {
+                    return false;
+                }
             }
         }
 
         return $horaActual >= $this->hora_apertura && $horaActual <= $this->hora_cierre;
+    }
+
+    /**
+     * Devuelve una descripción legible de los días de atención.
+     */
+    public function diasAtencionLegible(): string
+    {
+        if (empty($this->dias_atencion)) {
+            return 'días hábiles';
+        }
+
+        $val = trim($this->dias_atencion);
+        if (str_starts_with($val, '[')) {
+            $diasArray = json_decode($val, true);
+            if (is_array($diasArray) && !empty($diasArray)) {
+                $mapa = [1 => 'Lun', 2 => 'Mar', 3 => 'Mié', 4 => 'Jue', 5 => 'Vie', 6 => 'Sáb', 7 => 'Dom'];
+                if ($diasArray === [1, 2, 3, 4, 5]) {
+                    return 'Lun a Vie';
+                }
+                if ($diasArray === [1, 2, 3, 4, 5, 6]) {
+                    return 'Lun a Sáb';
+                }
+                $nombres = array_map(fn($d) => $mapa[(int) $d] ?? (string) $d, $diasArray);
+                return implode(', ', $nombres);
+            }
+        }
+
+        return $this->dias_atencion;
     }
 
     /**
@@ -83,7 +120,7 @@ class Tienda extends Model
         }
 
         if (!empty($this->hora_apertura)) {
-            $dias = !empty($this->dias_atencion) ? $this->dias_atencion : 'su próximo día hábil';
+            $dias = $this->diasAtencionLegible();
             return "Abre a las {$this->hora_apertura} ({$dias})";
         }
 

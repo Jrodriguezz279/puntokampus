@@ -81,6 +81,10 @@ class MiTiendaController extends Controller
             $contador++;
         }
 
+        $diasAtencion = isset($datos['dias_atencion']) && is_array($datos['dias_atencion'])
+            ? json_encode(array_values(array_map('intval', $datos['dias_atencion'])))
+            : ($datos['dias_atencion'] ?? null);
+
         $tienda = Tienda::create([
             'usuario_id' => $usuario->id,
             'nombre' => $datos['nombre'],
@@ -90,7 +94,7 @@ class MiTiendaController extends Controller
             'categoria_2_id' => $datos['categoria_2_id'] ?? null,
             'horario' => $datos['horario'] ?? null,
             'recibiendo_pedidos' => $datos['recibiendo_pedidos'] ?? true,
-            'dias_atencion' => $datos['dias_atencion'] ?? null,
+            'dias_atencion' => $diasAtencion,
             'hora_apertura' => $datos['hora_apertura'] ?? null,
             'hora_cierre' => $datos['hora_cierre'] ?? null,
             'punto_entrega_id' => $datos['punto_entrega_id'] ?? null,
@@ -153,7 +157,9 @@ class MiTiendaController extends Controller
             $camposActualizar['recibiendo_pedidos'] = (bool) $datos['recibiendo_pedidos'];
         }
         if (array_key_exists('dias_atencion', $datos)) {
-            $camposActualizar['dias_atencion'] = $datos['dias_atencion'];
+            $camposActualizar['dias_atencion'] = is_array($datos['dias_atencion'])
+                ? json_encode(array_values(array_map('intval', $datos['dias_atencion'])))
+                : $datos['dias_atencion'];
         }
         if (array_key_exists('hora_apertura', $datos)) {
             $camposActualizar['hora_apertura'] = $datos['hora_apertura'];

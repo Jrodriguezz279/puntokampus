@@ -670,7 +670,7 @@
                             <p class="showcase-category-label">
                                 🏷️ {{ $tienda->categoria1->nombre }}
                                 @if ($tienda->dias_atencion)
-                                    • {{ $tienda->dias_atencion }}
+                                    • {{ $tienda->diasAtencionLegible() }}
                                 @endif
                             </p>
                         </div>

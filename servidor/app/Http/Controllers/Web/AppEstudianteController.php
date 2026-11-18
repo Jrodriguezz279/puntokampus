@@ -776,7 +776,7 @@ class AppEstudianteController extends Controller
             if ($horaEntregaStr < $tienda->hora_apertura || $horaEntregaStr > $tienda->hora_cierre) {
                 return back()->withErrors([
                     'hora_entrega' => "El horario de atención es de {$tienda->hora_apertura} a {$tienda->hora_cierre}" .
-                        ($tienda->dias_atencion ? " ({$tienda->dias_atencion})" : '') .
+                        ($tienda->dias_atencion ? " ({$tienda->diasAtencionLegible()})" : '') .
                         ". Por favor selecciona una hora dentro del horario o desde la siguiente apertura."
                 ]);
             }
