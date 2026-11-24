@@ -94,13 +94,35 @@ class AppEstudianteController extends Controller
             ->take(6)
             ->get();
 
+        $productosQuery = Producto::whereNull('eliminado_en')
+            ->where('disponible', true)
+            ->whereHas('tienda', fn($q) => $q->where('estado', 'activa'))
+            ->with(['tienda.puntoEntrega', 'fotos']);
+
+        if ($categoriaId) {
+            $productosQuery->whereHas('tienda', function ($q) use ($categoriaId) {
+                $q->where('categoria_1_id', $categoriaId)
+                  ->orWhere('categoria_2_id', $categoriaId);
+            });
+        }
+
+        if ($busqueda !== '') {
+            $productosQuery->where(function ($q) use ($busqueda) {
+                $q->whereRaw('unaccent(lower(nombre)) LIKE unaccent(lower(?))', ["%{$busqueda}%"])
+                  ->orWhereRaw('unaccent(lower(descripcion)) LIKE unaccent(lower(?))', ["%{$busqueda}%"]);
+            });
+        }
+
+        $productos = $productosQuery->orderBy('creado_en', 'desc')->paginate(24, ['*'], 'p_page');
+
         return view('app.vitrina', compact(
             'tiendas',
             'categorias',
             'categoriaId',
             'busqueda',
             'carruselTiendas',
-            'carruselOfertas'
+            'carruselOfertas',
+            'productos'
         ));
     }
 
