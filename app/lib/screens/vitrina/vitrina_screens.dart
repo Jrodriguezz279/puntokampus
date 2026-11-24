@@ -337,6 +337,22 @@ class _CarruselDestacados extends StatelessWidget {
                           const Text('⏸ Pausada',
                             style: TextStyle(fontSize: 11, color: Color(0xFFBA1A1A), fontFamily: 'DMSans'),
                           )
+                        else if (t.estrellasPromedio != null && t.estrellasTotal >= 3)
+                          Row(
+                            children: [
+                              const Icon(Icons.star_rounded, size: 11, color: Color(0xFFF59E0B)),
+                              const SizedBox(width: 2),
+                              Text(
+                                '${t.estrellasPromedio!.toStringAsFixed(1)} (${t.estrellasTotal})',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF92400E),
+                                  fontFamily: 'DMSans',
+                                ),
+                              ),
+                            ],
+                          )
                         else if (t.categoria1 != null)
                           Text(t.categoria1!.nombre,
                             style: PKTextStyles.etiqueta,
@@ -528,24 +544,61 @@ class _TiendaScreenState extends State<TiendaScreen> {
                           children: [
                             Text(t.nombre, style: PKTextStyles.tituloTarjeta),
                             const SizedBox(height: PKSpacing.xs),
-                            Row(
-                              children: [
-                                Text(
-                                  t.textoEstrellas,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFFB45309),
-                                    fontFamily: 'DMSans',
+                            // ─── Calificación del vendedor (prominente) ───
+                            if (t.estrellasPromedio != null && t.estrellasTotal >= 3)
+                              Row(
+                                children: [
+                                  ...List.generate(5, (i) {
+                                    final filled = i < t.estrellasPromedio!.round();
+                                    return Icon(
+                                      filled ? Icons.star_rounded : Icons.star_outline_rounded,
+                                      size: 16,
+                                      color: const Color(0xFFF59E0B),
+                                    );
+                                  }),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    t.estrellasPromedio!.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF92400E),
+                                      fontFamily: 'DMSans',
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: PKSpacing.sm),
-                                if (t.esPremium)
-                                  const PKInsigniaSaco10()
-                                else
-                                  const PKInsigniaMatriculado(),
-                              ],
-                            ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '(${t.estrellasTotal} reseñas)',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF9CA3AF),
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              const Row(
+                                children: [
+                                  Icon(Icons.star_outline_rounded, size: 15, color: Color(0xFF9CA3AF)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Nueva • Sin calificaciones',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF9CA3AF),
+                                      fontStyle: FontStyle.italic,
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            // ─── Badge premium/matriculado ───
+                            const SizedBox(height: PKSpacing.xs),
+                            if (t.esPremium)
+                              const PKInsigniaSaco10()
+                            else
+                              const PKInsigniaMatriculado(),
                             if (t.puntoEntrega != null) ...[
                               const SizedBox(height: PKSpacing.xs),
                               Text('📍 ${t.puntoEntrega!.nombre}', style: PKTextStyles.etiqueta),
@@ -774,6 +827,33 @@ class _ProductoScreenState extends State<ProductoScreen> {
               ),
             const SizedBox(height: PKSpacing.base),
             Text(p.nombre, style: PKTextStyles.tituloPantalla.copyWith(fontSize: 22)),
+            const SizedBox(height: PKSpacing.xs),
+            // ─── Tienda + calificación del vendedor en detalle de producto ───
+            Row(
+              children: [
+                const Icon(Icons.storefront_outlined, size: 14, color: PKColors.secundario),
+                const SizedBox(width: 4),
+                Text(widget.tienda.nombre, style: PKTextStyles.etiqueta),
+                const SizedBox(width: 10),
+                if (widget.tienda.estrellasPromedio != null && widget.tienda.estrellasTotal >= 3) ...[
+                  const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
+                  const SizedBox(width: 2),
+                  Text(
+                    '${widget.tienda.estrellasPromedio!.toStringAsFixed(1)} (${widget.tienda.estrellasTotal})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF92400E),
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                ] else
+                  const Text(
+                    '✨ Nueva',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF), fontFamily: 'DMSans'),
+                  ),
+              ],
+            ),
             const SizedBox(height: PKSpacing.sm),
             if (p.tieneDescuento) ...[
               Row(

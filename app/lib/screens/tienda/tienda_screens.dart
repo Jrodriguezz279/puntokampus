@@ -525,7 +525,7 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
   final _horaAperturaController = TextEditingController();
   final _horaCierreController = TextEditingController();
   bool _recibiendoPedidos = true;
-  List<int> _diasAtencion = [1, 2, 3, 4, 5];
+  List<int> _diasAtencion = [];
   int? _cat1Id;
   int? _puntoId;
   Uint8List? _logoBytes;
@@ -550,7 +550,7 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
       _horaAperturaController.text = widget.tienda!.horaApertura ?? '';
       _horaCierreController.text = widget.tienda!.horaCierre ?? '';
       _recibiendoPedidos = widget.tienda!.recibiendoPedidos;
-      if (widget.tienda!.diasAtencion != null && widget.tienda!.diasAtencion!.isNotEmpty) {
+      if (widget.tienda!.diasAtencion != null) {
         _diasAtencion = List<int>.from(widget.tienda!.diasAtencion!);
       }
       _cat1Id = widget.tienda!.categoria1?.id;
@@ -580,16 +580,7 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
         inicial = TimeOfDay(hour: h, minute: m);
       }
     }
-    final elegida = await showTimePicker(
-      context: context,
-      initialTime: inicial,
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child!,
-        );
-      },
-    );
+    final elegida = await PKWheelTimePicker.mostrar(context, initialTime: inicial);
     if (elegida != null) {
       final hh = elegida.hour.toString().padLeft(2, '0');
       final mm = elegida.minute.toString().padLeft(2, '0');

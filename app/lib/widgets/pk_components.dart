@@ -734,3 +734,207 @@ class _PKSelectorImagenState extends State<PKSelectorImagen> {
     );
   }
 }
+
+
+// ─── PKWheelTimePicker ─────────────────────────────────────────────────────────
+/// Selector de hora mediante ruedas verticales (Wheel Time Picker).
+/// Reemplaza showTimePicker (reloj circular) en toda la app.
+///
+/// Uso:
+/// ```dart
+/// final TimeOfDay? resultado = await PKWheelTimePicker.mostrar(
+///   context, initialTime: TimeOfDay(hour: 8, minute: 0));
+/// ```
+class PKWheelTimePicker extends StatefulWidget {
+  final TimeOfDay initialTime;
+  const PKWheelTimePicker({super.key, required this.initialTime});
+
+  static Future<TimeOfDay?> mostrar(BuildContext context, {required TimeOfDay initialTime}) {
+    return showModalBottomSheet<TimeOfDay>(
+      context: context,
+      backgroundColor: PKColors.tarjeta,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => PKWheelTimePicker(initialTime: initialTime),
+    );
+  }
+
+  @override
+  State<PKWheelTimePicker> createState() => _PKWheelTimePickerState();
+}
+
+class _PKWheelTimePickerState extends State<PKWheelTimePicker> {
+  late int _hora;
+  late int _minuto;
+  late FixedExtentScrollController _ctrlHora;
+  late FixedExtentScrollController _ctrlMinuto;
+
+  @override
+  void initState() {
+    super.initState();
+    _hora = widget.initialTime.hour;
+    _minuto = widget.initialTime.minute;
+    _ctrlHora = FixedExtentScrollController(initialItem: _hora);
+    _ctrlMinuto = FixedExtentScrollController(initialItem: _minuto);
+  }
+
+  @override
+  void dispose() {
+    _ctrlHora.dispose();
+    _ctrlMinuto.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(PKSpacing.base, PKSpacing.lg, PKSpacing.base, PKSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: PKSpacing.md),
+              decoration: BoxDecoration(
+                color: PKColors.borde,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Text('Selecciona la hora', style: PKTextStyles.tituloSeccion),
+            const SizedBox(height: PKSpacing.base),
+
+            // Ruedas
+            SizedBox(
+              height: 180,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Rueda de horas (00–23)
+                  _buildRueda(
+                    controller: _ctrlHora,
+                    itemCount: 24,
+                    label: (i) => i.toString().padLeft(2, '0'),
+                    onChanged: (i) => setState(() => _hora = i),
+                  ),
+                  // Separador ":"
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: PKSpacing.md),
+                    child: Text(
+                      ':',
+                      style: PKTextStyles.tituloPantalla.copyWith(
+                        fontSize: 28,
+                        color: PKColors.primario,
+                      ),
+                    ),
+                  ),
+                  // Rueda de minutos (00–59)
+                  _buildRueda(
+                    controller: _ctrlMinuto,
+                    itemCount: 60,
+                    label: (i) => i.toString().padLeft(2, '0'),
+                    onChanged: (i) => setState(() => _minuto = i),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: PKSpacing.base),
+
+            // Vista previa
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: PKSpacing.lg, vertical: PKSpacing.sm),
+              decoration: BoxDecoration(
+                color: PKColors.primarioSuave,
+                borderRadius: PKRadii.botonAll,
+              ),
+              child: Text(
+                '${_hora.toString().padLeft(2, '0')}:${_minuto.toString().padLeft(2, '0')}',
+                style: PKTextStyles.tituloPantalla.copyWith(
+                  fontSize: 32,
+                  letterSpacing: 4,
+                  color: PKColors.primario,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: PKSpacing.base),
+
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancelar'),
+                  ),
+                ),
+                const SizedBox(width: PKSpacing.md),
+                Expanded(
+                  child: PKBotonPrimario(
+                    texto: 'Aceptar',
+                    onPressed: () => Navigator.pop(context, TimeOfDay(hour: _hora, minute: _minuto)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRueda({
+    required FixedExtentScrollController controller,
+    required int itemCount,
+    required String Function(int) label,
+    required ValueChanged<int> onChanged,
+  }) {
+    return SizedBox(
+      width: 72,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Resaltador del ítem central
+          Container(
+            height: 48,
+            decoration: BoxDecoration(
+              color: PKColors.primarioSuave,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: PKColors.primario, width: 1.5),
+            ),
+          ),
+          ListWheelScrollView.useDelegate(
+            controller: controller,
+            itemExtent: 48,
+            diameterRatio: 1.5,
+            physics: const FixedExtentScrollPhysics(),
+            perspective: 0.003,
+            onSelectedItemChanged: onChanged,
+            childDelegate: ListWheelChildBuilderDelegate(
+              childCount: itemCount,
+              builder: (context, index) {
+                final esSeleccionado = controller.hasClients &&
+                    controller.selectedItem == index;
+                return Center(
+                  child: Text(
+                    label(index),
+                    style: TextStyle(
+                      fontSize: esSeleccionado ? 22 : 17,
+                      fontWeight: esSeleccionado ? FontWeight.w800 : FontWeight.w400,
+                      color: esSeleccionado ? PKColors.primario : PKColors.secundario,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

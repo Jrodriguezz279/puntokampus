@@ -18,18 +18,46 @@ class MisPedidosScreen extends StatefulWidget {
   State<MisPedidosScreen> createState() => _MisPedidosScreenState();
 }
 
-class _MisPedidosScreenState extends State<MisPedidosScreen> {
+class _MisPedidosScreenState extends State<MisPedidosScreen> with RouteAware {
   List<Pedido> _pedidos = [];
   bool _cargando = true;
   String? _error;
+  // Para detectar regreso desde otra pantalla
+  static final RouteObserver<ModalRoute<void>> _routeObserver = RouteObserver<ModalRoute<void>>();
 
   @override
   void initState() {
     super.initState();
+    // Esperar a que el contexto esté listo para garantizar que el token esté disponible
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _cargar();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Recargar al volver a esta pantalla (ej. tras calificar o cancelar)
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      _routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    _routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // Se regresó a esta pantalla desde otra
     _cargar();
   }
 
-  void _cargar() async {
+  Future<void> _cargar({int intentos = 0}) async {
+    if (!mounted) return;
     setState(() {
       _cargando = true;
       _error = null;
@@ -37,11 +65,18 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
 
     try {
       final list = await PedidoService.getMisPedidos();
+      if (!mounted) return;
       setState(() {
         _pedidos = list;
         _cargando = false;
       });
     } catch (e) {
+      if (!mounted) return;
+      // Reintento automático una vez (condición de carrera al iniciar sesión)
+      if (intentos == 0) {
+        await Future.delayed(const Duration(milliseconds: 800));
+        return _cargar(intentos: 1);
+      }
       setState(() {
         _error = e.toString();
         _cargando = false;
@@ -73,7 +108,7 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
 
     try {
       await PedidoService.cancelarPedidoComprador(p.codigo);
-      _cargar();
+      _cargar(intentos: 0);
     } catch (e) {
       if (!mounted) return;
       pkSnackError(context, e.toString());
@@ -87,7 +122,7 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
       appBar: AppBar(title: const Text('Mis Pedidos')),
       body: RefreshIndicator(
         color: PKColors.primario,
-        onRefresh: () async => _cargar(),
+        onRefresh: () => _cargar(intentos: 0),
         child: _cargando
             ? const Padding(
                 padding: EdgeInsets.all(PKSpacing.base),

@@ -271,26 +271,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _seleccionarHora(BuildContext context) async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _horaEntrega,
-      helpText: 'Selecciona la hora de entrega',
-      confirmText: 'Aceptar',
-      cancelText: 'Cancelar',
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: PKColors.primario,
-              onPrimary: PKColors.sobrePrimario,
-              surface: PKColors.tarjeta,
-              onSurface: PKColors.titulo,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
+    final picked = await PKWheelTimePicker.mostrar(context, initialTime: _horaEntrega);
     if (picked != null) {
       final now = DateTime.now();
       final esHoy = _fechaEntrega.year == now.year &&

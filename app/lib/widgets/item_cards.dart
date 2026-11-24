@@ -69,15 +69,7 @@ class StoreCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Text(
-                            tienda.textoEstrellas,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFFB45309),
-                              fontFamily: 'DMSans',
-                            ),
-                          ),
+                          _buildRatingBadge(tienda),
                           const SizedBox(width: PKSpacing.xs),
                           if (tienda.esPremium)
                             const PKInsigniaSaco10()
@@ -119,7 +111,7 @@ class StoreCard extends StatelessWidget {
                             ),
                           ],
                           // Tramo 2: badge "Pausada"
-                          if (!tienda.puedeRecibirPedidos) ...[
+                          if (!tienda.puedeRecibirPedidos) ...[ 
                             const SizedBox(width: PKSpacing.sm),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -138,6 +130,26 @@ class StoreCard extends StatelessWidget {
                               ),
                             ),
                           ],
+                          // Badge "Cerrado" cuando está fuera de horario
+                          if (tienda.puedeRecibirPedidos && !tienda.estaAbierto) ...[
+                            const SizedBox(width: PKSpacing.sm),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF3F4F6),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                '🕐 Cerrado',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF6B7280),
+                                  fontFamily: 'DMSans',
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -147,6 +159,45 @@ class StoreCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRatingBadge(Tienda t) {
+    if (t.estrellasPromedio != null && t.estrellasTotal >= 3) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, size: 15, color: Color(0xFFF59E0B)),
+          const SizedBox(width: 2),
+          Text(
+            t.estrellasPromedio!.toStringAsFixed(1),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF92400E),
+              fontFamily: 'DMSans',
+            ),
+          ),
+          Text(
+            ' (${t.estrellasTotal})',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFFB45309),
+              fontFamily: 'DMSans',
+            ),
+          ),
+        ],
+      );
+    }
+    return const Text(
+      '✨ Nueva',
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF9CA3AF),
+        fontFamily: 'DMSans',
       ),
     );
   }
