@@ -14,6 +14,9 @@ class VitrinaProvider extends ChangeNotifier {
   String? _error;
   int? _categoriaSeleccionadaId;
   String _busquedaActual = '';
+  String? _instagramUrl;
+  String? _tiktokUrl;
+  String? _facebookUrl;
 
   List<Categoria> get categorias => _categorias;
   List<PuntoEntrega> get puntosEntrega => _puntosEntrega;
@@ -24,6 +27,9 @@ class VitrinaProvider extends ChangeNotifier {
   String? get error => _error;
   int? get categoriaSeleccionadaId => _categoriaSeleccionadaId;
   String get busquedaActual => _busquedaActual;
+  String? get instagramUrl => _instagramUrl;
+  String? get tiktokUrl => _tiktokUrl;
+  String? get facebookUrl => _facebookUrl;
 
   Future<void> cargarInicial() async {
     _cargando = true;
@@ -36,6 +42,7 @@ class VitrinaProvider extends ChangeNotifier {
         VitrinaService.getPuntosEntrega(),
         VitrinaService.getTiendas(),
         VitrinaService.getProductos(),
+        VitrinaService.getConfiguracionPublica(),
       ]);
 
       _categorias = res[0] as List<Categoria>;
@@ -43,6 +50,10 @@ class VitrinaProvider extends ChangeNotifier {
       _tiendas = res[2] as List<Tienda>;
       _productos = res[3] as List<Producto>;
       _ofertas = _productos.where((p) => p.tieneDescuento && p.disponible).toList();
+      final config = res[4] as Map<String, String?>;
+      _instagramUrl = config['instagram_url'];
+      _tiktokUrl = config['tiktok_url'];
+      _facebookUrl = config['facebook_url'];
       _cargando = false;
       notifyListeners();
     } catch (e) {

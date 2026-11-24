@@ -6,6 +6,7 @@ import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/vitrina_provider.dart';
 import 'providers/tienda_provider.dart';
+import 'providers/favoritos_provider.dart';
 import 'screens/main_navigation_screen.dart';
 
 void main() async {
@@ -29,6 +30,7 @@ class PuntoKampusApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => VitrinaProvider()),
         ChangeNotifierProvider(create: (_) => TiendaProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritosProvider()),
       ],
       child: MaterialApp(
         title: 'PuntoKampus UTB',

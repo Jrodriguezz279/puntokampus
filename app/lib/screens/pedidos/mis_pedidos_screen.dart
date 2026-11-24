@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/theme.dart';
 import '../../constants/app_strings.dart';
 import '../../models/pedido.dart';
@@ -412,6 +413,27 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> with RouteAware {
                                         ),
                                       ),
                                     ],
+                                  ],
+                                  if (p.esPendiente && p.whatsappUrl != null && p.whatsappUrl!.isNotEmpty) ...[
+                                    const SizedBox(height: PKSpacing.sm),
+                                    OutlinedButton.icon(
+                                      onPressed: () async {
+                                        final uri = Uri.parse(p.whatsappUrl!);
+                                        if (await canLaunchUrl(uri)) {
+                                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                        }
+                                      },
+                                      icon: const Icon(Icons.chat_outlined, size: 16, color: Color(0xFF15803D)),
+                                      label: const Text(
+                                        'Contactar al vendedor por WhatsApp',
+                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15803D), fontFamily: 'DMSans'),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(color: Color(0xFF86EFAC)),
+                                        backgroundColor: const Color(0xFFF0FDF4),
+                                        minimumSize: const Size(double.infinity, 38),
+                                      ),
+                                    ),
                                   ],
                                   const SizedBox(height: PKSpacing.sm),
                                   Row(

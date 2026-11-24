@@ -42,6 +42,7 @@ Route::prefix('v1')->group(function () {
     // Rutas públicas de Vitrina (H09, H10, H11, H12)
     Route::get('/categorias', [VitrinaController::class, 'categorias']);
     Route::get('/puntos-entrega', [VitrinaController::class, 'puntosEntrega']);
+    Route::get('/configuracion-publica', [VitrinaController::class, 'configuracionPublica']);
     Route::get('/tiendas', [VitrinaController::class, 'tiendas']);
     Route::get('/tiendas/{slug}', [VitrinaController::class, 'verTienda']);
     Route::get('/productos', [VitrinaController::class, 'productos']);

@@ -4,10 +4,12 @@ import '../theme/theme.dart';
 import '../widgets/pk_components.dart';
 import '../providers/auth_provider.dart';
 import '../providers/tienda_provider.dart';
+import '../providers/favoritos_provider.dart';
 import 'vitrina/vitrina_screens.dart';
 import 'pedidos/mis_pedidos_screen.dart';
 import 'tienda/tienda_screens.dart';
 import 'cuenta/cuenta_screens.dart';
+import 'favoritos/favoritos_screen.dart';
 import 'auth/auth_screens.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -22,22 +24,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   final List<Widget> _screens = const [
     VitrinaScreen(),
+    FavoritosScreen(),
     MisPedidosScreen(),
     MiTiendaScreen(),
     CuentaScreen(),
   ];
 
   static const _items = [
-    PKNavItem(icono: Icons.storefront_outlined,    iconoActivo: Icons.storefront,     etiqueta: 'Vitrina'),
-    PKNavItem(icono: Icons.receipt_long_outlined,  iconoActivo: Icons.receipt_long,   etiqueta: 'Mis pedidos'),
-    PKNavItem(icono: Icons.shopping_bag_outlined,  iconoActivo: Icons.shopping_bag,   etiqueta: 'Mi tienda'),
-    PKNavItem(icono: Icons.person_outline_rounded, iconoActivo: Icons.person_rounded, etiqueta: 'Cuenta'),
+    PKNavItem(icono: Icons.storefront_outlined,    iconoActivo: Icons.storefront,          etiqueta: 'Vitrina'),
+    PKNavItem(icono: Icons.favorite_border_rounded, iconoActivo: Icons.favorite_rounded,   etiqueta: 'Favoritos'),
+    PKNavItem(icono: Icons.receipt_long_outlined,  iconoActivo: Icons.receipt_long,         etiqueta: 'Mis pedidos'),
+    PKNavItem(icono: Icons.shopping_bag_outlined,  iconoActivo: Icons.shopping_bag,         etiqueta: 'Mi tienda'),
+    PKNavItem(icono: Icons.person_outline_rounded, iconoActivo: Icons.person_rounded,       etiqueta: 'Cuenta'),
   ];
 
   void _onItemTapped(int index) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    if (index != 0 && !auth.tieneSesion) {
+    // Favoritos (index 1) accesible sin sesión (es local)
+    if (index != 0 && index != 1 && !auth.tieneSesion) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const BienvenidaScreen()),
@@ -45,7 +50,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       return;
     }
 
-    if (index == 2) {
+    if (index == 1) {
+      Provider.of<FavoritosProvider>(context, listen: false).cargar();
+    }
+
+    if (index == 3) {
       Provider.of<TiendaProvider>(context, listen: false).cargarMiTienda();
     }
 

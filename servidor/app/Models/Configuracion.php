@@ -21,6 +21,9 @@ class Configuracion extends Model
         'fin_periodo_academico',
         'dias_borrado_comprobante',
         'limite_pedidos_gratis',
+        'instagram_url',
+        'tiktok_url',
+        'facebook_url',
     ];
 
     protected function casts(): array

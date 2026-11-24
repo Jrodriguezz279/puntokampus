@@ -168,12 +168,64 @@ class Pedido extends Model
     }
 
     /**
-     * Construye la URL de WhatsApp del vendedor para este pedido.
+     * Construye la URL de WhatsApp del vendedor para este pedido con los detalles completos.
      */
     public function whatsappUrl(): string
     {
         $telefono = $this->tienda?->usuario?->whatsapp ?? '';
-        $mensaje  = urlencode("Hola, hice el pedido {$this->codigo} en PuntoKampus");
+        $telefono = preg_replace('/[^0-9]/', '', $telefono);
+        if (str_starts_with($telefono, '09') && strlen($telefono) === 10) {
+            $telefono = '593' . substr($telefono, 1);
+        }
+
+        $lineas = [];
+        $lineas[] = "¡Hola! Acabo de hacer el pedido *{$this->codigo}* en PuntoKampus.";
+        $lineas[] = "";
+        $lineas[] = "*Detalle del pedido:*";
+
+        $this->loadMissing(['items', 'puntoEntrega', 'comprador', 'tienda.usuario']);
+        if ($this->items && $this->items->isNotEmpty()) {
+            foreach ($this->items as $item) {
+                $subtotalFmt = number_format((float) $item->subtotal, 2);
+                $lineas[] = "• {$item->cantidad}x {$item->nombre_producto} (\${$subtotalFmt})";
+            }
+        }
+
+        $totalFmt = number_format((float) $this->total, 2);
+        $lineas[] = "";
+        $lineas[] = "*Total:* \${$totalFmt}";
+
+        if ($this->puntoEntrega) {
+            $lineas[] = "*Punto de encuentro:* {$this->puntoEntrega->nombre}";
+        }
+
+        if ($this->hora_entrega) {
+            $fechaHora = $this->hora_entrega->format('d/m/Y H:i');
+            $lineas[] = "*Hora de entrega:* {$fechaHora}";
+        }
+
+        if ($this->forma_pago) {
+            $pagoStr = match($this->forma_pago) {
+                'efectivo' => '💵 Efectivo',
+                'transferencia' => '🏦 Transferencia bancaria',
+                'deuna' => '📱 Deuna',
+                default => ucfirst($this->forma_pago),
+            };
+            $lineas[] = "*Forma de pago:* {$pagoStr}";
+        }
+
+        if (!empty($this->nota)) {
+            $lineas[] = "*Nota:* {$this->nota}";
+        }
+
+        if ($this->comprador?->nombre) {
+            $lineas[] = "*Comprador:* {$this->comprador->nombre}";
+        }
+
+        $lineas[] = "";
+        $lineas[] = "Quedo atento/a para coordinar la entrega. ¡Muchas gracias!";
+
+        $mensaje = urlencode(implode("\n", $lineas));
         return "https://wa.me/{$telefono}?text={$mensaje}";
     }
 

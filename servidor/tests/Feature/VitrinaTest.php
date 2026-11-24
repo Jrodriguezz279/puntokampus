@@ -55,6 +55,10 @@ class VitrinaTest extends TestCase
         $resPto = $this->getJson('/api/v1/puntos-entrega');
         $resPto->assertStatus(200)
             ->assertJsonStructure(['puntos' => [['id', 'nombre', 'orden']]]);
+
+        $resConf = $this->getJson('/api/v1/configuracion-publica');
+        $resConf->assertStatus(200)
+            ->assertJsonStructure(['instagram_url', 'tiktok_url', 'facebook_url']);
     }
 
     /**

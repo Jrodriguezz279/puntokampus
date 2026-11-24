@@ -9,6 +9,7 @@ use App\Http\Resources\PuntoEntregaResource;
 use App\Http\Resources\TiendaDetalleResource;
 use App\Http\Resources\TiendaResource;
 use App\Models\Categoria;
+use App\Models\Configuracion;
 use App\Models\Producto;
 use App\Models\PuntoEntrega;
 use App\Models\Tienda;
@@ -46,6 +47,21 @@ class VitrinaController extends Controller
             'puntos' => $collection,
             'puntos_entrega' => $collection,
             'data' => $collection,
+        ]);
+    }
+
+    /**
+     * GET /api/v1/configuracion-publica
+     * Devuelve solo la información pública de la app (redes sociales, etc.)
+     */
+    public function configuracionPublica(): JsonResponse
+    {
+        $config = Configuracion::first();
+
+        return response()->json([
+            'instagram_url' => $config?->instagram_url,
+            'tiktok_url'    => $config?->tiktok_url,
+            'facebook_url'  => $config?->facebook_url,
         ]);
     }
 
@@ -153,3 +169,4 @@ class VitrinaController extends Controller
         ]);
     }
 }
+

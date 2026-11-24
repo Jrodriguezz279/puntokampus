@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/theme.dart';
 import '../../models/tienda.dart';
 import '../../models/producto.dart';
@@ -121,6 +122,7 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -147,6 +149,8 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
                             ],
                           ),
                         ),
+                        // Accesos directos a redes sociales oficiales
+                        _buildSocialShortcuts(vitrina),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -372,11 +376,10 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
 
             const SliverToBoxAdapter(child: SizedBox(height: PKSpacing.sm)),
 
-            // --- Carrusel de Destacados & Ofertas ---
-            if (!vitrina.cargando && (vitrina.tiendas.any((t) => t.estaActiva && (t.esPremium || (t.estrellasPromedio != null && t.estrellasTotal > 0))) || vitrina.ofertas.isNotEmpty))
+            // --- Carrusel de Ofertas ---
+            if (!vitrina.cargando && vitrina.ofertas.isNotEmpty)
               SliverToBoxAdapter(
-                child: _CarruselDestacados(
-                  tiendas: vitrina.tiendas,
+                child: _CarruselOfertas(
                   ofertas: vitrina.ofertas,
                 ),
               ),
@@ -586,21 +589,81 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
       ),
     );
   }
+
+  Widget _buildSocialShortcuts(VitrinaProvider vitrina) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _socialIconButton(
+          tooltip: 'Instagram',
+          icon: Icons.camera_alt_outlined,
+          color: const Color(0xFFE1306C),
+          bgColor: const Color(0xFFFDF2F8),
+          borderColor: const Color(0xFFFBCFE8),
+          url: vitrina.instagramUrl ?? 'https://instagram.com/puntokampus',
+        ),
+        const SizedBox(width: 6),
+        _socialIconButton(
+          tooltip: 'TikTok',
+          icon: Icons.music_note_outlined,
+          color: const Color(0xFF111827),
+          bgColor: const Color(0xFFF3F4F6),
+          borderColor: const Color(0xFFE5E7EB),
+          url: vitrina.tiktokUrl ?? 'https://tiktok.com/@puntokampus',
+        ),
+        const SizedBox(width: 6),
+        _socialIconButton(
+          tooltip: 'Facebook',
+          icon: Icons.facebook_outlined,
+          color: const Color(0xFF1877F2),
+          bgColor: const Color(0xFFEFF6FF),
+          borderColor: const Color(0xFFBFDBFE),
+          url: vitrina.facebookUrl ?? 'https://facebook.com/puntokampus',
+        ),
+      ],
+    );
+  }
+
+  Widget _socialIconButton({
+    required String tooltip,
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required Color borderColor,
+    required String url,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: () async {
+          final uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+      ),
+    );
+  }
 }
 
-// ─── Carrusel Destacados & Ofertas ──────────────────────────────────────────
-class _CarruselDestacados extends StatelessWidget {
-  final List<Tienda> tiendas;
+// ─── Carrusel de Ofertas ────────────────────────────────────────────────────
+class _CarruselOfertas extends StatelessWidget {
   final List<Producto> ofertas;
-  const _CarruselDestacados({required this.tiendas, this.ofertas = const []});
+  const _CarruselOfertas({required this.ofertas});
 
   @override
   Widget build(BuildContext context) {
-    final destacadas = tiendas
-        .where((t) => t.estaActiva && (t.esPremium || (t.estrellasPromedio != null && t.estrellasTotal > 0)))
-        .toList();
-
-    if (destacadas.isEmpty && ofertas.isEmpty) return const SizedBox.shrink();
+    if (ofertas.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -616,7 +679,7 @@ class _CarruselDestacados extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text(
-                  '🔥 DESTACADOS & OFERTAS',
+                  '🔥 OFERTAS',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -635,8 +698,7 @@ class _CarruselDestacados extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
             children: [
-              // 1. Tarjetas de Ofertas (Productos con Descuento)
-              ...ofertas.take(6).map((p) {
+              ...ofertas.take(10).map((p) {
                 return GestureDetector(
                   onTap: () {
                     if (p.tiendaSlug != null && p.tiendaSlug!.isNotEmpty) {
@@ -698,6 +760,11 @@ class _CarruselDestacados extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            Positioned(
+                              top: 6,
+                              left: 6,
+                              child: FavProductoButton(productoId: p.id, size: 16),
+                            ),
                           ],
                         ),
                         Padding(
@@ -755,144 +822,6 @@ class _CarruselDestacados extends StatelessWidget {
                   ),
                 );
               }),
-
-              // 2. Tarjetas de Tiendas Destacadas
-              ...destacadas.map((t) {
-                return GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => TiendaScreen(slug: t.slug)),
-                  ),
-                  child: Container(
-                    width: 165,
-                    margin: const EdgeInsets.only(right: PKSpacing.md, bottom: PKSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: PKColors.tarjeta,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: t.esPremium ? const Color(0xFFCC4E01) : PKColors.borde,
-                        width: t.esPremium ? 1.5 : 1,
-                      ),
-                      boxShadow: PKShadows.tarjeta,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(PKSpacing.md),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: PKColors.primarioSuave,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: PKColors.borde),
-                                ),
-                                clipBehavior: Clip.antiAlias,
-                                child: (t.logoUrl != null && t.logoUrl!.isNotEmpty)
-                                    ? Image.network(t.logoUrl!, fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => _inicial(t.nombre))
-                                    : _inicial(t.nombre),
-                              ),
-                              const SizedBox(width: 6),
-                              if (t.esPremium)
-                                const Icon(Icons.star_rounded, color: Color(0xFFCC4E01), size: 16),
-                            ],
-                          ),
-                          const SizedBox(height: PKSpacing.sm),
-                          Text(
-                            t.nombre,
-                            style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 13),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 3),
-                          if (!t.puedeRecibirPedidos)
-                            const Text('⏸ Pausada',
-                              style: TextStyle(fontSize: 11, color: Color(0xFFBA1A1A), fontFamily: 'DMSans'),
-                            )
-                          else if (t.estaAbierto)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFDCFCE7),
-                                border: Border.all(color: const Color(0xFFBBF7D0)),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.circle, size: 6, color: Color(0xFF16A34A)),
-                                  SizedBox(width: 3),
-                                  Text(
-                                    'Abierto',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF15803D),
-                                      fontFamily: 'DMSans',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          else
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEE2E2),
-                                border: Border.all(color: const Color(0xFFFECACA)),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.circle, size: 6, color: Color(0xFFDC2626)),
-                                  SizedBox(width: 3),
-                                  Text(
-                                    'Cerrado',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF991B1B),
-                                      fontFamily: 'DMSans',
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          const Spacer(),
-                          if (t.estrellasPromedio != null && t.estrellasTotal > 0)
-                            Row(
-                              children: [
-                                const Icon(Icons.star_rounded, size: 12, color: Color(0xFFF59E0B)),
-                                const SizedBox(width: 2),
-                                Text(
-                                  '${t.estrellasPromedio!.toStringAsFixed(1)} (${t.estrellasTotal})',
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF92400E),
-                                    fontFamily: 'DMSans',
-                                  ),
-                                ),
-                              ],
-                            )
-                          else if (t.categoria1 != null)
-                            Text(
-                              t.categoria1!.nombre,
-                              style: PKTextStyles.etiqueta,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
             ],
           ),
         ),
@@ -900,13 +829,6 @@ class _CarruselDestacados extends StatelessWidget {
       ],
     );
   }
-
-  Widget _inicial(String nombre) => Center(
-    child: Text(
-      nombre.isNotEmpty ? nombre[0].toUpperCase() : 'T',
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PKColors.primario, fontFamily: 'DMSans'),
-    ),
-  );
 }
 
 // ─── P07: Detalle de Tienda y Catálogo ─────────────────────────────────────────
@@ -986,6 +908,7 @@ class _TiendaScreenState extends State<TiendaScreen> {
       appBar: AppBar(
         title: Text(t.nombre),
         actions: [
+          FavTiendaButton(tiendaId: t.id),
           IconButton(
             icon: const Icon(Icons.flag_outlined, color: PKColors.secundario),
             tooltip: 'Reportar tienda',
@@ -1282,7 +1205,16 @@ class _ProductoScreenState extends State<ProductoScreen> {
 
     return Scaffold(
       backgroundColor: PKColors.fondo,
-      appBar: AppBar(title: Text(p.nombre)),
+      appBar: AppBar(
+        title: Text(p.nombre),
+        actions: [
+          FavProductoButton(productoId: p.id),
+          IconButton(
+            icon: const Icon(Icons.shopping_bag_outlined),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CarritoScreen())),
+          ),
+        ],
+      ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(PKSpacing.base),
         decoration: const BoxDecoration(

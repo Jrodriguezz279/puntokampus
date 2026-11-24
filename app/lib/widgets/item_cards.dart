@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/theme.dart';
 import '../models/tienda.dart';
 import '../models/producto.dart';
+import '../providers/favoritos_provider.dart';
 import 'pk_components.dart';
 
 class StoreCard extends StatelessWidget {
@@ -75,6 +77,8 @@ class StoreCard extends StatelessWidget {
                             const PKInsigniaSaco10()
                           else
                             const PKInsigniaMatriculado(),
+                          const SizedBox(width: PKSpacing.xs),
+                          FavTiendaButton(tiendaId: tienda.id),
                         ],
                       ),
                       if (tienda.descripcion != null && tienda.descripcion!.isNotEmpty) ...[
@@ -386,28 +390,97 @@ class ProductCard extends StatelessWidget {
                 ),
 
                 // Botón añadir o pastilla Agotado
-                if (producto.disponible)
-                  IconButton(
-                    onPressed: onAddToCart,
-                    icon: const Icon(Icons.add_shopping_cart, color: PKColors.primario),
-                    tooltip: 'Agregar al carrito',
-                  )
-                else
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: PKColors.neutroFondo,
-                      borderRadius: PKRadii.chipAll,
-                    ),
-                    child: Text(
-                      'Agotado',
-                      style: PKTextStyles.etiqueta.copyWith(
-                        color: PKColors.secundario,
-                        fontWeight: FontWeight.bold,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FavProductoButton(productoId: producto.id),
+                    if (producto.disponible)
+                      IconButton(
+                        onPressed: onAddToCart,
+                        icon: const Icon(Icons.add_shopping_cart, color: PKColors.primario),
+                        tooltip: 'Agregar al carrito',
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: PKColors.neutroFondo,
+                          borderRadius: PKRadii.chipAll,
+                        ),
+                        child: Text(
+                          'Agotado',
+                          style: PKTextStyles.etiqueta.copyWith(
+                            color: PKColors.secundario,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                  ],
+                ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Botones reutilizables de Favorito ───────────────────────────────────────
+class FavTiendaButton extends StatelessWidget {
+  final int tiendaId;
+  final double size;
+  const FavTiendaButton({super.key, required this.tiendaId, this.size = 20});
+
+  @override
+  Widget build(BuildContext context) {
+    final favs = Provider.of<FavoritosProvider>(context);
+    final isFav = favs.esTiendaFav(tiendaId);
+    return Tooltip(
+      message: isFav ? 'Quitar de favoritos' : 'Agregar a favoritos',
+      child: InkWell(
+        onTap: () => favs.toggleTienda(tiendaId),
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              key: ValueKey(isFav),
+              size: size,
+              color: isFav ? const Color(0xFFE11D48) : PKColors.secundario,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class FavProductoButton extends StatelessWidget {
+  final int productoId;
+  final double size;
+  const FavProductoButton({super.key, required this.productoId, this.size = 20});
+
+  @override
+  Widget build(BuildContext context) {
+    final favs = Provider.of<FavoritosProvider>(context);
+    final isFav = favs.esProductoFav(productoId);
+    return Tooltip(
+      message: isFav ? 'Quitar de favoritos' : 'Agregar a favoritos',
+      child: InkWell(
+        onTap: () => favs.toggleProducto(productoId),
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              key: ValueKey(isFav),
+              size: size,
+              color: isFav ? const Color(0xFFE11D48) : PKColors.secundario,
             ),
           ),
         ),
@@ -491,27 +564,35 @@ class ProductGridCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (!producto.disponible)
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF374151).withOpacity(0.85),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: const Text(
-                          'Agotado',
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontFamily: 'DMSans',
+                  Positioned(
+                    top: 6,
+                    left: 6,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FavProductoButton(productoId: producto.id, size: 16),
+                        if (!producto.disponible) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF374151).withOpacity(0.85),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: const Text(
+                              'Agotado',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontFamily: 'DMSans',
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        ],
+                      ],
                     ),
+                  ),
                 ],
               ),
 

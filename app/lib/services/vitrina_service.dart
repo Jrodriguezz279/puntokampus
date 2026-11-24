@@ -55,4 +55,18 @@ class VitrinaService {
     final list = (response is List) ? response : (response['data'] as List<dynamic>? ?? response['productos'] as List<dynamic>? ?? []);
     return list.map((p) => Producto.fromJson(p as Map<String, dynamic>)).toList();
   }
+
+  static Future<Map<String, String?>> getConfiguracionPublica() async {
+    try {
+      final response = await ApiService.get('/configuracion-publica', requiresAuth: false);
+      if (response is Map<String, dynamic>) {
+        return {
+          'instagram_url': response['instagram_url']?.toString(),
+          'tiktok_url': response['tiktok_url']?.toString(),
+          'facebook_url': response['facebook_url']?.toString(),
+        };
+      }
+    } catch (_) {}
+    return {};
+  }
 }

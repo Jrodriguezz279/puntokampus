@@ -16,6 +16,7 @@ void main() {
     testWidgets('renderiza barra de navegacion principal', (WidgetTester tester) async {
       await tester.pumpWidget(const PuntoKampusApp());
       expect(find.text('Vitrina'), findsOneWidget);
+      expect(find.text('Favoritos'), findsOneWidget);
       expect(find.text('Mis pedidos'), findsOneWidget);
       expect(find.text('Mi tienda'), findsOneWidget);
       expect(find.text('Cuenta'), findsOneWidget);
