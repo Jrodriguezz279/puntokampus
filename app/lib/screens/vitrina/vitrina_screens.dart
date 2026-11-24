@@ -909,14 +909,6 @@ class _CarruselDestacados extends StatelessWidget {
   );
 }
 
-  Widget _inicial(String nombre) => Center(
-    child: Text(
-      nombre.isNotEmpty ? nombre[0].toUpperCase() : 'T',
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PKColors.primario, fontFamily: 'DMSans'),
-    ),
-  );
-}
-
 // ─── P07: Detalle de Tienda y Catálogo ─────────────────────────────────────────
 class TiendaScreen extends StatefulWidget {
   final String slug;
