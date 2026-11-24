@@ -19,6 +19,8 @@ import 'reportar_tienda_screen.dart';
 // ══════════════════════════════════════════════════════════════════════════════
 
 // ─── P05: Vitrina Principal ───────────────────────────────────────────────────
+enum VitrinaTab { tiendas, productos }
+
 class VitrinaScreen extends StatefulWidget {
   const VitrinaScreen({super.key});
 
@@ -28,6 +30,7 @@ class VitrinaScreen extends StatefulWidget {
 
 class _VitrinaScreenState extends State<VitrinaScreen> {
   final _searchController = TextEditingController();
+  VitrinaTab _activeTab = VitrinaTab.tiendas;
 
   @override
   void initState() {
@@ -108,23 +111,229 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
         color: PKColors.primario,
         onRefresh: () => vitrina.cargarInicial(),
         child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // Barra de búsqueda
+            // Cabecera Hero moderna inspirada en Stitch
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(PKSpacing.base),
+                padding: const EdgeInsets.fromLTRB(PKSpacing.base, PKSpacing.base, PKSpacing.base, PKSpacing.xs),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: PKColors.primarioSuave,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFFED7AA)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.local_mall_outlined, size: 12, color: PKColors.primario),
+                              SizedBox(width: 4),
+                              Text(
+                                'MERCADO ESTUDIANTIL UTB',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: PKColors.primario,
+                                  letterSpacing: 0.5,
+                                  fontFamily: 'DMSans',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Vitrina del Campus',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: PKColors.titulo,
+                        letterSpacing: -0.5,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Descubre lo que se crea en tu campus por y para estudiantes.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: PKColors.secundario,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Barra de búsqueda con botón para limpiar
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
                 child: TextField(
                   controller: _searchController,
                   style: PKTextStyles.cuerpo,
                   decoration: InputDecoration(
                     hintText: 'Buscar comida, postres, impresiones...',
                     prefixIcon: const Icon(Icons.search, color: PKColors.secundario),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close, size: 18, color: PKColors.secundario),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                              vitrina.buscar('');
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: PKColors.tarjeta,
                     contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: PKSpacing.base),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: PKColors.borde),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: PKColors.primario, width: 1.5),
+                    ),
                   ),
+                  onChanged: (val) {
+                    setState(() {});
+                  },
                   onSubmitted: (val) => vitrina.buscar(val),
                 ),
               ),
             ),
+
+            // Selector Segmentado de Pestañas: Tiendas vs Productos
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.xs),
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1EAE4),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: PKColors.borde),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _activeTab = VitrinaTab.tiendas),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _activeTab == VitrinaTab.tiendas ? PKColors.tarjeta : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: _activeTab == VitrinaTab.tiendas ? PKShadows.tarjeta : null,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.storefront_outlined,
+                                size: 16,
+                                color: _activeTab == VitrinaTab.tiendas ? PKColors.primario : PKColors.secundario,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Tiendas',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: _activeTab == VitrinaTab.tiendas ? FontWeight.bold : FontWeight.w500,
+                                  color: _activeTab == VitrinaTab.tiendas ? PKColors.primario : PKColors.secundario,
+                                  fontFamily: 'DMSans',
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: _activeTab == VitrinaTab.tiendas ? PKColors.primarioSuave : const Color(0xFFE5DDD6),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${vitrina.tiendas.length}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: _activeTab == VitrinaTab.tiendas ? PKColors.primario : PKColors.secundario,
+                                    fontFamily: 'DMSans',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _activeTab = VitrinaTab.productos),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _activeTab == VitrinaTab.productos ? PKColors.tarjeta : Colors.transparent,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: _activeTab == VitrinaTab.productos ? PKShadows.tarjeta : null,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.inventory_2_outlined,
+                                size: 16,
+                                color: _activeTab == VitrinaTab.productos ? PKColors.primario : PKColors.secundario,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Productos',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: _activeTab == VitrinaTab.productos ? FontWeight.bold : FontWeight.w500,
+                                  color: _activeTab == VitrinaTab.productos ? PKColors.primario : PKColors.secundario,
+                                  fontFamily: 'DMSans',
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: _activeTab == VitrinaTab.productos ? PKColors.primarioSuave : const Color(0xFFE5DDD6),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${vitrina.productos.length}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: _activeTab == VitrinaTab.productos ? PKColors.primario : PKColors.secundario,
+                                    fontFamily: 'DMSans',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: PKSpacing.xs)),
 
             // Fila de Categorías deslizables
             SliverToBoxAdapter(
@@ -161,7 +370,7 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: PKSpacing.base)),
+            const SliverToBoxAdapter(child: SizedBox(height: PKSpacing.sm)),
 
             // --- Carrusel de Destacados & Ofertas ---
             if (!vitrina.cargando && (vitrina.tiendas.any((t) => t.estaActiva && (t.esPremium || (t.estrellasPromedio != null && t.estrellasTotal > 0))) || vitrina.ofertas.isNotEmpty))
@@ -172,64 +381,204 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
                 ),
               ),
 
-            // Título de la sección
+            // Título de la sección según la pestaña activa
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
-                child: Text(
-                  'Tiendas en el campus UTB (${vitrina.tiendas.length})',
-                  style: PKTextStyles.tituloSeccion.copyWith(fontSize: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _activeTab == VitrinaTab.tiendas
+                          ? 'Tiendas en el campus UTB (${vitrina.tiendas.length})'
+                          : 'Catálogo de Productos (${vitrina.productos.length})',
+                      style: PKTextStyles.tituloSeccion.copyWith(fontSize: 16),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-            // Lista de tiendas
+            // Contenido dinámico según la pestaña activa (Tiendas o Productos)
             if (vitrina.cargando)
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (_, __) => const PKEsqueleto(height: 90),
-                    childCount: 4,
-                  ),
-                ),
-              )
+              _activeTab == VitrinaTab.tiendas
+                  ? SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (_, __) => const Padding(
+                            padding: EdgeInsets.only(bottom: PKSpacing.md),
+                            child: PKEsqueleto(height: 90),
+                          ),
+                          childCount: 4,
+                        ),
+                      ),
+                    )
+                  : SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
+                      sliver: SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.68,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (_, __) => const PKEsqueleto(height: 200),
+                          childCount: 6,
+                        ),
+                      ),
+                    )
             else if (vitrina.error != null)
               SliverFillRemaining(
+                hasScrollBody: false,
                 child: PKEstadoError(
                   mensaje: vitrina.error!,
                   onReintentar: () => vitrina.cargarInicial(),
                 ),
               )
-            else if (vitrina.tiendas.isEmpty)
-              const SliverFillRemaining(
-                child: PKEstadoVacio(
-                  icono: Icons.storefront_outlined,
-                  titulo: 'No encontramos tiendas',
-                  subtitulo: 'Prueba buscando con otro término o revisa otra categoría.',
-                ),
-              )
+            else if (_activeTab == VitrinaTab.tiendas)
+              // ─── Pestaña Tiendas ───
+              vitrina.tiendas.isEmpty
+                  ? SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(PKSpacing.xl),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.storefront_outlined, size: 48, color: PKColors.secundario),
+                              const SizedBox(height: PKSpacing.md),
+                              const Text(
+                                'No encontramos tiendas',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PKColors.titulo, fontFamily: 'DMSans'),
+                              ),
+                              const SizedBox(height: PKSpacing.xs),
+                              const Text(
+                                'Prueba buscando con otro término o revisa otra categoría.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 13, color: PKColors.secundario, fontFamily: 'DMSans'),
+                              ),
+                              const SizedBox(height: PKSpacing.base),
+                              OutlinedButton.icon(
+                                icon: const Icon(Icons.refresh, size: 16),
+                                label: const Text('Ver todas las tiendas'),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {});
+                                  vitrina.limpiarFiltros();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final tienda = vitrina.tiendas[index];
+                            return StoreCard(
+                              tienda: tienda,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => TiendaScreen(slug: tienda.slug)),
+                                );
+                              },
+                            );
+                          },
+                          childCount: vitrina.tiendas.length,
+                        ),
+                      ),
+                    )
             else
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final tienda = vitrina.tiendas[index];
-                      return StoreCard(
-                        tienda: tienda,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => TiendaScreen(slug: tienda.slug)),
-                          );
-                        },
-                      );
-                    },
-                    childCount: vitrina.tiendas.length,
-                  ),
-                ),
-              ),
+              // ─── Pestaña Productos ───
+              vitrina.productos.isEmpty
+                  ? SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(PKSpacing.xl),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.inventory_2_outlined, size: 48, color: PKColors.secundario),
+                              const SizedBox(height: PKSpacing.md),
+                              const Text(
+                                'No encontramos productos',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PKColors.titulo, fontFamily: 'DMSans'),
+                              ),
+                              const SizedBox(height: PKSpacing.xs),
+                              const Text(
+                                'Prueba buscando con otro término o revisa otra categoría.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 13, color: PKColors.secundario, fontFamily: 'DMSans'),
+                              ),
+                              const SizedBox(height: PKSpacing.base),
+                              OutlinedButton.icon(
+                                icon: const Icon(Icons.refresh, size: 16),
+                                label: const Text('Ver todos los productos'),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {});
+                                  vitrina.limpiarFiltros();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
+                      sliver: SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.68,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final producto = vitrina.productos[index];
+                            return ProductGridCard(
+                              producto: producto,
+                              onTap: () {
+                                if (producto.tiendaSlug != null && producto.tiendaSlug!.isNotEmpty) {
+                                  Tienda? matchingTienda;
+                                  for (final t in vitrina.tiendas) {
+                                    if (t.slug == producto.tiendaSlug) {
+                                      matchingTienda = t;
+                                      break;
+                                    }
+                                  }
+                                  if (matchingTienda != null) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ProductoScreen(producto: producto, tienda: matchingTienda!),
+                                      ),
+                                    );
+                                  } else {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => TiendaScreen(slug: producto.tiendaSlug!),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                            );
+                          },
+                          childCount: vitrina.productos.length,
+                        ),
+                      ),
+                    ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],
@@ -281,7 +630,7 @@ class _CarruselDestacados extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 155,
+          height: 160,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
@@ -314,7 +663,7 @@ class _CarruselDestacados extends StatelessWidget {
                         Stack(
                           children: [
                             Container(
-                              height: 78,
+                              height: 80,
                               width: double.infinity,
                               color: PKColors.neutroFondo,
                               child: (p.primeraFotoUrl != null && p.primeraFotoUrl!.isNotEmpty)
@@ -415,7 +764,7 @@ class _CarruselDestacados extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => TiendaScreen(slug: t.slug)),
                   ),
                   child: Container(
-                    width: 160,
+                    width: 165,
                     margin: const EdgeInsets.only(right: PKSpacing.md, bottom: PKSpacing.sm),
                     decoration: BoxDecoration(
                       color: PKColors.tarjeta,
@@ -459,12 +808,63 @@ class _CarruselDestacados extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 3),
                           if (!t.puedeRecibirPedidos)
                             const Text('⏸ Pausada',
                               style: TextStyle(fontSize: 11, color: Color(0xFFBA1A1A), fontFamily: 'DMSans'),
                             )
-                          else if (t.estrellasPromedio != null && t.estrellasTotal > 0)
+                          else if (t.estaAbierto)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                border: Border.all(color: const Color(0xFFBBF7D0)),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.circle, size: 6, color: Color(0xFF16A34A)),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    'Abierto',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF15803D),
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEE2E2),
+                                border: Border.all(color: const Color(0xFFFECACA)),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.circle, size: 6, color: Color(0xFFDC2626)),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    'Cerrado',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF991B1B),
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const Spacer(),
+                          if (t.estrellasPromedio != null && t.estrellasTotal > 0)
                             Row(
                               children: [
                                 const Icon(Icons.star_rounded, size: 12, color: Color(0xFFF59E0B)),
@@ -480,13 +880,9 @@ class _CarruselDestacados extends StatelessWidget {
                                 ),
                               ],
                             )
-                          else if (t.estaAbierto)
-                            const Text(
-                              '🟢 Abierto',
-                              style: TextStyle(fontSize: 11, color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontFamily: 'DMSans'),
-                            )
                           else if (t.categoria1 != null)
-                            Text(t.categoria1!.nombre,
+                            Text(
+                              t.categoria1!.nombre,
                               style: PKTextStyles.etiqueta,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -504,6 +900,14 @@ class _CarruselDestacados extends StatelessWidget {
       ],
     );
   }
+
+  Widget _inicial(String nombre) => Center(
+    child: Text(
+      nombre.isNotEmpty ? nombre[0].toUpperCase() : 'T',
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: PKColors.primario, fontFamily: 'DMSans'),
+    ),
+  );
+}
 
   Widget _inicial(String nombre) => Center(
     child: Text(

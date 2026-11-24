@@ -162,19 +162,27 @@ class StoreCard extends StatelessWidget {
                           if (tienda.puedeRecibirPedidos && !tienda.estaAbierto) ...[
                             const SizedBox(width: PKSpacing.sm),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFEE2E2),
-                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: const Color(0xFFFECACA)),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text(
-                                '🔴 Cerrado',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF991B1B),
-                                  fontFamily: 'DMSans',
-                                ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.circle, size: 7, color: Color(0xFFDC2626)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Cerrado',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF991B1B),
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -401,6 +409,198 @@ class ProductCard extends StatelessWidget {
                   ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Tarjeta de Producto en Cuadrícula (Vitrina) ─────────────────────────────
+class ProductGridCard extends StatelessWidget {
+  final Producto producto;
+  final VoidCallback onTap;
+
+  const ProductGridCard({
+    super.key,
+    required this.producto,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: PKColors.tarjeta,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: PKColors.borde),
+        boxShadow: PKShadows.tarjeta,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Foto del producto con badge de descuento
+              Stack(
+                children: [
+                  Container(
+                    height: 110,
+                    width: double.infinity,
+                    color: PKColors.neutroFondo,
+                    child: (producto.primeraFotoUrl != null && producto.primeraFotoUrl!.isNotEmpty)
+                        ? Image.network(
+                            producto.primeraFotoUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Center(
+                              child: Icon(Icons.fastfood_outlined, color: PKColors.secundario, size: 28),
+                            ),
+                          )
+                        : const Center(
+                            child: Icon(Icons.fastfood_outlined, color: PKColors.secundario, size: 28),
+                          ),
+                  ),
+                  if (producto.tieneDescuento)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: PKColors.primario,
+                          borderRadius: BorderRadius.circular(5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.18),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          '-${producto.porcentajeDescuento.toStringAsFixed(0)}% OFF',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            fontFamily: 'DMSans',
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (!producto.disponible)
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF374151).withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Text(
+                          'Agotado',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontFamily: 'DMSans',
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+
+              // Información del producto
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (producto.tiendaNombre != null && producto.tiendaNombre!.isNotEmpty)
+                            Text(
+                              '🏪 ${producto.tiendaNombre}',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: PKColors.secundario,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'DMSans',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          const SizedBox(height: 2),
+                          Text(
+                            producto.nombre,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: PKColors.titulo,
+                              fontFamily: 'DMSans',
+                              height: 1.2,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (producto.tieneDescuento)
+                                  Text(
+                                    '\$${producto.precio.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      decoration: TextDecoration.lineThrough,
+                                      color: PKColors.secundario,
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                Text(
+                                  '\$${producto.precioEfectivo.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: PKColors.primario,
+                                    fontFamily: 'DMSans',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: const BoxDecoration(
+                              color: PKColors.primarioSuave,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 13,
+                              color: PKColors.primario,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

@@ -41,10 +41,14 @@ class VitrinaService {
     return Tienda.fromJson(data as Map<String, dynamic>);
   }
 
-  static Future<List<Producto>> getProductos({String? busqueda, int pagina = 1}) async {
+  static Future<List<Producto>> getProductos({String? busqueda, int? categoriaId, int pagina = 1}) async {
     final Map<String, String> query = {'page': pagina.toString()};
     if (busqueda != null && busqueda.trim().isNotEmpty) {
+      query['buscar'] = busqueda.trim();
       query['q'] = busqueda.trim();
+    }
+    if (categoriaId != null) {
+      query['categoria'] = categoriaId.toString();
     }
 
     final response = await ApiService.get('/productos', queryParams: query, requiresAuth: false);
