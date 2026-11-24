@@ -39,6 +39,11 @@ class PedidoResource extends JsonResource
             'creado_en'          => $this->creado_en?->toIso8601String(),
             'items'              => PedidoItemResource::collection($this->whenLoaded('items')),
             'whatsapp_url'       => $this->whatsappUrl(),
+            'paso_hora'          => (bool) $this->paso_hora,
+            'vence_en'           => $this->vence_en?->toIso8601String(),
+            'entregado_con'      => $this->entregado_con,
+            'admin_nota'         => $this->admin_nota,
+            'admin_gestionado_en'=> $this->admin_gestionado_en?->toIso8601String(),
         ];
 
         if ($codigoEntrega !== null) {

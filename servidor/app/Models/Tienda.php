@@ -80,7 +80,9 @@ class Tienda extends Model
             }
         }
 
-        return $horaActual >= $this->hora_apertura && $horaActual <= $this->hora_cierre;
+        $horaApertura = preg_match('/^(\d{1,2}):(\d{2})/', $this->hora_apertura, $mA) ? sprintf('%02d:%02d', (int)$mA[1], (int)$mA[2]) : $this->hora_apertura;
+        $horaCierre = preg_match('/^(\d{1,2}):(\d{2})/', $this->hora_cierre, $mC) ? sprintf('%02d:%02d', (int)$mC[1], (int)$mC[2]) : $this->hora_cierre;
+        return $horaActual >= $horaApertura && $horaActual <= $horaCierre;
     }
 
     /**

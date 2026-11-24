@@ -454,8 +454,11 @@ class AppEstudianteController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
+        $now = now();
         $pedidos = Pedido::where('tienda_id', $tienda->id)
             ->with(['comprador', 'puntoEntrega', 'items'])
+            ->orderByRaw("CASE WHEN estado = 'pendiente' AND hora_entrega < ? THEN 0 ELSE 1 END", [$now])
+            ->orderByRaw("CASE WHEN estado = 'pendiente' AND hora_entrega < ? THEN hora_entrega END ASC", [$now])
             ->orderBy('id', 'desc')
             ->get();
 

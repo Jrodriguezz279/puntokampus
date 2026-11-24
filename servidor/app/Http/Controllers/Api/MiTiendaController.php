@@ -96,8 +96,8 @@ class MiTiendaController extends Controller
             'horario' => $datos['horario'] ?? null,
             'recibiendo_pedidos' => $datos['recibiendo_pedidos'] ?? true,
             'dias_atencion' => $diasAtencion,
-            'hora_apertura' => $datos['hora_apertura'] ?? null,
-            'hora_cierre' => $datos['hora_cierre'] ?? null,
+            'hora_apertura' => $this->normalizarHora($datos['hora_apertura'] ?? null),
+            'hora_cierre' => $this->normalizarHora($datos['hora_cierre'] ?? null),
             'punto_entrega_id' => $datos['punto_entrega_id'] ?? null,
             'plan' => 'gratis',
             'estado' => 'activa',
@@ -163,10 +163,10 @@ class MiTiendaController extends Controller
                 : $datos['dias_atencion'];
         }
         if (array_key_exists('hora_apertura', $datos)) {
-            $camposActualizar['hora_apertura'] = $datos['hora_apertura'];
+            $camposActualizar['hora_apertura'] = $this->normalizarHora($datos['hora_apertura']);
         }
         if (array_key_exists('hora_cierre', $datos)) {
-            $camposActualizar['hora_cierre'] = $datos['hora_cierre'];
+            $camposActualizar['hora_cierre'] = $this->normalizarHora($datos['hora_cierre']);
         }
 
         $tienda->update($camposActualizar);
@@ -302,6 +302,18 @@ class MiTiendaController extends Controller
             return substr($url, strlen($prefijoAbsoluto));
         }
         return null;
+    }
+
+    private function normalizarHora(?string $hora): ?string
+    {
+        if (empty($hora)) {
+            return null;
+        }
+        $hora = trim($hora);
+        if (preg_match('/^(\d{1,2}):(\d{2})/', $hora, $matches)) {
+            return sprintf('%02d:%02d', (int) $matches[1], (int) $matches[2]);
+        }
+        return $hora;
     }
 }
 

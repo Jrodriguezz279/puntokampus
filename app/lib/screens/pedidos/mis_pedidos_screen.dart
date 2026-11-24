@@ -127,11 +127,50 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
                                       PKPastillaEstado(estado: estadoFromString(p.estado)),
                                     ],
                                   ),
+                                  if (p.pasoHora) ...[
+                                    const SizedBox(height: PKSpacing.xs),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEF3C7),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: const Color(0xFFF59E0B)),
+                                      ),
+                                      child: const Text(
+                                        'Pasó la hora de entrega',
+                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF92400E), fontFamily: 'DMSans'),
+                                      ),
+                                    ),
+                                  ],
+                                  if (p.esVencido) ...[
+                                    const SizedBox(height: PKSpacing.xs),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(PKSpacing.sm),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEE2E2),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: const Color(0xFFEF4444)),
+                                      ),
+                                      child: const Text(
+                                        'Este pedido venció porque no se confirmó la entrega.',
+                                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF991B1B), fontFamily: 'DMSans'),
+                                      ),
+                                    ),
+                                  ],
                                   const SizedBox(height: PKSpacing.xs),
                                   Text(
                                     'Tienda: ${p.nombreTienda ?? "Tienda"}',
                                     style: PKTextStyles.cuerpo.copyWith(fontWeight: FontWeight.w600),
                                   ),
+                                  if (p.creadoEn != null && p.creadoEn!.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text('🗓️ Realizado el: ${p.fechaHoraCreacionFormateada}', style: PKTextStyles.etiqueta),
+                                  ],
+                                  if (p.horaEntrega != null && p.horaEntrega!.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text('⏰ Entrega: ${p.fechaHoraEntregaFormateada}', style: PKTextStyles.etiqueta),
+                                  ],
                                   if (p.puntoEntrega != null) ...[
                                     const SizedBox(height: 2),
                                     Text('📍 Entrega: ${p.puntoEntrega}', style: PKTextStyles.etiqueta),

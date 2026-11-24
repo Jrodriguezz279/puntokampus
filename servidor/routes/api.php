@@ -88,7 +88,8 @@ Route::prefix('v1')->group(function () {
         // Mis Pedidos como Comprador (H14, H15, R16)
         Route::get('/mis-pedidos', [MisPedidosController::class, 'index']);
         Route::get('/mis-pedidos/{codigo}', [MisPedidosController::class, 'show']);
-        Route::delete('/mis-pedidos/{codigo}', [MisPedidosController::class, 'cancelar']);
+        Route::match(['delete', 'put', 'post'], '/mis-pedidos/{codigo}', [MisPedidosController::class, 'cancelar']);
+        Route::match(['delete', 'put', 'post'], '/mis-pedidos/{codigo}/cancelar', [MisPedidosController::class, 'cancelar']);
 
         // Pedidos de Mi Tienda como Vendedor (H16, H17, R17)
         Route::get('/mi-tienda/pedidos', [TiendaPedidosController::class, 'index']);

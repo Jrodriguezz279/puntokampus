@@ -90,13 +90,30 @@
                     <span class="badge badge-entregado">Entregado</span>
                 @elseif ($pedido->estado === 'pendiente')
                     <span class="badge badge-pendiente">Pendiente</span>
+                @elseif ($pedido->estado === 'vencido')
+                    <span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;">Vencido</span>
                 @else
                     <span class="badge badge-cancelado">{{ ucfirst($pedido->estado) }}</span>
                 @endif
             </div>
 
-            <div style="font-size:0.98rem; font-weight:700; margin-bottom:0.5rem;">
+            @if ($pedido->paso_hora)
+                <div style="background:#fef3c7; border-left:4px solid #f59e0b; color:#92400e; padding:0.45rem 0.75rem; border-radius:6px; font-size:0.82rem; margin:0.5rem 0; font-weight:600;">
+                    ⚠️ Pasó la hora de entrega
+                </div>
+            @endif
+
+            @if ($pedido->estado === 'vencido')
+                <div style="background:#fee2e2; border-left:4px solid #ef4444; color:#991b1b; padding:0.55rem 0.8rem; border-radius:6px; font-size:0.83rem; margin:0.5rem 0;">
+                    Este pedido venció porque no se confirmó la entrega.
+                </div>
+            @endif
+
+            <div style="font-size:0.98rem; font-weight:700; margin-bottom:0.35rem;">
                 🏪 {{ $pedido->tienda->nombre }}
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;">
+                🗓️ Realizado el: {{ $pedido->creado_en ? $pedido->creado_en->format('d/m/Y H:i') : '' }}
             </div>
 
             {{-- R17 / Tramo 2: Código de entrega y QR para el comprador --}}
@@ -133,7 +150,7 @@
             </div>
 
             <div style="font-size:0.82rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-                <span>📍 <strong>{{ $pedido->puntoEntrega->nombre ?? 'Campus' }}</strong> (⏰ {{ date('H:i', strtotime($pedido->hora_entrega)) }})</span>
+                <span>📍 <strong>{{ $pedido->puntoEntrega->nombre ?? 'Campus' }}</strong> • ⏰ Entrega: {{ $pedido->hora_entrega ? \Carbon\Carbon::parse($pedido->hora_entrega)->format('d/m/Y H:i') : 'No especificada' }}</span>
                 @if ($pedido->tienda->usuario->whatsapp)
                     <a href="https://wa.me/{{ $pedido->tienda->usuario->whatsapp }}?text={{ urlencode('Hola, tengo una consulta sobre mi pedido ' . $pedido->codigo . ' en PuntoKampus.') }}"
                        target="_blank" style="color:var(--primary); font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:0.25rem;">

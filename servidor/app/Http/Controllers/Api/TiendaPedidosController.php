@@ -30,7 +30,14 @@ class TiendaPedidosController extends Controller
             }
         }
 
-        $pedidos = $query->orderBy('creado_en', 'desc')->paginate(15);
+        // CAMBIO 2: Dentro del filtro actual, los pedidos pendientes con paso_hora van primero
+        // (los más antiguos arriba con hora_entrega ASC), y después el orden habitual (creado_en DESC).
+        $now = now();
+        $pedidos = $query
+            ->orderByRaw("CASE WHEN estado = 'pendiente' AND hora_entrega < ? THEN 0 ELSE 1 END", [$now])
+            ->orderByRaw("CASE WHEN estado = 'pendiente' AND hora_entrega < ? THEN hora_entrega END ASC", [$now])
+            ->orderBy('creado_en', 'desc')
+            ->paginate(15);
 
         return PedidoResource::collection($pedidos);
     }

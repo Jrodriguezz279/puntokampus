@@ -60,6 +60,10 @@ class Pedido {
   // Fase 4: Deuna QR y entregado con
   final String? deunaQrUrl;
   final String? entregadoCon;
+  // CAMBIO 2: Avisos de pedido pendiente que pasó hora
+  final bool pasoHora;
+  final String? venceEn;
+  final String? adminNota;
 
   Pedido({
     required this.id,
@@ -88,11 +92,60 @@ class Pedido {
     this.compradorEstrellas,
     this.deunaQrUrl,
     this.entregadoCon,
+    this.pasoHora = false,
+    this.venceEn,
+    this.adminNota,
   });
 
   bool get esPendiente => estado.trim().toLowerCase() == 'pendiente';
   bool get esEntregado => estado.trim().toLowerCase() == 'entregado';
   bool get esCancelado => estado.trim().toLowerCase() == 'cancelado';
+  bool get esVencido => estado.trim().toLowerCase() == 'vencido';
+
+  String get fechaHoraEntregaFormateada {
+    if (horaEntrega == null || horaEntrega!.isEmpty) return 'No especificada';
+    try {
+      final dt = DateTime.parse(horaEntrega!).toLocal();
+      final dia = dt.day.toString().padLeft(2, '0');
+      final mes = dt.month.toString().padLeft(2, '0');
+      final anio = dt.year;
+      final hora = dt.hour.toString().padLeft(2, '0');
+      final min = dt.minute.toString().padLeft(2, '0');
+      return '$dia/$mes/$anio $hora:$min';
+    } catch (_) {
+      return horaEntrega!;
+    }
+  }
+
+  String get fechaHoraCreacionFormateada {
+    if (creadoEn == null || creadoEn!.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(creadoEn!).toLocal();
+      final dia = dt.day.toString().padLeft(2, '0');
+      final mes = dt.month.toString().padLeft(2, '0');
+      final anio = dt.year;
+      final hora = dt.hour.toString().padLeft(2, '0');
+      final min = dt.minute.toString().padLeft(2, '0');
+      return '$dia/$mes/$anio $hora:$min';
+    } catch (_) {
+      return creadoEn!;
+    }
+  }
+
+  String get venceEnFormateado {
+    if (venceEn == null || venceEn!.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(venceEn!).toLocal();
+      final dia = dt.day.toString().padLeft(2, '0');
+      final mes = dt.month.toString().padLeft(2, '0');
+      final anio = dt.year;
+      final hora = dt.hour.toString().padLeft(2, '0');
+      final min = dt.minute.toString().padLeft(2, '0');
+      return '$dia/$mes/$anio $hora:$min';
+    } catch (_) {
+      return venceEn!;
+    }
+  }
 
   factory Pedido.fromJson(Map<String, dynamic> json) {
     var rawItems = json['items'] as List<dynamic>? ?? [];
@@ -114,7 +167,7 @@ class Pedido {
       estado: json['estado'] as String? ?? 'pendiente',
       whatsappUrl: json['whatsapp_url'] as String?,
       items: itemsList,
-      creadoEn: json['created_at'] as String?,
+      creadoEn: (json['creado_en'] ?? json['created_at']) as String?,
       codigoEntrega: json['codigo_entrega'] as String?,
       codigoBloqueado: json['codigo_bloqueado'] == true || json['codigo_bloqueado'] == 1,
       qrUrl: json['qr_url']?.toString(),
@@ -131,6 +184,9 @@ class Pedido {
           : null,
       deunaQrUrl: json['deuna_qr_url']?.toString(),
       entregadoCon: json['entregado_con']?.toString(),
+      pasoHora: json['paso_hora'] == true || json['paso_hora'] == 1 || json['paso_hora']?.toString() == 'true',
+      venceEn: json['vence_en']?.toString(),
+      adminNota: json['admin_nota']?.toString(),
     );
   }
 }

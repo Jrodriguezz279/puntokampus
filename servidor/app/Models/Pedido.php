@@ -27,6 +27,9 @@ class Pedido extends Model
         'intentos_codigo',
         'codigo_bloqueado',
         'entregado_con',
+        'admin_nota',
+        'admin_id',
+        'admin_gestionado_en',
     ];
 
     protected $hidden = [
@@ -36,15 +39,21 @@ class Pedido extends Model
     protected function casts(): array
     {
         return [
-            'hora_entrega'       => 'datetime',
-            'total'              => 'decimal:2',
-            'estado_cambiado_en' => 'datetime',
-            'codigo_bloqueado'   => 'boolean',
-            'intentos_codigo'    => 'integer',
+            'hora_entrega'        => 'datetime',
+            'total'               => 'decimal:2',
+            'estado_cambiado_en'  => 'datetime',
+            'codigo_bloqueado'    => 'boolean',
+            'intentos_codigo'     => 'integer',
+            'admin_gestionado_en' => 'datetime',
         ];
     }
 
     // ─── Relaciones ───────────────────────────────────────────────────────────
+
+    public function admin()
+    {
+        return $this->belongsTo(Usuario::class, 'admin_id');
+    }
 
     public function comprador()
     {
@@ -74,6 +83,30 @@ class Pedido extends Model
     public function calificacionAComprador()
     {
         return $this->hasOne(Calificacion::class, 'pedido_id')->where('direccion', 'a_comprador');
+    }
+
+    /**
+     * CAMBIO 2: Campo calculado paso_hora
+     * Verdadero si el pedido sigue pendiente y la hora de entrega ya pasó.
+     */
+    public function getPasoHoraAttribute(): bool
+    {
+        return $this->estado === 'pendiente'
+            && $this->hora_entrega !== null
+            && now()->greaterThan($this->hora_entrega);
+    }
+
+    /**
+     * CAMBIO 2: Campo calculado vence_en
+     * Fecha y hora en que pasará a vencido (hora_entrega + 24 horas).
+     */
+    public function getVenceEnAttribute(): ?\Illuminate\Support\Carbon
+    {
+        if ($this->estado !== 'pendiente' || !$this->hora_entrega) {
+            return null;
+        }
+
+        return $this->hora_entrega->copy()->addHours(24);
     }
 
     public function fechaLimiteCalificacion(): ?\Illuminate\Support\Carbon
@@ -205,5 +238,15 @@ class Pedido extends Model
     public function scopePendientes($query)
     {
         return $query->where('estado', 'pendiente');
+    }
+
+    public function scopeConfirmadasConCodigo($query)
+    {
+        return $query->where('estado', 'entregado')->where('entregado_con', 'codigo');
+    }
+
+    public function scopeEntregadasAdmin($query)
+    {
+        return $query->where('estado', 'entregado')->where('entregado_con', 'administrador');
     }
 }

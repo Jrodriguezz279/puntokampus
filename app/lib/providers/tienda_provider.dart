@@ -40,13 +40,14 @@ class TiendaProvider extends ChangeNotifier {
     List<int>? diasAtencion,
     String? horaApertura,
     String? horaCierre,
+    bool? esCreacion,
   }) async {
     _cargando = true;
     _error = null;
     notifyListeners();
 
     try {
-      final esNueva = _miTienda == null;
+      final esNueva = esCreacion ?? (_miTienda == null);
       _miTienda = await TiendaService.guardarTienda(
         nombre: nombre,
         descripcion: descripcion,

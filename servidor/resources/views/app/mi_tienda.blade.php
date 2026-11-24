@@ -430,17 +430,32 @@
                         <div>
                             <strong style="color:var(--primary); font-size:1.05rem;">#{{ $pedido->codigo }}</strong>
                             <span style="font-size:0.8rem; color:var(--text-muted); margin-left:0.4rem;">
-                                {{ $pedido->creado_en ? $pedido->creado_en->format('d/m H:i') : '' }}
+                                🗓️ {{ $pedido->creado_en ? $pedido->creado_en->format('d/m/Y H:i') : '' }}
                             </span>
                         </div>
                         @if ($pedido->estado === 'entregado')
                             <span class="badge badge-entregado">Entregado</span>
                         @elseif ($pedido->estado === 'pendiente')
                             <span class="badge badge-pendiente">Pendiente</span>
+                        @elseif ($pedido->estado === 'vencido')
+                            <span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5;">Vencido</span>
                         @else
                             <span class="badge badge-cancelado">{{ ucfirst($pedido->estado) }}</span>
                         @endif
                     </div>
+
+                    @if ($pedido->paso_hora)
+                        <div style="background:#fef3c7; border-left:4px solid #f59e0b; color:#92400e; padding:0.55rem 0.8rem; border-radius:6px; font-size:0.82rem; margin:0.5rem 0;">
+                            <strong style="display:block;">⚠️ Pasó la hora de entrega</strong>
+                            <span>Confirma la entrega o cancela antes de que venza el {{ $pedido->vence_en ? $pedido->vence_en->format('d/m/Y H:i') : '' }}.</span>
+                        </div>
+                    @endif
+
+                    @if ($pedido->estado === 'vencido')
+                        <div style="background:#fee2e2; border-left:4px solid #ef4444; color:#991b1b; padding:0.55rem 0.8rem; border-radius:6px; font-size:0.83rem; margin:0.5rem 0;">
+                            Este pedido venció porque no se confirmó la entrega. Ya no se puede cambiar. Si fue un error, escribe al equipo.
+                        </div>
+                    @endif
 
                     <div style="font-size:0.9rem; margin:0.4rem 0;">
                         👤 <strong>{{ $pedido->comprador->nombres }}</strong>
@@ -461,7 +476,7 @@
                     </div>
 
                     <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem;">
-                        📍 Entrega: <strong>{{ $pedido->puntoEntrega->nombre ?? 'Campus' }}</strong> • ⏰ {{ date('H:i', strtotime($pedido->hora_entrega)) }}
+                        📍 Entrega: <strong>{{ $pedido->puntoEntrega->nombre ?? 'Campus' }}</strong> • ⏰ Entrega: {{ $pedido->hora_entrega ? \Carbon\Carbon::parse($pedido->hora_entrega)->format('d/m/Y H:i') : 'No especificada' }}
                         @if ($pedido->nota)
                             <br>💬 <em>"{{ $pedido->nota }}"</em>
                         @endif

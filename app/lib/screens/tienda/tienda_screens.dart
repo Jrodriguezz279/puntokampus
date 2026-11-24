@@ -569,12 +569,55 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
     super.dispose();
   }
 
+  Future<String?> _seleccionarHora(String valorActual) async {
+    TimeOfDay inicial = const TimeOfDay(hour: 8, minute: 0);
+    final limpio = valorActual.trim();
+    if (limpio.isNotEmpty && limpio.contains(':')) {
+      final partes = limpio.split(':');
+      final h = int.tryParse(partes[0]);
+      final m = partes.length > 1 ? int.tryParse(partes[1]) : 0;
+      if (h != null && m != null && h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+        inicial = TimeOfDay(hour: h, minute: m);
+      }
+    }
+    final elegida = await showTimePicker(
+      context: context,
+      initialTime: inicial,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
+    if (elegida != null) {
+      final hh = elegida.hour.toString().padLeft(2, '0');
+      final mm = elegida.minute.toString().padLeft(2, '0');
+      return '$hh:$mm';
+    }
+    return null;
+  }
+
   void _guardar() async {
     final vitrina = Provider.of<VitrinaProvider>(context, listen: false);
     final tiendaProv = Provider.of<TiendaProvider>(context, listen: false);
 
     final catId = _cat1Id ?? (vitrina.categorias.isNotEmpty ? vitrina.categorias.first.id : 1);
     final puntoId = _puntoId ?? (vitrina.puntosEntrega.isNotEmpty ? vitrina.puntosEntrega.first.id : 1);
+
+    String? normalizarHora(String raw) {
+      final t = raw.trim();
+      if (t.isEmpty) return null;
+      if (t.contains(':')) {
+        final p = t.split(':');
+        final h = int.tryParse(p[0]);
+        final m = p.length > 1 ? int.tryParse(p[1]) : 0;
+        if (h != null && m != null && h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+          return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+        }
+      }
+      return t;
+    }
 
     setState(() => _guardando = true);
     final ok = await tiendaProv.guardarTienda(
@@ -586,8 +629,9 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
       whatsapp: _whatsappController.text.trim(),
       recibiendoPedidos: _recibiendoPedidos,
       diasAtencion: _diasAtencion,
-      horaApertura: _horaAperturaController.text.trim().isNotEmpty ? _horaAperturaController.text.trim() : null,
-      horaCierre: _horaCierreController.text.trim().isNotEmpty ? _horaCierreController.text.trim() : null,
+      horaApertura: normalizarHora(_horaAperturaController.text),
+      horaCierre: normalizarHora(_horaCierreController.text),
+      esCreacion: widget.tienda == null,
     );
 
     if (!mounted) return;
@@ -742,6 +786,19 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
                           etiqueta: 'Hora apertura',
                           hint: '08:00',
                           controller: _horaAperturaController,
+                          readOnly: true,
+                          onTap: () async {
+                            final hora = await _seleccionarHora(_horaAperturaController.text);
+                            if (hora != null) {
+                              setState(() => _horaAperturaController.text = hora);
+                            }
+                          },
+                          suffixIcon: _horaAperturaController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () => setState(() => _horaAperturaController.clear()),
+                                )
+                              : const Icon(Icons.access_time, size: 18, color: PKColors.secundario),
                         ),
                       ),
                       const SizedBox(width: PKSpacing.md),
@@ -750,6 +807,19 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
                           etiqueta: 'Hora cierre',
                           hint: '18:00',
                           controller: _horaCierreController,
+                          readOnly: true,
+                          onTap: () async {
+                            final hora = await _seleccionarHora(_horaCierreController.text);
+                            if (hora != null) {
+                              setState(() => _horaCierreController.text = hora);
+                            }
+                          },
+                          suffixIcon: _horaCierreController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () => setState(() => _horaCierreController.clear()),
+                                )
+                              : const Icon(Icons.access_time, size: 18, color: PKColors.secundario),
                         ),
                       ),
                     ],
@@ -1341,8 +1411,73 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
                                   PKPastillaEstado(estado: estadoFromString(p.estado)),
                                 ],
                               ),
+                              if (p.pasoHora) ...[
+                                const SizedBox(height: PKSpacing.xs),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(PKSpacing.sm),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF3C7),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFFF59E0B)),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Pasó la hora de entrega',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF92400E),
+                                          fontFamily: 'DMSans',
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Confirma la entrega o cancela antes de que venza el ${p.venceEnFormateado}.',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xFF92400E),
+                                          fontFamily: 'DMSans',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              if (p.esVencido) ...[
+                                const SizedBox(height: PKSpacing.xs),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(PKSpacing.sm),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFFEF4444)),
+                                  ),
+                                  child: const Text(
+                                    'Este pedido venció porque no se confirmó la entrega. Ya no se puede cambiar. Si fue un error, escribe al equipo.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF991B1B),
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: PKSpacing.xs),
                               Text('Comprador: ${p.nombreComprador ?? "Estudiante"}', style: PKTextStyles.etiqueta),
+                              if (p.creadoEn != null && p.creadoEn!.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text('🗓️ Realizado el: ${p.fechaHoraCreacionFormateada}', style: PKTextStyles.etiqueta),
+                              ],
+                              if (p.horaEntrega != null && p.horaEntrega!.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text('⏰ Entrega: ${p.fechaHoraEntregaFormateada}', style: PKTextStyles.etiqueta),
+                              ],
                               if (p.compradorEstrellas != null) ...[
                                 const SizedBox(height: 2),
                                 Text(

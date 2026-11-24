@@ -66,9 +66,11 @@ class PedidoController extends Controller
         if (!empty($tienda->hora_apertura) && !empty($tienda->hora_cierre)) {
             $horaEntrega = \Carbon\Carbon::parse($request->input('hora_entrega'))->timezone('America/Guayaquil');
             $horaEntregaStr = $horaEntrega->format('H:i');
-            if ($horaEntregaStr < $tienda->hora_apertura || $horaEntregaStr > $tienda->hora_cierre) {
+            $horaApertura = preg_match('/^(\d{1,2}):(\d{2})/', $tienda->hora_apertura, $mA) ? sprintf('%02d:%02d', (int)$mA[1], (int)$mA[2]) : $tienda->hora_apertura;
+            $horaCierre = preg_match('/^(\d{1,2}):(\d{2})/', $tienda->hora_cierre, $mC) ? sprintf('%02d:%02d', (int)$mC[1], (int)$mC[2]) : $tienda->hora_cierre;
+            if ($horaEntregaStr < $horaApertura || $horaEntregaStr > $horaCierre) {
                 return response()->json([
-                    'message' => "Esta tienda solo acepta pedidos dentro de su horario ({$tienda->hora_apertura} a {$tienda->hora_cierre}) o desde su siguiente apertura.",
+                    'message' => "Esta tienda solo acepta pedidos dentro de su horario ({$horaApertura} a {$horaCierre}) o desde su siguiente apertura.",
                 ], 422);
             }
         }
@@ -145,6 +147,11 @@ class PedidoController extends Controller
     public function verQr(\Illuminate\Http\Request $request, string $codigo)
     {
         $pedido = Pedido::where('codigo', $codigo)->firstOrFail();
+
+        // Si el pedido está vencido, no se puede mostrar el QR
+        if ($pedido->estado === 'vencido') {
+            return response()->json(['message' => 'Este pedido está vencido y no dispone de código QR.'], 422);
+        }
 
         // R17-a: Solo el comprador dueño del pedido puede ver el QR/código de entrega. Si es vendedor u otro usuario -> 403
         if ($request->user()->id !== $pedido->comprador_id) {

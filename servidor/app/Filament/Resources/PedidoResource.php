@@ -30,7 +30,15 @@ class PedidoResource extends Resource
                 Forms\Components\TextInput::make('total')->label('Total')->prefix('$')->disabled(),
                 Forms\Components\TextInput::make('estado')->label('Estado')->disabled(),
                 Forms\Components\DateTimePicker::make('hora_entrega')->label('Hora de Entrega')->disabled(),
+                Forms\Components\TextInput::make('entregado_con')->label('Entregado con')->disabled(),
+                Forms\Components\TextInput::make('cancelado_por')->label('Cancelado por')->disabled(),
             ])->columns(2),
+
+            Forms\Components\Section::make('Gestión Administrativa')->schema([
+                Forms\Components\TextInput::make('admin.nombres')->label('Administrador')->disabled(),
+                Forms\Components\DateTimePicker::make('admin_gestionado_en')->label('Fecha de Gestión')->disabled(),
+                Forms\Components\Textarea::make('admin_nota')->label('Nota del Administrador')->disabled()->columnSpanFull(),
+            ])->columns(2)->visible(fn (?Pedido $record) => $record && $record->admin_nota !== null),
 
             Forms\Components\Section::make('Calificaciones')->schema([
                 Forms\Components\Placeholder::make('calificacion_tienda')
@@ -107,7 +115,131 @@ class PedidoResource extends Resource
                     ->sortable(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->extraModalActions([
+                        Tables\Actions\Action::make('modalMarcarEntregado')
+                            ->label('Marcar como entregado')
+                            ->icon('heroicon-o-check-circle')
+                            ->color('success')
+                            ->visible(fn (Pedido $record): bool => $record->estado === 'vencido')
+                            ->requiresConfirmation()
+                            ->modalHeading('Marcar pedido vencido como entregado')
+                            ->modalDescription('Requiere una nota administrativa obligatoria para confirmar la entrega manual.')
+                            ->form([
+                                Forms\Components\Textarea::make('admin_nota')
+                                    ->label('Nota administrativa obligatoria')
+                                    ->required()
+                                    ->rows(3),
+                            ])
+                            ->action(function (Pedido $record, array $data) {
+                                abort_unless(auth()->user()?->es_admin, 403, 'Solo un administrador puede realizar esta acción.');
+                                $record->update([
+                                    'estado'              => 'entregado',
+                                    'entregado_con'       => 'administrador',
+                                    'estado_cambiado_en'  => now(),
+                                    'admin_nota'          => $data['admin_nota'],
+                                    'admin_id'            => auth()->id(),
+                                    'admin_gestionado_en' => now(),
+                                ]);
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Pedido marcado como entregado por administración')
+                                    ->success()
+                                    ->send();
+                            }),
+
+                        Tables\Actions\Action::make('modalMarcarCancelado')
+                            ->label('Marcar como cancelado')
+                            ->icon('heroicon-o-x-circle')
+                            ->color('danger')
+                            ->visible(fn (Pedido $record): bool => $record->estado === 'vencido')
+                            ->requiresConfirmation()
+                            ->modalHeading('Marcar pedido vencido como cancelado')
+                            ->modalDescription('Requiere una nota administrativa obligatoria para confirmar la cancelación manual.')
+                            ->form([
+                                Forms\Components\Textarea::make('admin_nota')
+                                    ->label('Nota administrativa obligatoria')
+                                    ->required()
+                                    ->rows(3),
+                            ])
+                            ->action(function (Pedido $record, array $data) {
+                                abort_unless(auth()->user()?->es_admin, 403, 'Solo un administrador puede realizar esta acción.');
+                                $record->update([
+                                    'estado'              => 'cancelado',
+                                    'cancelado_por'       => 'administrador',
+                                    'estado_cambiado_en'  => now(),
+                                    'admin_nota'          => $data['admin_nota'],
+                                    'admin_id'            => auth()->id(),
+                                    'admin_gestionado_en' => now(),
+                                ]);
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Pedido marcado como cancelado por administración')
+                                    ->warning()
+                                    ->send();
+                            }),
+                    ]),
+
+                Tables\Actions\Action::make('marcarEntregado')
+                    ->label('Entregar')
+                    ->tooltip('Marcar pedido vencido como entregado')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn (Pedido $record): bool => $record->estado === 'vencido')
+                    ->requiresConfirmation()
+                    ->modalHeading('Marcar pedido vencido como entregado')
+                    ->modalDescription('Requiere una nota administrativa obligatoria para confirmar la entrega manual.')
+                    ->form([
+                        Forms\Components\Textarea::make('admin_nota')
+                            ->label('Nota administrativa obligatoria')
+                            ->required()
+                            ->rows(3),
+                    ])
+                    ->action(function (Pedido $record, array $data) {
+                        abort_unless(auth()->user()?->es_admin, 403, 'Solo un administrador puede realizar esta acción.');
+                        $record->update([
+                            'estado'              => 'entregado',
+                            'entregado_con'       => 'administrador',
+                            'estado_cambiado_en'  => now(),
+                            'admin_nota'          => $data['admin_nota'],
+                            'admin_id'            => auth()->id(),
+                            'admin_gestionado_en' => now(),
+                        ]);
+                        \Filament\Notifications\Notification::make()
+                            ->title('Pedido marcado como entregado por administración')
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('marcarCancelado')
+                    ->label('Cancelar')
+                    ->tooltip('Marcar pedido vencido como cancelado')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->visible(fn (Pedido $record): bool => $record->estado === 'vencido')
+                    ->requiresConfirmation()
+                    ->modalHeading('Marcar pedido vencido como cancelado')
+                    ->modalDescription('Requiere una nota administrativa obligatoria para confirmar la cancelación manual.')
+                    ->form([
+                        Forms\Components\Textarea::make('admin_nota')
+                            ->label('Nota administrativa obligatoria')
+                            ->required()
+                            ->rows(3),
+                    ])
+                    ->action(function (Pedido $record, array $data) {
+                        abort_unless(auth()->user()?->es_admin, 403, 'Solo un administrador puede realizar esta acción.');
+                        $record->update([
+                            'estado'              => 'cancelado',
+                            'cancelado_por'       => 'administrador',
+                            'estado_cambiado_en'  => now(),
+                            'admin_nota'          => $data['admin_nota'],
+                            'admin_id'            => auth()->id(),
+                            'admin_gestionado_en' => now(),
+                        ]);
+                        \Filament\Notifications\Notification::make()
+                            ->title('Pedido marcado como cancelado por administración')
+                            ->warning()
+                            ->send();
+                    }),
+
                 Tables\Actions\Action::make('desbloquear')
                     ->label('Desbloquear')
                     ->icon('heroicon-o-lock-open')

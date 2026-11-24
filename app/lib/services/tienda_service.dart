@@ -42,11 +42,11 @@ class TiendaService {
       'punto_entrega_id': puntoEntregaId,
       'horario': horario,
       'whatsapp': whatsapp,
+      'hora_apertura': (horaApertura != null && horaApertura.trim().isNotEmpty) ? horaApertura.trim() : null,
+      'hora_cierre': (horaCierre != null && horaCierre.trim().isNotEmpty) ? horaCierre.trim() : null,
     };
     if (recibiendoPedidos != null) body['recibiendo_pedidos'] = recibiendoPedidos;
     if (diasAtencion != null) body['dias_atencion'] = diasAtencion;
-    if (horaApertura != null) body['hora_apertura'] = horaApertura;
-    if (horaCierre != null) body['hora_cierre'] = horaCierre;
 
     final response = esCreacion
         ? await ApiService.post('/mi-tienda', body: body)
