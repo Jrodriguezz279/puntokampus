@@ -22,8 +22,35 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> with RouteAware {
   List<Pedido> _pedidos = [];
   bool _cargando = true;
   String? _error;
+  String _filtroEstado = 'todos';
   // Para detectar regreso desde otra pantalla
   static final RouteObserver<ModalRoute<void>> _routeObserver = RouteObserver<ModalRoute<void>>();
+
+  int get _countTodos => _pedidos.length;
+  int get _countPendientes => _pedidos.where((p) => p.esPendiente).length;
+  int get _countEntregados => _pedidos.where((p) => p.esEntregado).length;
+  int get _countCancelados => _pedidos.where((p) => p.esCancelado).length;
+  int get _countVencidos => _pedidos.where((p) => p.esVencido).length;
+
+  List<Pedido> get _pedidosFiltrados {
+    if (_filtroEstado == 'todos') return _pedidos;
+    return _pedidos.where((p) => p.estado.toLowerCase() == _filtroEstado).toList();
+  }
+
+  String _nombreFiltro(String f) {
+    switch (f) {
+      case 'pendiente':
+        return 'Pendientes';
+      case 'entregado':
+        return 'Entregados';
+      case 'cancelado':
+        return 'Cancelados';
+      case 'vencido':
+        return 'Vencidos';
+      default:
+        return 'Todos';
+    }
+  }
 
   @override
   void initState() {
@@ -115,37 +142,130 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> with RouteAware {
     }
   }
 
+  Widget _buildFiltrosEstado() {
+    final opciones = [
+      {'id': 'todos', 'label': 'Todos', 'count': _countTodos},
+      {'id': 'pendiente', 'label': 'Pendientes', 'count': _countPendientes},
+      {'id': 'entregado', 'label': 'Entregados', 'count': _countEntregados},
+      {'id': 'cancelado', 'label': 'Cancelados', 'count': _countCancelados},
+      {'id': 'vencido', 'label': 'Vencidos', 'count': _countVencidos},
+    ];
+
+    return Container(
+      height: 48,
+      color: PKColors.tarjeta,
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
+        itemCount: opciones.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final opt = opciones[i];
+          final id = opt['id'] as String;
+          final label = opt['label'] as String;
+          final count = opt['count'] as int;
+          final activo = _filtroEstado == id;
+
+          return InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => setState(() => _filtroEstado = id),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: activo ? PKColors.primario : PKColors.fondo,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: activo ? PKColors.primario : PKColors.borde,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: activo ? FontWeight.bold : FontWeight.w500,
+                      color: activo ? PKColors.sobrePrimario : PKColors.titulo,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: activo
+                          ? Colors.white.withOpacity(0.25)
+                          : PKColors.borde.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: activo ? PKColors.sobrePrimario : PKColors.secundario,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filtrados = _pedidosFiltrados;
+
     return Scaffold(
       backgroundColor: PKColors.fondo,
       appBar: AppBar(title: const Text('Mis Pedidos')),
-      body: RefreshIndicator(
-        color: PKColors.primario,
-        onRefresh: () => _cargar(intentos: 0),
-        child: _cargando
-            ? const Padding(
-                padding: EdgeInsets.all(PKSpacing.base),
-                child: Column(
-                  children: [
-                    PKEsqueleto(height: 100),
-                    PKEsqueleto(height: 100),
-                  ],
-                ),
-              )
-            : _error != null
-                ? PKEstadoError(mensaje: _error!, onReintentar: _cargar)
-                : _pedidos.isEmpty
-                    ? const PKEstadoVacio(
-                        icono: Icons.receipt_long_outlined,
-                        titulo: 'Sin pedidos activos',
-                        subtitulo: AppStrings.emptyMisPedidos,
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(PKSpacing.base),
-                        itemCount: _pedidos.length,
-                        itemBuilder: (context, index) {
-                          final p = _pedidos[index];
+      body: Column(
+        children: [
+          _buildFiltrosEstado(),
+          const Divider(height: 1, thickness: 1, color: PKColors.borde),
+          Expanded(
+            child: RefreshIndicator(
+              color: PKColors.primario,
+              onRefresh: () => _cargar(intentos: 0),
+              child: _cargando
+                  ? const Padding(
+                      padding: EdgeInsets.all(PKSpacing.base),
+                      child: Column(
+                        children: [
+                          PKEsqueleto(height: 100),
+                          PKEsqueleto(height: 100),
+                        ],
+                      ),
+                    )
+                  : _error != null
+                      ? PKEstadoError(mensaje: _error!, onReintentar: _cargar)
+                      : _pedidos.isEmpty
+                          ? const PKEstadoVacio(
+                              icono: Icons.receipt_long_outlined,
+                              titulo: 'Sin pedidos activos',
+                              subtitulo: AppStrings.emptyMisPedidos,
+                            )
+                          : filtrados.isEmpty
+                              ? PKEstadoVacio(
+                                  icono: Icons.filter_list_off,
+                                  titulo: 'Sin pedidos ${_nombreFiltro(_filtroEstado).toLowerCase()}',
+                                  subtitulo: 'No tienes pedidos registrados en este estado.',
+                                  botonTexto: 'Ver todos',
+                                  onBoton: () => setState(() => _filtroEstado = 'todos'),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.all(PKSpacing.base),
+                                  itemCount: filtrados.length,
+                                  itemBuilder: (context, index) {
+                                    final p = filtrados[index];
                           return Container(
                             margin: const EdgeInsets.only(bottom: PKSpacing.md),
                             child: PKTarjeta(
@@ -317,6 +437,9 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> with RouteAware {
                           );
                         },
                       ),
+            ),
+          ),
+        ],
       ),
     );
   }

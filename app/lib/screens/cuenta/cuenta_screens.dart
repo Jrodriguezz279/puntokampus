@@ -91,11 +91,11 @@ class CuentaScreen extends StatelessWidget {
                             border: Border.all(color: PKColors.borde),
                           ),
                           child: Text(
-                            (u.estrellasPromedio != null && u.estrellasTotal >= 3)
+                            (u.estrellasPromedio != null && u.estrellasTotal > 0)
                                 ? '⭐ ${u.estrellasPromedio!.toStringAsFixed(1)} (${u.estrellasTotal} calificaciones)'
                                 : '⭐ Todavía no tienes calificaciones',
                             style: PKTextStyles.etiqueta.copyWith(
-                              color: (u.estrellasPromedio != null && u.estrellasTotal >= 3)
+                              color: (u.estrellasPromedio != null && u.estrellasTotal > 0)
                                   ? const Color(0xFFB45309)
                                   : PKColors.secundario,
                               fontWeight: FontWeight.w600,

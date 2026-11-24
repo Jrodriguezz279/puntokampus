@@ -92,13 +92,13 @@ class Usuario extends Authenticatable implements FilamentUser, HasName
     public function estrellasTotalComprador(): ?int
     {
         $total = $this->calificacionesVisiblesCompradorQuery()->count();
-        return $total >= 3 ? $total : null;
+        return $total > 0 ? $total : null;
     }
 
     public function estrellasPromedioComprador(): ?float
     {
         $total = $this->calificacionesVisiblesCompradorQuery()->count();
-        if ($total < 3) {
+        if ($total < 1) {
             return null;
         }
         $avg = $this->calificacionesVisiblesCompradorQuery()->avg('estrellas');

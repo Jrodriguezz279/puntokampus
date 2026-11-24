@@ -460,6 +460,11 @@
                     <div style="font-size:0.9rem; margin:0.4rem 0;">
                         👤 <strong>{{ $pedido->comprador->nombres }}</strong>
                         <span style="color:var(--text-muted); font-size:0.82rem;">({{ $pedido->comprador->correo }})</span>
+                        @if ($pedido->comprador->estrellasPromedioComprador())
+                            <span style="display:inline-flex; align-items:center; gap:0.2rem; font-size:11px; font-weight:700; color:#b45309; margin-left:0.4rem; background:#fef3c7; padding:1px 6px; border-radius:9999px;">
+                                ⭐ {{ number_format($pedido->comprador->estrellasPromedioComprador(), 1) }} ({{ $pedido->comprador->estrellasTotalComprador() }})
+                            </span>
+                        @endif
                     </div>
 
                     <div style="background:#f9fafb; padding:0.75rem 0.85rem; border-radius:var(--radius-sm); font-size:0.88rem; margin:0.5rem 0; border:1px solid #f3f4f6;">
@@ -508,6 +513,42 @@
                                     ✕ Cancelar pedido
                                 </button>
                             </form>
+                        </div>
+                    @endif
+                    @if ($pedido->estado === 'entregado')
+                        @php
+                            $calDada = $pedido->calificaciones()->where('direccion', 'a_comprador')->first();
+                            $calRecibida = $pedido->calificacionesSonVisibles() ? $pedido->calificaciones()->where('direccion', 'a_tienda')->first() : null;
+                        @endphp
+                        <div style="background:#fefce8; border:1px solid #fef08a; border-radius:8px; padding:0.6rem 0.8rem; margin-top:0.6rem; font-size:0.85rem;">
+                            @if ($calDada)
+                                <div style="color:#b45309; font-weight:600; margin-bottom:0.2rem;">
+                                    ⭐ Calificaste al comprador con {{ $calDada->estrellas }} {{ $calDada->estrellas === 1 ? 'estrella' : 'estrellas' }}
+                                </div>
+                            @endif
+                            @if ($calRecibida)
+                                <div style="color:#15803d; font-weight:600;">
+                                    ⭐ Calificación recibida de la tienda: {{ $calRecibida->estrellas }} {{ $calRecibida->estrellas === 1 ? 'estrella' : 'estrellas' }}
+                                </div>
+                            @endif
+                            @if ($pedido->puedeCalificarVendedor())
+                                <form method="POST" action="/app/mi-tienda/pedidos/{{ $pedido->codigo }}/calificar" style="margin-top:0.4rem;">
+                                    @csrf
+                                    <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                                        <span style="font-size:0.82rem; font-weight:600; color:var(--text);">Calificar al comprador:</span>
+                                        <select name="estrellas" style="padding:0.25rem 0.5rem; border-radius:6px; border:1px solid var(--border); font-size:0.82rem;">
+                                            <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                                            <option value="4">⭐⭐⭐⭐ (4)</option>
+                                            <option value="3">⭐⭐⭐ (3)</option>
+                                            <option value="2">⭐⭐ (2)</option>
+                                            <option value="1">⭐ (1)</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-secondary" style="font-size:0.78rem; padding:0.3rem 0.6rem; min-height:30px;">
+                                            Enviar calificación
+                                        </button>
+                                    </div>
+                                </form>
+                            @endif
                         </div>
                     @endif
                 </div>

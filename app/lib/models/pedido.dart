@@ -181,7 +181,12 @@ class Pedido {
           : int.tryParse(json['calificacion_dada']?.toString() ?? ''),
       compradorEstrellas: json['comprador_estrellas'] is Map<String, dynamic>
           ? json['comprador_estrellas'] as Map<String, dynamic>
-          : null,
+          : (json['comprador_estrellas'] is num
+              ? {
+                  'promedio': (json['comprador_estrellas'] as num).toDouble(),
+                  'total': 1,
+                }
+              : null),
       deunaQrUrl: json['deuna_qr_url']?.toString(),
       entregadoCon: json['entregado_con']?.toString(),
       pasoHora: json['paso_hora'] == true || json['paso_hora'] == 1 || json['paso_hora']?.toString() == 'true',

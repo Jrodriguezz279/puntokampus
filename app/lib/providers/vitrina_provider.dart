@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import '../models/categoria.dart';
 import '../models/tienda.dart';
+import '../models/producto.dart';
 import '../services/vitrina_service.dart';
 
 class VitrinaProvider extends ChangeNotifier {
   List<Categoria> _categorias = [];
   List<PuntoEntrega> _puntosEntrega = [];
   List<Tienda> _tiendas = [];
+  List<Producto> _ofertas = [];
   bool _cargando = false;
   String? _error;
   int? _categoriaSeleccionadaId;
@@ -15,6 +17,7 @@ class VitrinaProvider extends ChangeNotifier {
   List<Categoria> get categorias => _categorias;
   List<PuntoEntrega> get puntosEntrega => _puntosEntrega;
   List<Tienda> get tiendas => _tiendas;
+  List<Producto> get ofertas => _ofertas;
   bool get cargando => _cargando;
   String? get error => _error;
   int? get categoriaSeleccionadaId => _categoriaSeleccionadaId;
@@ -30,11 +33,14 @@ class VitrinaProvider extends ChangeNotifier {
         VitrinaService.getCategorias(),
         VitrinaService.getPuntosEntrega(),
         VitrinaService.getTiendas(),
+        VitrinaService.getProductos(),
       ]);
 
       _categorias = res[0] as List<Categoria>;
       _puntosEntrega = res[1] as List<PuntoEntrega>;
       _tiendas = res[2] as List<Tienda>;
+      final prods = res[3] as List<Producto>;
+      _ofertas = prods.where((p) => p.tieneDescuento && p.disponible).toList();
       _cargando = false;
       notifyListeners();
     } catch (e) {

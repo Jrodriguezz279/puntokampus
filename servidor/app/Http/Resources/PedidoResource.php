@@ -67,7 +67,10 @@ class PedidoResource extends JsonResource
         }
 
         if ($esVendedor) {
-            $data['comprador_estrellas']   = $this->comprador?->estrellasPromedioComprador();
+            $data['comprador_estrellas']   = ($this->comprador && $this->comprador->estrellasPromedioComprador()) ? [
+                'promedio' => $this->comprador->estrellasPromedioComprador(),
+                'total'    => $this->comprador->estrellasTotalComprador() ?? 1,
+            ] : null;
             $data['puede_calificar']       = $this->puedeCalificarVendedor();
             $data['calificacion_recibida'] = $visibles ? $this->calificacionATienda?->estrellas : null;
             $data['calificacion_dada']     = $this->calificacionAComprador?->estrellas;

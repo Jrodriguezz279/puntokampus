@@ -163,10 +163,13 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
 
             const SliverToBoxAdapter(child: SizedBox(height: PKSpacing.base)),
 
-            // --- Tramo 2: Carrusel de Destacados ---
-            if (!vitrina.cargando && vitrina.tiendas.any((t) => t.esPremium && t.estaActiva && t.recibiendoPedidos && t.estaAbierto))
+            // --- Carrusel de Destacados & Ofertas ---
+            if (!vitrina.cargando && (vitrina.tiendas.any((t) => t.estaActiva && (t.esPremium || (t.estrellasPromedio != null && t.estrellasTotal > 0))) || vitrina.ofertas.isNotEmpty))
               SliverToBoxAdapter(
-                child: _CarruselDestacados(tiendas: vitrina.tiendas),
+                child: _CarruselDestacados(
+                  tiendas: vitrina.tiendas,
+                  ofertas: vitrina.ofertas,
+                ),
               ),
 
             // Título de la sección
@@ -236,16 +239,19 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
   }
 }
 
-// ─── Carrusel Destacados (Tramo 2) ──────────────────────────────────────────
+// ─── Carrusel Destacados & Ofertas ──────────────────────────────────────────
 class _CarruselDestacados extends StatelessWidget {
   final List<Tienda> tiendas;
-  const _CarruselDestacados({required this.tiendas});
+  final List<Producto> ofertas;
+  const _CarruselDestacados({required this.tiendas, this.ofertas = const []});
 
   @override
   Widget build(BuildContext context) {
-    // Carrusel de la vitrina: tiendas Premium activas, recibiendo pedidos y abiertas en ese momento
-    final destacadas = tiendas.where((t) => t.esPremium && t.estaActiva && t.recibiendoPedidos && t.estaAbierto).toList();
-    if (destacadas.isEmpty) return const SizedBox.shrink();
+    final destacadas = tiendas
+        .where((t) => t.estaActiva && (t.esPremium || (t.estrellasPromedio != null && t.estrellasTotal > 0)))
+        .toList();
+
+    if (destacadas.isEmpty && ofertas.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +267,7 @@ class _CarruselDestacados extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text(
-                  '⭐ DESTACADOS',
+                  '🔥 DESTACADOS & OFERTAS',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -275,96 +281,223 @@ class _CarruselDestacados extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 130,
-          child: ListView.builder(
+          height: 155,
+          child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
-            itemCount: destacadas.length,
-            itemBuilder: (context, index) {
-              final t = destacadas[index];
-              return GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => TiendaScreen(slug: t.slug)),
-                ),
-                child: Container(
-                  width: 160,
-                  margin: const EdgeInsets.only(right: PKSpacing.md, bottom: PKSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: PKColors.tarjeta,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: t.esPremium ? const Color(0xFFCC4E01) : PKColors.borde,
-                      width: t.esPremium ? 1.5 : 1,
+            children: [
+              // 1. Tarjetas de Ofertas (Productos con Descuento)
+              ...ofertas.take(6).map((p) {
+                return GestureDetector(
+                  onTap: () {
+                    if (p.tiendaSlug != null && p.tiendaSlug!.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => TiendaScreen(slug: p.tiendaSlug!)),
+                      );
+                    }
+                  },
+                  child: Container(
+                    width: 175,
+                    margin: const EdgeInsets.only(right: PKSpacing.md, bottom: PKSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: PKColors.tarjeta,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFFED7AA), width: 1.5),
+                      boxShadow: PKShadows.tarjeta,
                     ),
-                    boxShadow: PKShadows.tarjeta,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(PKSpacing.md),
+                    clipBehavior: Clip.antiAlias,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        // Imagen de oferta con badge
+                        Stack(
                           children: [
                             Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: PKColors.primarioSuave,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: PKColors.borde),
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: (t.logoUrl != null && t.logoUrl!.isNotEmpty)
-                                  ? Image.network(t.logoUrl!, fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => _inicial(t.nombre))
-                                  : _inicial(t.nombre),
+                              height: 78,
+                              width: double.infinity,
+                              color: PKColors.neutroFondo,
+                              child: (p.primeraFotoUrl != null && p.primeraFotoUrl!.isNotEmpty)
+                                  ? Image.network(
+                                      p.primeraFotoUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Center(
+                                        child: Icon(Icons.fastfood_outlined, color: PKColors.secundario, size: 28),
+                                      ),
+                                    )
+                                  : const Center(
+                                      child: Icon(Icons.fastfood_outlined, color: PKColors.secundario, size: 28),
+                                    ),
                             ),
-                            const SizedBox(width: 6),
-                            if (t.esPremium)
-                              const Icon(Icons.star_rounded, color: Color(0xFFCC4E01), size: 16),
-                          ],
-                        ),
-                        const SizedBox(height: PKSpacing.sm),
-                        Text(
-                          t.nombre,
-                          style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 13),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        if (!t.puedeRecibirPedidos)
-                          const Text('⏸ Pausada',
-                            style: TextStyle(fontSize: 11, color: Color(0xFFBA1A1A), fontFamily: 'DMSans'),
-                          )
-                        else if (t.estrellasPromedio != null && t.estrellasTotal >= 3)
-                          Row(
-                            children: [
-                              const Icon(Icons.star_rounded, size: 11, color: Color(0xFFF59E0B)),
-                              const SizedBox(width: 2),
-                              Text(
-                                '${t.estrellasPromedio!.toStringAsFixed(1)} (${t.estrellasTotal})',
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF92400E),
-                                  fontFamily: 'DMSans',
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFCC4E01),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Text(
+                                  '-${p.porcentajeDescuento.toStringAsFixed(0)}% OFF',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    fontFamily: 'DMSans',
+                                  ),
                                 ),
                               ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                p.nombre,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: PKColors.titulo,
+                                  fontFamily: 'DMSans',
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Text(
+                                    '\$${p.precioEfectivo.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: PKColors.primario,
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '\$${p.precio.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      decoration: TextDecoration.lineThrough,
+                                      color: PKColors.secundario,
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (p.tiendaNombre != null)
+                                Text(
+                                  '🏪 ${p.tiendaNombre}',
+                                  style: const TextStyle(fontSize: 10, color: PKColors.secundario, fontFamily: 'DMSans'),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                             ],
-                          )
-                        else if (t.categoria1 != null)
-                          Text(t.categoria1!.nombre,
-                            style: PKTextStyles.etiqueta,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
+                        ),
                       ],
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              }),
+
+              // 2. Tarjetas de Tiendas Destacadas
+              ...destacadas.map((t) {
+                return GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => TiendaScreen(slug: t.slug)),
+                  ),
+                  child: Container(
+                    width: 160,
+                    margin: const EdgeInsets.only(right: PKSpacing.md, bottom: PKSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: PKColors.tarjeta,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: t.esPremium ? const Color(0xFFCC4E01) : PKColors.borde,
+                        width: t.esPremium ? 1.5 : 1,
+                      ),
+                      boxShadow: PKShadows.tarjeta,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(PKSpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: PKColors.primarioSuave,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: PKColors.borde),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: (t.logoUrl != null && t.logoUrl!.isNotEmpty)
+                                    ? Image.network(t.logoUrl!, fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => _inicial(t.nombre))
+                                    : _inicial(t.nombre),
+                              ),
+                              const SizedBox(width: 6),
+                              if (t.esPremium)
+                                const Icon(Icons.star_rounded, color: Color(0xFFCC4E01), size: 16),
+                            ],
+                          ),
+                          const SizedBox(height: PKSpacing.sm),
+                          Text(
+                            t.nombre,
+                            style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 13),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          if (!t.puedeRecibirPedidos)
+                            const Text('⏸ Pausada',
+                              style: TextStyle(fontSize: 11, color: Color(0xFFBA1A1A), fontFamily: 'DMSans'),
+                            )
+                          else if (t.estrellasPromedio != null && t.estrellasTotal > 0)
+                            Row(
+                              children: [
+                                const Icon(Icons.star_rounded, size: 12, color: Color(0xFFF59E0B)),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${t.estrellasPromedio!.toStringAsFixed(1)} (${t.estrellasTotal})',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF92400E),
+                                    fontFamily: 'DMSans',
+                                  ),
+                                ),
+                              ],
+                            )
+                          else if (t.estaAbierto)
+                            const Text(
+                              '🟢 Abierto',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontFamily: 'DMSans'),
+                            )
+                          else if (t.categoria1 != null)
+                            Text(t.categoria1!.nombre,
+                              style: PKTextStyles.etiqueta,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
           ),
         ),
         const SizedBox(height: PKSpacing.sm),
@@ -545,7 +678,7 @@ class _TiendaScreenState extends State<TiendaScreen> {
                             Text(t.nombre, style: PKTextStyles.tituloTarjeta),
                             const SizedBox(height: PKSpacing.xs),
                             // ─── Calificación del vendedor (prominente) ───
-                            if (t.estrellasPromedio != null && t.estrellasTotal >= 3)
+                            if (t.estrellasPromedio != null && t.estrellasTotal > 0)
                               Row(
                                 children: [
                                   ...List.generate(5, (i) {
@@ -835,7 +968,7 @@ class _ProductoScreenState extends State<ProductoScreen> {
                 const SizedBox(width: 4),
                 Text(widget.tienda.nombre, style: PKTextStyles.etiqueta),
                 const SizedBox(width: 10),
-                if (widget.tienda.estrellasPromedio != null && widget.tienda.estrellasTotal >= 3) ...[
+                if (widget.tienda.estrellasPromedio != null && widget.tienda.estrellasTotal > 0) ...[
                   const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
                   const SizedBox(width: 2),
                   Text(

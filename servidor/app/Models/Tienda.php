@@ -148,13 +148,13 @@ class Tienda extends Model
     public function estrellasTotal(): ?int
     {
         $total = $this->calificacionesVisiblesQuery()->count();
-        return $total >= 3 ? $total : null;
+        return $total > 0 ? $total : null;
     }
 
     public function estrellasPromedio(): ?float
     {
         $total = $this->calificacionesVisiblesQuery()->count();
-        if ($total < 3) {
+        if ($total < 1) {
             return null;
         }
         $avg = $this->calificacionesVisiblesQuery()->avg('estrellas');

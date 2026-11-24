@@ -269,11 +269,12 @@ class CalificacionesFase3Test extends TestCase
         $p2 = $this->crearPedidoEntregado(4);
         Calificacion::create(['pedido_id' => $p2->id, 'direccion' => 'a_tienda', 'autor_id' => $this->comprador->id, 'estrellas' => 4, 'creada_en' => now()]);
 
-        // Con 2 calificaciones, estrellas_promedio es null
+        // Con 2 calificaciones visibles, se calcula promedio (5 + 4) / 2 = 4.5
         $response = $this->getJson("/api/v1/tiendas/{$this->tienda->slug}");
         $response->assertStatus(200);
         $tiendaData = $response->json('tienda') ?? $response->json('data') ?? $response->json();
-        $this->assertNull($tiendaData['estrellas_promedio']);
+        $this->assertEquals(4.5, $tiendaData['estrellas_promedio']);
+        $this->assertEquals(2, $tiendaData['estrellas_total']);
 
         // Pedido 3
         $p3 = $this->crearPedidoEntregado(4);

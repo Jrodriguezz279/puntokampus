@@ -567,6 +567,13 @@
                                     <div>
                                         <h3 style="font-size:15px; font-weight:700; margin:0; color:var(--text); line-height:1.2;">{{ $cTienda->nombre }}</h3>
                                         <span style="font-size:12px; color:var(--primary-dark);">🏷️ {{ $cTienda->categoria1->nombre ?? 'Campus' }}</span>
+                                        @if ($cTienda->estrellasPromedio())
+                                            <div style="font-size:11px; font-weight:700; color:#b45309; margin-top:2px;">
+                                                ⭐ {{ number_format($cTienda->estrellasPromedio(), 1) }} ({{ $cTienda->estrellasTotal() }})
+                                            </div>
+                                        @else
+                                            <div style="font-size:11px; color:var(--text-muted); font-style:italic; margin-top:2px;">✨ Nueva</div>
+                                        @endif
                                     </div>
                                 </div>
                                 <span class="showcase-badge-saco10" style="height:22px; font-size:10px;">⭐ Sacó 10</span>
@@ -667,12 +674,33 @@
                                     </span>
                                 @endif
                             </div>
-                            <p class="showcase-category-label">
+                                <p class="showcase-category-label">
                                 🏷️ {{ $tienda->categoria1->nombre }}
                                 @if ($tienda->dias_atencion)
                                     • {{ $tienda->diasAtencionLegible() }}
                                 @endif
                             </p>
+                            <div style="display:flex; align-items:center; gap:0.4rem; margin-top:0.3rem; flex-wrap:wrap;">
+                                @if ($tienda->estrellasPromedio())
+                                    <span style="display:inline-flex; align-items:center; gap:0.2rem; font-size:12px; font-weight:700; color:#b45309; background:#fef3c7; padding:2px 7px; border-radius:9999px;">
+                                        ⭐ {{ number_format($tienda->estrellasPromedio(), 1) }}
+                                        <span style="font-size:11px; font-weight:500; color:#92400e;">({{ $tienda->estrellasTotal() }})</span>
+                                    </span>
+                                @else
+                                    <span style="font-size:11px; color:var(--text-muted); font-style:italic;">✨ Nueva</span>
+                                @endif
+                                @if ($tienda->estaAbiertoAhora())
+                                    <span style="display:inline-flex; align-items:center; gap:0.25rem; font-size:11px; font-weight:700; color:#15803d; background:#dcfce7; padding:2px 7px; border-radius:9999px; border:1px solid #bbf7d0;">
+                                        🟢 Abierto
+                                    </span>
+                                @elseif (!$tienda->recibiendo_pedidos)
+                                    {{-- Se muestra pausada arriba --}}
+                                @else
+                                    <span style="display:inline-flex; align-items:center; gap:0.25rem; font-size:11px; font-weight:600; color:#dc2626; background:#fee2e2; padding:2px 7px; border-radius:9999px;">
+                                        🔴 Cerrado
+                                    </span>
+                                @endif
+                            </div>
                         </div>
                     </div>
 

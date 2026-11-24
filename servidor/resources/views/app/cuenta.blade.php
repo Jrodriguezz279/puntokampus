@@ -16,6 +16,14 @@
                     🎓 {{ $usuario->carrera }} (Semestre {{ $usuario->semestre }})
                 </span>
             @endif
+            @if ($usuario->estrellasPromedioComprador())
+                <div style="margin-top:0.6rem;">
+                    <span style="display:inline-flex; align-items:center; gap:0.25rem; font-size:12px; font-weight:700; color:#b45309; background:#fef3c7; padding:3px 9px; border-radius:9999px;">
+                        ⭐ {{ number_format($usuario->estrellasPromedioComprador(), 1) }}
+                        <span style="font-weight:500; color:#92400e;">({{ $usuario->estrellasTotalComprador() }} calificaciones como comprador)</span>
+                    </span>
+                </div>
+            @endif
         </div>
 
         <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 1.25rem;">

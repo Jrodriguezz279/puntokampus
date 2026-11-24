@@ -64,7 +64,7 @@ class Tienda {
   bool get puedeRecibirPedidos => estaActiva && recibiendoPedidos;
 
   String get textoEstrellas =>
-      (estrellasPromedio != null && estrellasTotal >= 3)
+      (estrellasPromedio != null && estrellasTotal > 0)
           ? '⭐ ${estrellasPromedio!.toStringAsFixed(1)} ($estrellasTotal)'
           : '⭐ Nueva';
 

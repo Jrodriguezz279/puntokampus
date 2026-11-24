@@ -30,6 +30,8 @@ class Producto {
   final double? precioDescuento;
   final bool descuentoActivo;
   final bool disponible;
+  final String? tiendaNombre;
+  final String? tiendaSlug;
   final List<ProductoFoto> fotos;
 
   Producto({
@@ -41,6 +43,8 @@ class Producto {
     this.precioDescuento,
     this.descuentoActivo = false,
     this.disponible = true,
+    this.tiendaNombre,
+    this.tiendaSlug,
     this.fotos = const [],
   });
 
@@ -77,6 +81,8 @@ class Producto {
           json['descuento_activo']?.toString() == 'true' ||
           json['tiene_descuento'] == true,
       disponible: json['disponible'] == true || json['disponible'] == 1 || json['disponible']?.toString() == 'true',
+      tiendaNombre: json['tienda_nombre']?.toString() ?? json['tienda']?['nombre']?.toString(),
+      tiendaSlug: json['tienda_slug']?.toString() ?? json['tienda']?['slug']?.toString(),
       fotos: fotosList,
     );
   }

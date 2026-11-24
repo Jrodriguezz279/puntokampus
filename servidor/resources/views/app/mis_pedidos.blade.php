@@ -158,6 +158,43 @@
                     </a>
                 @endif
             </div>
+
+            @if ($pedido->estado === 'entregado')
+                @php
+                    $calDada = $pedido->calificaciones()->where('direccion', 'a_tienda')->first();
+                    $calRecibida = $pedido->calificacionesSonVisibles() ? $pedido->calificaciones()->where('direccion', 'a_comprador')->first() : null;
+                @endphp
+                <div style="background:#fefce8; border:1px solid #fef08a; border-radius:8px; padding:0.6rem 0.8rem; margin-top:0.6rem; font-size:0.85rem;">
+                    @if ($calDada)
+                        <div style="color:#b45309; font-weight:600; margin-bottom:0.2rem;">
+                            ⭐ Calificaste a la tienda con {{ $calDada->estrellas }} {{ $calDada->estrellas === 1 ? 'estrella' : 'estrellas' }}
+                        </div>
+                    @endif
+                    @if ($calRecibida)
+                        <div style="color:#15803d; font-weight:600;">
+                            ⭐ Calificación recibida como comprador: {{ $calRecibida->estrellas }} {{ $calRecibida->estrellas === 1 ? 'estrella' : 'estrellas' }}
+                        </div>
+                    @endif
+                    @if ($pedido->puedeCalificarComprador())
+                        <form method="POST" action="/app/mis-pedidos/{{ $pedido->codigo }}/calificar" style="margin-top:0.4rem;">
+                            @csrf
+                            <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
+                                <span style="font-size:0.82rem; font-weight:600; color:var(--text);">Calificar a la tienda:</span>
+                                <select name="estrellas" style="padding:0.25rem 0.5rem; border-radius:6px; border:1px solid var(--border); font-size:0.82rem;">
+                                    <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                                    <option value="4">⭐⭐⭐⭐ (4)</option>
+                                    <option value="3">⭐⭐⭐ (3)</option>
+                                    <option value="2">⭐⭐ (2)</option>
+                                    <option value="1">⭐ (1)</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary" style="font-size:0.78rem; padding:0.3rem 0.6rem; min-height:30px;">
+                                    Enviar calificación
+                                </button>
+                            </div>
+                        </form>
+                    @endif
+                </div>
+            @endif
         </div>
     @empty
         <div class="card" style="text-align:center; padding:3.5rem 1.5rem; color:var(--text-muted); grid-column:1/-1;">

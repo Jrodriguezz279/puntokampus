@@ -384,9 +384,17 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(prod.nombre, style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15)),
-                                      const SizedBox(height: 3),
-                                      Row(
+                                      Text(
+                                        prod.nombre,
+                                        style: PKTextStyles.tituloTarjeta.copyWith(fontSize: 15),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 4,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
                                         children: [
                                           if (prod.tieneDescuento) ...[
                                             Text(
@@ -398,7 +406,6 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                                                 fontFamily: 'DMSans',
                                               ),
                                             ),
-                                            const SizedBox(width: 4),
                                             Text(
                                               '\$${prod.precio.toStringAsFixed(2)}',
                                               style: const TextStyle(
@@ -408,9 +415,8 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                                                 fontFamily: 'DMSans',
                                               ),
                                             ),
-                                            const SizedBox(width: 4),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                               decoration: BoxDecoration(
                                                 color: const Color(0xFFCC4E01),
                                                 borderRadius: BorderRadius.circular(4),
@@ -436,7 +442,6 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                                               ),
                                             ),
                                           ],
-                                          const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
@@ -458,37 +463,50 @@ class _MiTiendaScreenState extends State<MiTiendaScreen> {
                                     ],
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined, color: PKColors.primario),
-                                  tooltip: 'Editar producto',
-                                  onPressed: () => _abrirFormProducto(prod),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: PKColors.error),
-                                  tooltip: 'Eliminar producto',
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: const Text('¿Eliminar producto?'),
-                                        content: Text('¿Deseas eliminar "${prod.nombre}" de tu catálogo?'),
-                                        actions: [
-                                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              tiendaProv.eliminarProducto(prod.id);
-                                              Navigator.pop(ctx);
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: PKColors.error,
-                                              foregroundColor: PKColors.sobrePrimario,
-                                            ),
-                                            child: const Text('Eliminar'),
+                                const SizedBox(width: PKSpacing.sm),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined, size: 20, color: PKColors.primario),
+                                      visualDensity: VisualDensity.compact,
+                                      padding: const EdgeInsets.all(6),
+                                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                      tooltip: 'Editar producto',
+                                      onPressed: () => _abrirFormProducto(prod),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, size: 20, color: PKColors.error),
+                                      visualDensity: VisualDensity.compact,
+                                      padding: const EdgeInsets.all(6),
+                                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                                      tooltip: 'Eliminar producto',
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: const Text('¿Eliminar producto?'),
+                                            content: Text('¿Deseas eliminar "${prod.nombre}" de tu catálogo?'),
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  tiendaProv.eliminarProducto(prod.id);
+                                                  Navigator.pop(ctx);
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: PKColors.error,
+                                                  foregroundColor: PKColors.sobrePrimario,
+                                                ),
+                                                child: const Text('Eliminar'),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    );
-                                  },
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -1182,9 +1200,36 @@ class PedidosTiendaScreen extends StatefulWidget {
 class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
   List<Pedido> _pedidos = [];
   bool _cargando = true;
+  String _filtroEstado = 'todos';
   // Controladores de texto: uno por código de pedido (para el campo de ingreso del código de entrega)
   final Map<String, TextEditingController> _codigoControllers = {};
   final Map<String, bool> _confirmando = {};
+
+  int get _countTodos => _pedidos.length;
+  int get _countPendientes => _pedidos.where((p) => p.esPendiente).length;
+  int get _countEntregados => _pedidos.where((p) => p.esEntregado).length;
+  int get _countCancelados => _pedidos.where((p) => p.esCancelado).length;
+  int get _countVencidos => _pedidos.where((p) => p.esVencido).length;
+
+  List<Pedido> get _pedidosFiltrados {
+    if (_filtroEstado == 'todos') return _pedidos;
+    return _pedidos.where((p) => p.estado.toLowerCase() == _filtroEstado).toList();
+  }
+
+  String _nombreFiltro(String f) {
+    switch (f) {
+      case 'pendiente':
+        return 'Pendientes';
+      case 'entregado':
+        return 'Entregados';
+      case 'cancelado':
+        return 'Cancelados';
+      case 'vencido':
+        return 'Vencidos';
+      default:
+        return 'Todos';
+    }
+  }
 
   @override
   void initState() {
@@ -1363,27 +1408,120 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
     }
   }
 
+  Widget _buildFiltrosEstado() {
+    final opciones = [
+      {'id': 'todos', 'label': 'Todos', 'count': _countTodos},
+      {'id': 'pendiente', 'label': 'Pendientes', 'count': _countPendientes},
+      {'id': 'entregado', 'label': 'Entregados', 'count': _countEntregados},
+      {'id': 'cancelado', 'label': 'Cancelados', 'count': _countCancelados},
+      {'id': 'vencido', 'label': 'Vencidos', 'count': _countVencidos},
+    ];
+
+    return Container(
+      height: 48,
+      color: PKColors.tarjeta,
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base),
+        itemCount: opciones.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final opt = opciones[i];
+          final id = opt['id'] as String;
+          final label = opt['label'] as String;
+          final count = opt['count'] as int;
+          final activo = _filtroEstado == id;
+
+          return InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => setState(() => _filtroEstado = id),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: activo ? PKColors.primario : PKColors.fondo,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: activo ? PKColors.primario : PKColors.borde,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: activo ? FontWeight.bold : FontWeight.w500,
+                      color: activo ? PKColors.sobrePrimario : PKColors.titulo,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: activo
+                          ? Colors.white.withOpacity(0.25)
+                          : PKColors.borde.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: activo ? PKColors.sobrePrimario : PKColors.secundario,
+                        fontFamily: 'DMSans',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filtrados = _pedidosFiltrados;
+
     return Scaffold(
       backgroundColor: PKColors.fondo,
       appBar: AppBar(title: const Text('Pedidos Recibidos')),
-      body: RefreshIndicator(
-        color: PKColors.primario,
-        onRefresh: () async => _cargar(),
-        child: _cargando
-            ? const Center(child: CircularProgressIndicator(color: PKColors.primario))
-            : _pedidos.isEmpty
-                ? const PKEstadoVacio(
-                    icono: Icons.inbox_outlined,
-                    titulo: 'Sin pedidos recibidos',
-                    subtitulo: AppStrings.emptyPedidosTienda,
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(PKSpacing.base),
-                    itemCount: _pedidos.length,
-                    itemBuilder: (context, index) {
-                      final p = _pedidos[index];
+      body: Column(
+        children: [
+          _buildFiltrosEstado(),
+          const Divider(height: 1, thickness: 1, color: PKColors.borde),
+          Expanded(
+            child: RefreshIndicator(
+              color: PKColors.primario,
+              onRefresh: () async => _cargar(),
+              child: _cargando
+                  ? const Center(child: CircularProgressIndicator(color: PKColors.primario))
+                  : _pedidos.isEmpty
+                      ? const PKEstadoVacio(
+                          icono: Icons.inbox_outlined,
+                          titulo: 'Sin pedidos recibidos',
+                          subtitulo: AppStrings.emptyPedidosTienda,
+                        )
+                      : filtrados.isEmpty
+                          ? PKEstadoVacio(
+                              icono: Icons.filter_list_off,
+                              titulo: 'Sin pedidos ${_nombreFiltro(_filtroEstado).toLowerCase()}',
+                              subtitulo: 'No se encontraron pedidos de tu tienda en este estado.',
+                              botonTexto: 'Ver todos',
+                              onBoton: () => setState(() => _filtroEstado = 'todos'),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(PKSpacing.base),
+                              itemCount: filtrados.length,
+                              itemBuilder: (context, index) {
+                                final p = filtrados[index];
                       final controller = _codigoControllers.putIfAbsent(p.codigo, () => TextEditingController());
                       final confirmando = _confirmando[p.codigo] ?? false;
                       return Container(
@@ -1683,6 +1821,9 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
                     );
                     },
                   ),
+            ),
+          ),
+        ],
       ),
     );
   }

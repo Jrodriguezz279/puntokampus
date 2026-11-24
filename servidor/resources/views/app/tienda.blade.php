@@ -299,6 +299,28 @@
                     @endif
                 </div>
 
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.4rem; flex-wrap:wrap;">
+                    @if ($tienda->estrellasPromedio())
+                        <div style="display:inline-flex; align-items:center; gap:0.35rem; background:#fef3c7; border:1px solid #fde68a; padding:3px 9px; border-radius:8px;">
+                            <span style="color:#f59e0b; font-size:1rem; line-height:1;">★</span>
+                            <strong style="font-size:0.95rem; font-weight:800; color:#92400e;">{{ number_format($tienda->estrellasPromedio(), 1) }}</strong>
+                            <span style="color:#92400e; font-size:0.8rem; font-weight:600;">({{ $tienda->estrellasTotal() }} {{ $tienda->estrellasTotal() === 1 ? 'reseña' : 'reseñas' }})</span>
+                        </div>
+                    @else
+                        <span style="color:var(--text-muted); font-size:0.82rem; font-style:italic;">⭐ Nueva • Sin calificaciones aún</span>
+                    @endif
+
+                    @if ($tienda->estaAbiertoAhora())
+                        <span style="display:inline-flex; align-items:center; gap:0.25rem; font-size:12px; font-weight:700; color:#15803d; background:#dcfce7; padding:3px 9px; border-radius:9999px; border:1px solid #bbf7d0;">
+                            🟢 Abierto ahora
+                        </span>
+                    @elseif ($tienda->recibiendo_pedidos)
+                        <span style="display:inline-flex; align-items:center; gap:0.25rem; font-size:12px; font-weight:600; color:#dc2626; background:#fee2e2; padding:3px 9px; border-radius:9999px;">
+                            🔴 Cerrado ahora
+                        </span>
+                    @endif
+                </div>
+
                 <p style="font-size: 0.9rem; color: var(--text); margin-top: 0.4rem;">
                     {{ $tienda->descripcion ?: 'Tienda oficial de estudiante UTB.' }}
                 </p>

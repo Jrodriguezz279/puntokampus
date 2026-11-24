@@ -22,6 +22,8 @@ class ProductoResource extends JsonResource
             'porcentaje_descuento' => (int) $this->descuento_porcentaje,
             'precio_efectivo' => (float) $this->precio_efectivo,
             'disponible' => (bool) $this->disponible,
+            'tienda_nombre' => $this->tienda?->nombre,
+            'tienda_slug' => $this->tienda?->slug,
             'fotos' => ProductoFotoResource::collection($this->whenLoaded('fotos')),
             'creado_en' => $this->creado_en?->toIso8601String(),
         ];

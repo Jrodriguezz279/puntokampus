@@ -13,10 +13,15 @@ class MisPedidosController extends Controller
     {
         $comprador = $request->user();
 
-        $pedidos = Pedido::with(['tienda.usuario', 'puntoEntrega', 'items'])
-            ->where('comprador_id', $comprador->id)
-            ->orderBy('creado_en', 'desc')
-            ->paginate(15);
+        $query = Pedido::with(['tienda.usuario', 'puntoEntrega', 'items'])
+            ->where('comprador_id', $comprador->id);
+
+        if ($request->filled('estado') && in_array($request->query('estado'), ['pendiente', 'entregado', 'cancelado', 'vencido'])) {
+            $query->where('estado', $request->query('estado'));
+        }
+
+        $pedidos = $query->orderBy('creado_en', 'desc')
+            ->paginate(20);
 
         return PedidoResource::collection($pedidos);
     }

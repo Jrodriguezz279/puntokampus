@@ -130,21 +130,49 @@ class StoreCard extends StatelessWidget {
                               ),
                             ),
                           ],
+                          // Badge "Abierto" en verde si la tienda está abierta
+                          if (tienda.puedeRecibirPedidos && tienda.estaAbierto) ...[
+                            const SizedBox(width: PKSpacing.sm),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                border: Border.all(color: const Color(0xFFBBF7D0)),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.circle, size: 7, color: Color(0xFF16A34A)),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Abierto',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF15803D),
+                                      fontFamily: 'DMSans',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                           // Badge "Cerrado" cuando está fuera de horario
                           if (tienda.puedeRecibirPedidos && !tienda.estaAbierto) ...[
                             const SizedBox(width: PKSpacing.sm),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF3F4F6),
+                                color: const Color(0xFFFEE2E2),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
-                                '🕐 Cerrado',
+                                '🔴 Cerrado',
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF6B7280),
+                                  color: Color(0xFF991B1B),
                                   fontFamily: 'DMSans',
                                 ),
                               ),
@@ -164,40 +192,54 @@ class StoreCard extends StatelessWidget {
   }
 
   Widget _buildRatingBadge(Tienda t) {
-    if (t.estrellasPromedio != null && t.estrellasTotal >= 3) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.star_rounded, size: 15, color: Color(0xFFF59E0B)),
-          const SizedBox(width: 2),
-          Text(
-            t.estrellasPromedio!.toStringAsFixed(1),
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF92400E),
-              fontFamily: 'DMSans',
+    if (t.estrellasPromedio != null && t.estrellasTotal > 0) {
+      return Container(
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF3C7),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFFDE68A)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF59E0B)),
+            const SizedBox(width: 2),
+            Text(
+              t.estrellasPromedio!.toStringAsFixed(1),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF92400E),
+                fontFamily: 'DMSans',
+              ),
             ),
-          ),
-          Text(
-            ' (${t.estrellasTotal})',
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFFB45309),
-              fontFamily: 'DMSans',
+            const SizedBox(width: 2),
+            Text(
+              '(${t.estrellasTotal})',
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFB45309),
+                fontFamily: 'DMSans',
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
-    return const Text(
-      '✨ Nueva',
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF9CA3AF),
-        fontFamily: 'DMSans',
+    return const Padding(
+      padding: EdgeInsets.only(right: 6),
+      child: Text(
+        '✨ Nueva',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF9CA3AF),
+          fontStyle: FontStyle.italic,
+          fontFamily: 'DMSans',
+        ),
       ),
     );
   }
