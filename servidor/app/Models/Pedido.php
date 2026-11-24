@@ -26,6 +26,7 @@ class Pedido extends Model
         'codigo_entrega',
         'intentos_codigo',
         'codigo_bloqueado',
+        'entregado_con',
     ];
 
     protected $hidden = [
@@ -58,6 +59,63 @@ class Pedido extends Model
     public function puntoEntrega()
     {
         return $this->belongsTo(PuntoEntrega::class, 'punto_entrega_id');
+    }
+
+    public function calificaciones()
+    {
+        return $this->hasMany(Calificacion::class, 'pedido_id');
+    }
+
+    public function calificacionATienda()
+    {
+        return $this->hasOne(Calificacion::class, 'pedido_id')->where('direccion', 'a_tienda');
+    }
+
+    public function calificacionAComprador()
+    {
+        return $this->hasOne(Calificacion::class, 'pedido_id')->where('direccion', 'a_comprador');
+    }
+
+    public function fechaLimiteCalificacion(): ?\Illuminate\Support\Carbon
+    {
+        $fecha = $this->estado_cambiado_en ?? $this->actualizado_en ?? $this->creado_en;
+        return $fecha ? $fecha->copy()->addDays(3) : null;
+    }
+
+    public function enPlazoCalificacion(): bool
+    {
+        if ($this->estado !== 'entregado') {
+            return false;
+        }
+        $limite = $this->fechaLimiteCalificacion();
+        return $limite ? now()->lte($limite) : false;
+    }
+
+    public function calificacionesSonVisibles(): bool
+    {
+        if ($this->estado !== 'entregado') {
+            return false;
+        }
+
+        $limite = $this->fechaLimiteCalificacion();
+        if ($limite && now()->gte($limite)) {
+            return true;
+        }
+
+        $tieneATienda = $this->calificaciones()->where('direccion', 'a_tienda')->exists();
+        $tieneAComprador = $this->calificaciones()->where('direccion', 'a_comprador')->exists();
+
+        return $tieneATienda && $tieneAComprador;
+    }
+
+    public function puedeCalificarComprador(): bool
+    {
+        return $this->enPlazoCalificacion() && !$this->calificaciones()->where('direccion', 'a_tienda')->exists();
+    }
+
+    public function puedeCalificarVendedor(): bool
+    {
+        return $this->enPlazoCalificacion() && !$this->calificaciones()->where('direccion', 'a_comprador')->exists();
     }
 
     public function items()

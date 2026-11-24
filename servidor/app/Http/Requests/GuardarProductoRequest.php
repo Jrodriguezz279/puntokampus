@@ -33,7 +33,31 @@ class GuardarProductoRequest extends FormRequest
             'precio.required' => 'El precio es obligatorio.',
             'precio.min' => 'El precio debe ser mayor a 0.',
             'precio.max' => 'El precio no puede exceder $500.',
+            'precio_descuento.min' => 'El precio rebajado tiene que ser mayor a 0.',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $precio = $this->input('precio');
+            $precioDescuento = $this->input('precio_descuento');
+
+            if ($this->isMethod('put') || $this->isMethod('patch')) {
+                if ($precio === null && $this->route('id')) {
+                    $prod = \App\Models\Producto::find($this->route('id'));
+                    if ($prod) {
+                        $precio = $prod->precio;
+                    }
+                }
+            }
+
+            if ($precioDescuento !== null && $precio !== null) {
+                if ((float) $precioDescuento >= (float) $precio) {
+                    $validator->errors()->add('precio_descuento', 'El precio rebajado tiene que ser menor que el precio normal.');
+                }
+            }
+        });
     }
 }
 

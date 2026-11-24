@@ -10,12 +10,14 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
+        $adminPassword = env('ADMIN_DEFAULT_PASSWORD', 'AdminUtb2026!#Secure');
+
         Usuario::updateOrCreate(
             ['correo' => 'admin@utb.edu.ec'],
             [
                 'nombres' => 'Administrador PuntoKampus',
                 'es_admin' => true,
-                'password' => Hash::make('PuntoKampus2026!'),
+                'password' => Hash::make($adminPassword),
                 'estado' => 'activa',
                 'acepto_privacidad_en' => now(),
             ]

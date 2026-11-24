@@ -111,7 +111,10 @@ class PKTarjeta extends StatelessWidget {
         border: Border.all(color: PKColors.borde),
         boxShadow: PKShadows.tarjeta,
       ),
-      child: child,
+      child: Material(
+        color: Colors.transparent,
+        child: child,
+      ),
     );
 
     if (onTap != null) {

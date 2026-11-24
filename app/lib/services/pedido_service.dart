@@ -64,4 +64,19 @@ class PedidoService {
   static String getQrUrl(String codigoPedido) {
     return '${ApiConstants.baseUrl}/pedidos/$codigoPedido/qr?formato=png';
   }
+
+  // Fase 3: Calificaciones bidireccionales
+  static Future<Map<String, dynamic>> calificarTienda(String codigo, int estrellas) async {
+    final response = await ApiService.post('/mis-pedidos/$codigo/calificacion', body: {
+      'estrellas': estrellas,
+    });
+    return response as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> calificarComprador(String codigo, int estrellas) async {
+    final response = await ApiService.post('/mi-tienda/pedidos/$codigo/calificacion', body: {
+      'estrellas': estrellas,
+    });
+    return response as Map<String, dynamic>;
+  }
 }

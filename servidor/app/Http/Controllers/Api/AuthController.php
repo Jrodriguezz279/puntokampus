@@ -69,8 +69,8 @@ class AuthController extends Controller
         $request->validate([
             'correo' => ['required', 'string', 'email'],
             'codigo' => ['required', 'string'],
-            'contrasena' => ['nullable', 'string', 'min:6'],
-            'password' => ['nullable', 'string', 'min:6'],
+            'contrasena' => ['nullable', 'string', 'min:12', 'max:128'],
+            'password' => ['nullable', 'string', 'min:12', 'max:128'],
             'dispositivo' => ['nullable', 'string', 'max:120'],
         ]);
 
@@ -112,8 +112,8 @@ class AuthController extends Controller
         $request->validate([
             'correo' => ['required', 'string', 'email'],
             'codigo' => ['required', 'string'],
-            'contrasena' => ['sometimes', 'string', 'min:6'],
-            'password' => ['sometimes', 'string', 'min:6'],
+            'contrasena' => ['sometimes', 'string', 'min:12', 'max:128'],
+            'password' => ['sometimes', 'string', 'min:12', 'max:128'],
         ]);
 
         $password = $request->input('contrasena') ?? $request->input('password');

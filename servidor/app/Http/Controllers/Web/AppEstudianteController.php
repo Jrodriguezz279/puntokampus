@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -85,6 +86,9 @@ class AppEstudianteController extends Controller
         $carruselOfertas = Producto::whereNull('eliminado_en')
             ->where('disponible', true)
             ->where('descuento_activo', true)
+            ->whereNotNull('precio_descuento')
+            ->whereColumn('precio_descuento', '<', 'precio')
+            ->where('precio_descuento', '>', 0)
             ->whereHas('tienda', fn($q) => $q->where('estado', 'activa'))
             ->with(['tienda.puntoEntrega', 'fotos'])
             ->take(6)
@@ -141,6 +145,16 @@ class AppEstudianteController extends Controller
 
         $correo = strtolower(trim($request->input('correo')));
         $contrasena = $request->input('contrasena');
+        $throttleKey = 'login_contrasena:' . $correo;
+
+        // R2/Seguridad: 5 intentos fallidos obligan a esperar
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $minutes = ceil($seconds / 60);
+            return back()->withErrors([
+                'contrasena' => "Demasiados intentos fallidos. Por favor espera {$minutes} minuto(s) antes de volver a intentar.",
+            ])->withInput();
+        }
 
         $usuario = Usuario::where('correo', $correo)->first();
         if ($usuario && $usuario->estado === 'desactivada') {
@@ -152,16 +166,12 @@ class AppEstudianteController extends Controller
             $valida = Hash::check($contrasena, $usuario->password);
         }
 
-        // Acceso de prueba / demostración
-        if (!$valida && ($contrasena === 'PuntoKampus2026!' || $contrasena === '123456')) {
-            if ($usuario && in_array($correo, ['maria.compradora@est.utb.edu.ec', 'carlos.vendedor@est.utb.edu.ec', 'admin@utb.edu.ec'])) {
-                $valida = true;
-            }
-        }
-
         if (!$usuario || !$valida) {
+            RateLimiter::hit($throttleKey, 600);
             return back()->withErrors(['contrasena' => 'El correo o la contraseña son incorrectos.'])->withInput();
         }
+
+        RateLimiter::clear($throttleKey);
 
         Auth::login($usuario);
 
@@ -189,14 +199,13 @@ class AppEstudianteController extends Controller
         }
 
         try {
-            $this->authService->solicitarCodigo($correo, 'acceso');
+            $this->authService->solicitarCodigo($correo, 'registro');
         } catch (\Throwable $e) {
             return back()->withErrors(['correo' => $e->getMessage()])->withInput();
         }
 
         session([
             'registro_correo' => $correo,
-            'codigo_demo' => '123456',
         ]);
 
         return redirect('/app/registro/verificar');
@@ -211,8 +220,7 @@ class AppEstudianteController extends Controller
         if (!$correo) {
             return redirect('/app/registro');
         }
-        $codigoDemo = session('codigo_demo');
-        return view('app.registro_verificar', compact('correo', 'codigoDemo'));
+        return view('app.registro_verificar', compact('correo'));
     }
 
     /**
@@ -222,7 +230,7 @@ class AppEstudianteController extends Controller
     {
         $request->validate([
             'codigo'     => ['required', 'string', 'size:6'],
-            'contrasena' => ['required', 'string', 'min:6'],
+            'contrasena' => ['required', 'string', 'min:12', 'max:128'],
             'nombres'    => ['nullable', 'string', 'max:150'],
         ]);
 
@@ -237,7 +245,7 @@ class AppEstudianteController extends Controller
                 $request->input('codigo'),
                 'web',
                 $request->input('contrasena'),
-                'acceso'
+                'registro'
             );
 
             $usuario = $resultado['usuario'];
@@ -275,11 +283,6 @@ class AppEstudianteController extends Controller
             return back()->withErrors(['correo' => 'Solo se puede solicitar con un correo de la UTB (termina en utb.edu.ec).'])->withInput();
         }
 
-        $usuario = Usuario::where('correo', $correo)->first();
-        if (!$usuario || $usuario->estado === 'desactivada') {
-            return back()->withErrors(['correo' => 'No encontramos una cuenta activa con este correo institucional.'])->withInput();
-        }
-
         try {
             $this->authService->solicitarCodigoRecuperacion($correo);
         } catch (\Throwable $e) {
@@ -288,7 +291,6 @@ class AppEstudianteController extends Controller
 
         session([
             'recuperar_correo' => $correo,
-            'codigo_demo' => '123456',
         ]);
 
         return redirect('/app/olvide-contrasena/recuperar');
@@ -303,8 +305,7 @@ class AppEstudianteController extends Controller
         if (!$correo) {
             return redirect('/app/olvide-contrasena');
         }
-        $codigoDemo = session('codigo_demo');
-        return view('app.recuperar_contrasena', compact('correo', 'codigoDemo'));
+        return view('app.recuperar_contrasena', compact('correo'));
     }
 
     /**
@@ -314,7 +315,7 @@ class AppEstudianteController extends Controller
     {
         $request->validate([
             'codigo'     => ['required', 'string', 'size:6'],
-            'contrasena' => ['required', 'string', 'min:6'],
+            'contrasena' => ['required', 'string', 'min:12', 'max:128'],
         ]);
 
         $correo = session('recuperar_correo');
@@ -329,7 +330,7 @@ class AppEstudianteController extends Controller
                 $request->input('contrasena')
             );
 
-            session()->forget(['recuperar_correo', 'codigo_demo']);
+            session()->forget('recuperar_correo');
 
             return redirect('/app/login')->with('mensaje', '¡Tu contraseña ha sido actualizada con éxito! Inicia sesión con tu nueva contraseña.');
         } catch (\Throwable $e) {
@@ -925,22 +926,36 @@ class AppEstudianteController extends Controller
     /**
      * Tramo 2: Ver código QR del pedido (solo para el comprador)
      */
-    public function verQrWeb(string $codigo): Response
+    public function verQrWeb(Request $request, string $codigo): Response
     {
         $usuario = Auth::user();
-        $pedido = Pedido::where('codigo', $codigo)
-            ->where('comprador_id', $usuario->id)
-            ->firstOrFail();
+        $pedido = Pedido::where('codigo', $codigo)->first();
+        if (!$pedido) {
+            abort(404, 'Pedido no encontrado.');
+        }
+
+        // R17-a: Solo el comprador puede ver el QR de entrega
+        if ((int) $pedido->comprador_id !== (int) $usuario->id) {
+            abort(403, 'No autorizado para ver este código QR.');
+        }
 
         $payload = $pedido->qr_payload;
         if (!$payload) {
             abort(404, 'Código QR no disponible o pedido ya entregado.');
         }
 
-        $png = QrService::generarPng($payload, 280);
+        $formato = $request->query('formato', 'svg');
+        if ($formato === 'png') {
+            $png = QrService::generarPng($payload, 280);
+            return response($png, 200, [
+                'Content-Type'  => 'image/png',
+                'Cache-Control' => 'no-cache, private',
+            ]);
+        }
 
-        return response($png, 200, [
-            'Content-Type'  => 'image/png',
+        $svg = QrService::generarSvg($payload, 280);
+        return response($svg, 200, [
+            'Content-Type'  => 'image/svg+xml',
             'Cache-Control' => 'no-cache, private',
         ]);
     }
@@ -960,7 +975,7 @@ class AppEstudianteController extends Controller
         }
 
         // Verificar que el usuario sea el dueño de la tienda del pedido
-        if ($pedido->tienda->usuario_id !== $usuario->id) {
+        if ((int) $pedido->tienda->usuario_id !== (int) $usuario->id) {
             return redirect('/app')->withErrors(['general' => 'No tienes permiso para confirmar este pedido. Solo el vendedor de la tienda puede hacerlo.']);
         }
 
@@ -968,16 +983,27 @@ class AppEstudianteController extends Controller
             return redirect('/app/mi-tienda')->with('mensaje', "El pedido #{$codigo} ya fue marcado como entregado.");
         }
 
-        $codigoIngresado = trim((string) $request->query('c', ''));
-        $codigoReal = $pedido->codigo_entrega_descifrado;
+        if ($pedido->codigo_bloqueado) {
+            return redirect('/app/mi-tienda')->withErrors(['general' => 'Código bloqueado tras 5 intentos fallidos. Contacta al administrador para desbloquear.']);
+        }
 
-        if (empty($codigoIngresado) || $codigoIngresado !== $codigoReal) {
-            return redirect('/app/mi-tienda')->withErrors(['general' => 'Código de entrega QR incorrecto o inválido.']);
+        $codigoIngresado = trim((string) $request->query('c', ''));
+
+        if (empty($codigoIngresado) || !$pedido->verificarCodigoEntrega($codigoIngresado)) {
+            $pedido->refresh();
+            if ($pedido->codigo_bloqueado) {
+                return redirect('/app/mi-tienda')->withErrors(['general' => 'Código bloqueado tras 5 intentos fallidos. Contacta al administrador.']);
+            }
+            $restantes = 5 - $pedido->intentos_codigo;
+            return redirect('/app/mi-tienda')->withErrors(['general' => "Código de entrega QR incorrecto o inválido. Intentos restantes: {$restantes}."]);
         }
 
         $pedido->update([
             'estado'             => 'entregado',
             'estado_cambiado_en' => now(),
+            'codigo_entrega'     => null,
+            'intentos_codigo'    => 0,
+            'entregado_con'      => 'codigo',
         ]);
 
         return redirect('/app/mi-tienda')->with('mensaje', "🎉 ¡Excelente! Pedido #{$pedido->codigo} confirmado y entregado con éxito mediante el escaneo de código QR.");
@@ -1127,6 +1153,65 @@ class AppEstudianteController extends Controller
     }
 
     /**
+     * Calificar a la tienda desde la web
+     */
+    public function calificarTiendaWeb(Request $request, string $codigo): RedirectResponse
+    {
+        $request->validate([
+            'estrellas' => ['required', 'integer', 'min:1', 'max:5'],
+        ]);
+
+        $usuario = Auth::user();
+        $pedido = Pedido::where('codigo', $codigo)->firstOrFail();
+
+        if ((int) $pedido->comprador_id !== (int) $usuario->id) {
+            abort(403);
+        }
+
+        if ($pedido->estado !== 'entregado' || !$pedido->enPlazoCalificacion() || !$pedido->puedeCalificarComprador()) {
+            return back()->with('error', 'Este pedido ya no se puede calificar.');
+        }
+
+        \App\Models\Calificacion::create([
+            'pedido_id' => $pedido->id,
+            'direccion' => 'a_tienda',
+            'autor_id'  => $usuario->id,
+            'estrellas' => (int) $request->input('estrellas'),
+            'creada_en' => now(),
+        ]);
+
+        return back()->with('mensaje', 'Gracias. Tu calificación se verá cuando la otra parte también califique o en 3 días.');
+    }
+
+    /**
+     * Calificar al comprador desde la web
+     */
+    public function calificarCompradorWeb(Request $request, string $codigo): RedirectResponse
+    {
+        $request->validate([
+            'estrellas' => ['required', 'integer', 'min:1', 'max:5'],
+        ]);
+
+        $usuario = Auth::user();
+        $tienda = Tienda::where('usuario_id', $usuario->id)->firstOrFail();
+        $pedido = Pedido::where('codigo', $codigo)->where('tienda_id', $tienda->id)->firstOrFail();
+
+        if ($pedido->estado !== 'entregado' || !$pedido->enPlazoCalificacion() || !$pedido->puedeCalificarVendedor()) {
+            return back()->with('error', 'Este pedido ya no se puede calificar.');
+        }
+
+        \App\Models\Calificacion::create([
+            'pedido_id' => $pedido->id,
+            'direccion' => 'a_comprador',
+            'autor_id'  => $usuario->id,
+            'estrellas' => (int) $request->input('estrellas'),
+            'creada_en' => now(),
+        ]);
+
+        return back()->with('mensaje', 'Gracias. Tu calificación se verá cuando la otra parte también califique o en 3 días.');
+    }
+
+    /**
      * P13: Cuenta del Estudiante
      */
     public function cuenta(): View
@@ -1142,25 +1227,5 @@ class AppEstudianteController extends Controller
     {
         Auth::logout();
         return redirect('/app')->with('mensaje', 'Sesión cerrada correctamente.');
-    }
-
-    /**
-     * Atajo de prueba: Iniciar sesión con un clic como un usuario específico
-     */
-    public function loginRapido(string $tipo): RedirectResponse
-    {
-        $correo = match ($tipo) {
-            'vendedor'  => 'carlos.vendedor@est.utb.edu.ec',
-            'comprador' => 'maria.compradora@est.utb.edu.ec',
-            default     => 'carlos.vendedor@est.utb.edu.ec',
-        };
-
-        $usuario = Usuario::where('correo', $correo)->first();
-        if ($usuario) {
-            Auth::login($usuario);
-            return redirect('/app')->with('mensaje', "Has iniciado sesión como {$usuario->nombres}");
-        }
-
-        return redirect('/app');
     }
 }

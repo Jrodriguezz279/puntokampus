@@ -77,6 +77,14 @@ class SolicitudPremiumResource extends Resource
                     ->sortable(),
             ])
             ->actions([
+                Action::make('verFoto')
+                    ->label('Ver Comprobante')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->url(fn (SolicitudPremium $record): string => route('comprobantes.foto', $record->id))
+                    ->openUrlInNewTab()
+                    ->visible(fn (SolicitudPremium $record): bool => $record->foto_borrada_en === null),
+
                 // Acción 1: Aprobar solicitud (H21, H24, R22)
                 Action::make('aprobar')
                     ->label('Aprobar')

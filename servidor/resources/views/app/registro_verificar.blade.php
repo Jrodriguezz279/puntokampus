@@ -14,29 +14,15 @@
                 </p>
             </div>
 
-            @if(isset($codigoDemo))
-                <div style="background: #fbf2ed; border: 1px dashed var(--primary); border-radius: 8px; padding: 0.75rem 1rem; text-align: center; margin-bottom: 1.25rem; font-size: 0.85rem;">
-                    Código de verificación para pruebas: <strong style="font-size: 1.15rem; color: var(--primary); letter-spacing: 2px;">{{ $codigoDemo }}</strong>
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div style="background: #fce8e6; color: #c5221f; padding: 0.85rem 1rem; border-radius: 8px; font-size: 0.88rem; margin-bottom: 1.25rem;">
-                    @foreach($errors->all() as $err)
-                        <div>• {{ $err }}</div>
-                    @endforeach
-                </div>
-            @endif
-
             <form method="POST" action="/app/registro/verificar">
                 @csrf
                 <div style="text-align: left; margin-bottom: 1.15rem;">
                     <label for="codigo" style="display:block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">
                         Código de 6 dígitos
                     </label>
-                    <input type="text" id="codigo" name="codigo" placeholder="123456" maxlength="6" required
+                    <input type="text" id="codigo" name="codigo" placeholder="000000" maxlength="6" required
                            style="width:100%; padding:0.75rem 1rem; border:1.5px solid var(--border); border-radius:10px; font-size:1.3rem; letter-spacing: 6px; text-align: center; font-weight: 700;"
-                           value="{{ old('codigo', $codigoDemo ?? '') }}" autofocus>
+                           value="{{ old('codigo') }}" autofocus>
                 </div>
 
                 <div style="text-align: left; margin-bottom: 1.15rem;">
@@ -53,7 +39,7 @@
                         Crea tu Contraseña
                     </label>
                     <div style="position: relative;">
-                        <input type="password" id="contrasena" name="contrasena" placeholder="Mínimo 6 caracteres" required minlength="6"
+                        <input type="password" id="contrasena" name="contrasena" placeholder="Mínimo 12 caracteres" required minlength="12" maxlength="128"
                                autocomplete="new-password"
                                class="form-control" style="width:100%; padding:0.75rem 2.5rem 0.75rem 1rem; border:1.5px solid var(--border); border-radius:10px; font-size:0.95rem;">
                         <button type="button" onclick="togglePass('contrasena')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1.1rem;">

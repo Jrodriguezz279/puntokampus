@@ -592,7 +592,7 @@
                     <a href="/app/tienda/{{ $cOferta->tienda->slug }}" class="carousel-slide" style="border-left: 3px solid #ba1a1a;">
                         <div>
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
-                                <span class="badge-descuento">🔥 {{ round($cOferta->descuento_porcentaje) }}% OFF</span>
+                                <span class="badge-descuento">🔥 {{ $cOferta->descuento_porcentaje ?: $cOferta->porcentaje_descuento }}% OFF</span>
                                 <span style="font-size:11px; color:var(--text-muted);">{{ $cOferta->tienda->nombre }}</span>
                             </div>
                             <div style="display:flex; gap:0.6rem; align-items:center; margin-bottom:0.5rem;">

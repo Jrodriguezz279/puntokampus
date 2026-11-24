@@ -52,6 +52,14 @@ class Pedido {
   // Tramo 2: QR
   final String? qrUrl;
   final String? qrPayload;
+  // Fase 3: Calificaciones
+  final bool puedeCalificar;
+  final int? calificacionRecibida;
+  final int? calificacionDada;
+  final Map<String, dynamic>? compradorEstrellas;
+  // Fase 4: Deuna QR y entregado con
+  final String? deunaQrUrl;
+  final String? entregadoCon;
 
   Pedido({
     required this.id,
@@ -74,6 +82,12 @@ class Pedido {
     this.codigoBloqueado = false,
     this.qrUrl,
     this.qrPayload,
+    this.puedeCalificar = false,
+    this.calificacionRecibida,
+    this.calificacionDada,
+    this.compradorEstrellas,
+    this.deunaQrUrl,
+    this.entregadoCon,
   });
 
   bool get esPendiente => estado.trim().toLowerCase() == 'pendiente';
@@ -105,6 +119,18 @@ class Pedido {
       codigoBloqueado: json['codigo_bloqueado'] == true || json['codigo_bloqueado'] == 1,
       qrUrl: json['qr_url']?.toString(),
       qrPayload: json['qr_payload']?.toString(),
+      puedeCalificar: json['puede_calificar'] == true || json['puede_calificar'] == 1,
+      calificacionRecibida: json['calificacion_recibida'] is int
+          ? json['calificacion_recibida'] as int
+          : int.tryParse(json['calificacion_recibida']?.toString() ?? ''),
+      calificacionDada: json['calificacion_dada'] is int
+          ? json['calificacion_dada'] as int
+          : int.tryParse(json['calificacion_dada']?.toString() ?? ''),
+      compradorEstrellas: json['comprador_estrellas'] is Map<String, dynamic>
+          ? json['comprador_estrellas'] as Map<String, dynamic>
+          : null,
+      deunaQrUrl: json['deuna_qr_url']?.toString(),
+      entregadoCon: json['entregado_con']?.toString(),
     );
   }
 }

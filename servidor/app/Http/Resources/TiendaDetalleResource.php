@@ -30,6 +30,8 @@ class TiendaDetalleResource extends JsonResource
             'categoria_2' => new CategoriaResource($this->whenLoaded('categoria2')),
             'punto_entrega' => new PuntoEntregaResource($this->whenLoaded('puntoEntrega')),
             'whatsapp' => ($this->usuario && $this->usuario->mostrar_whatsapp) ? $this->usuario->whatsapp : null,
+            'estrellas_promedio' => $this->estrellasPromedio(),
+            'estrellas_total'    => $this->estrellasTotal(),
             'productos' => ProductoResource::collection(
                 $this->productos->whereNull('eliminado_en')->load('fotos')
             ),

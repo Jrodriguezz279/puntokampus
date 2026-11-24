@@ -82,6 +82,26 @@ class CuentaScreen extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text('🎓 ${u.carrera}', style: PKTextStyles.etiqueta),
                         ],
+                        const SizedBox(height: PKSpacing.xs),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: PKColors.fondo,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: PKColors.borde),
+                          ),
+                          child: Text(
+                            (u.estrellasPromedio != null && u.estrellasTotal >= 3)
+                                ? '⭐ ${u.estrellasPromedio!.toStringAsFixed(1)} (${u.estrellasTotal} calificaciones)'
+                                : '⭐ Todavía no tienes calificaciones',
+                            style: PKTextStyles.etiqueta.copyWith(
+                              color: (u.estrellasPromedio != null && u.estrellasTotal >= 3)
+                                  ? const Color(0xFFB45309)
+                                  : PKColors.secundario,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

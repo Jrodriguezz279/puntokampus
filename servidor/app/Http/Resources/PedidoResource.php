@@ -45,6 +45,29 @@ class PedidoResource extends JsonResource
             $data['codigo_entrega'] = $codigoEntrega;
         }
 
+        // Calificaciones bidireccionales (Fase 3: Estrellas)
+        $esComprador = $usuario && (int) $usuario->id === (int) $this->comprador_id;
+        $esVendedor  = $usuario && $this->tienda && (int) $usuario->id === (int) $this->tienda->usuario_id;
+        $visibles    = $this->calificacionesSonVisibles();
+
+        if ($esComprador) {
+            $data['puede_calificar']       = $this->puedeCalificarComprador();
+            $data['calificacion_recibida'] = $visibles ? $this->calificacionAComprador?->estrellas : null;
+            $data['calificacion_dada']     = $this->calificacionATienda?->estrellas;
+
+            // Fase 4: QR de Deuna solo para el comprador con pago deuna
+            if ($this->forma_pago === 'deuna' && $this->tienda && !empty($this->tienda->deuna_qr_url)) {
+                $data['deuna_qr_url'] = $this->tienda->deuna_qr_url;
+            }
+        }
+
+        if ($esVendedor) {
+            $data['comprador_estrellas']   = $this->comprador?->estrellasPromedioComprador();
+            $data['puede_calificar']       = $this->puedeCalificarVendedor();
+            $data['calificacion_recibida'] = $visibles ? $this->calificacionATienda?->estrellas : null;
+            $data['calificacion_dada']     = $this->calificacionAComprador?->estrellas;
+        }
+
         return $data;
     }
 }

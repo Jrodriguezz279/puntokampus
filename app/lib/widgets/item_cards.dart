@@ -69,6 +69,16 @@ class StoreCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          Text(
+                            tienda.textoEstrellas,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFB45309),
+                              fontFamily: 'DMSans',
+                            ),
+                          ),
+                          const SizedBox(width: PKSpacing.xs),
                           if (tienda.esPremium)
                             const PKInsigniaSaco10()
                           else

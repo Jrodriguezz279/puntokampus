@@ -8,6 +8,7 @@ use App\Models\Configuracion;
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 class AuthService
@@ -40,34 +41,26 @@ class AuthService
             abort(403, 'Tu cuenta está desactivada. Escribe al equipo para más información.');
         }
 
-        // R2: Throttling - omitir para cuentas de evaluación / demostración
-        $esCuentaDemo = in_array($correo, [
-            'maria.compradora@est.utb.edu.ec',
-            'carlos.vendedor@est.utb.edu.ec',
-            'admin@utb.edu.ec',
-        ]);
+        // R2: Throttling estricto (60s entre envíos y máximo 5 códigos por hora)
+        $ultimoCodigo = CodigoAcceso::where('correo', $correo)
+            ->where(function ($q) use ($proposito) {
+                $q->where('proposito', $proposito)->orWhereNull('proposito');
+            })
+            ->orderBy('creado_en', 'desc')
+            ->first();
 
-        if (!$esCuentaDemo) {
-            $ultimoCodigo = CodigoAcceso::where('correo', $correo)
-                ->where(function ($q) use ($proposito) {
-                    $q->where('proposito', $proposito)->orWhereNull('proposito');
-                })
-                ->orderBy('creado_en', 'desc')
-                ->first();
+        if ($ultimoCodigo && $ultimoCodigo->creado_en && $ultimoCodigo->creado_en->gt(now()->subSeconds(60))) {
+            $segundosRestantes = 60 - now()->diffInSeconds($ultimoCodigo->creado_en);
+            abort(429, "Por favor espera {$segundosRestantes} segundos antes de pedir otro código.");
+        }
 
-            if ($ultimoCodigo && $ultimoCodigo->creado_en && $ultimoCodigo->creado_en->gt(now()->subSeconds(60))) {
-                $segundosRestantes = 60 - now()->diffInSeconds($ultimoCodigo->creado_en);
-                abort(429, "Por favor espera {$segundosRestantes} segundos antes de pedir otro código.");
-            }
+        // R2: Máximo 5 códigos por hora
+        $solicitudesUltimaHora = CodigoAcceso::where('correo', $correo)
+            ->where('creado_en', '>=', now()->subHour())
+            ->count();
 
-            // R2: Máximo 5 códigos por hora
-            $solicitudesUltimaHora = CodigoAcceso::where('correo', $correo)
-                ->where('creado_en', '>=', now()->subHour())
-                ->count();
-
-            if ($solicitudesUltimaHora >= 5) {
-                abort(429, 'Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.');
-            }
+        if ($solicitudesUltimaHora >= 5) {
+            abort(429, 'Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.');
         }
 
         // Generar código de 6 dígitos aleatorio
@@ -106,54 +99,54 @@ class AuthService
 
         $registroCodigo = CodigoAcceso::where('correo', $correo)
             ->where(function ($q) use ($proposito) {
-                $q->where('proposito', $proposito)->orWhereNull('proposito');
+                if ($proposito === 'acceso') {
+                    $q->whereIn('proposito', ['acceso', 'registro'])->orWhereNull('proposito');
+                } else {
+                    $q->where('proposito', $proposito);
+                }
             })
             ->whereNull('usado_en')
             ->orderBy('creado_en', 'desc')
             ->first();
 
-        $esCodigoUniversal = ($codigo === '123456');
-
-        if (!$registroCodigo && !$esCodigoUniversal) {
+        if (!$registroCodigo) {
             throw ValidationException::withMessages([
                 'codigo' => ['Este código ya venció. Pide uno nuevo.'],
             ]);
         }
 
-        if ($registroCodigo) {
-            // Al 5to intento fallido el código deja de servir
-            if ($registroCodigo->intentos >= 5 && !$esCodigoUniversal) {
+        // Al 5to intento fallido el código deja de servir
+        if ($registroCodigo->intentos >= 5) {
+            throw ValidationException::withMessages([
+                'codigo' => ['Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.'],
+            ]);
+        }
+
+        // Código vencido > 10 min
+        if ($registroCodigo->expira_en->isPast()) {
+            throw ValidationException::withMessages([
+                'codigo' => ['Este código ya venció. Pide uno nuevo.'],
+            ]);
+        }
+
+        // Validar hash
+        if (!Hash::check($codigo, $registroCodigo->codigo_hash)) {
+            $registroCodigo->increment('intentos');
+            $restantes = 5 - $registroCodigo->intentos;
+
+            if ($restantes <= 0) {
                 throw ValidationException::withMessages([
                     'codigo' => ['Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.'],
                 ]);
             }
 
-            // Código vencido > 10 min
-            if ($registroCodigo->expira_en->isPast() && !$esCodigoUniversal) {
-                throw ValidationException::withMessages([
-                    'codigo' => ['Este código ya venció. Pide uno nuevo.'],
-                ]);
-            }
-
-            // Validar hash (o permitir código universal de prueba)
-            if (!$esCodigoUniversal && !Hash::check($codigo, $registroCodigo->codigo_hash)) {
-                $registroCodigo->increment('intentos');
-                $restantes = 5 - $registroCodigo->intentos;
-
-                if ($restantes <= 0) {
-                    throw ValidationException::withMessages([
-                        'codigo' => ['Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.'],
-                    ]);
-                }
-
-                throw ValidationException::withMessages([
-                    'codigo' => ["Ese código no es correcto. Te quedan {$restantes} intentos."],
-                ]);
-            }
-
-            // Marcar como usado
-            $registroCodigo->update(['usado_en' => now()]);
+            throw ValidationException::withMessages([
+                'codigo' => ["Ese código no es correcto. Te quedan {$restantes} intentos."],
+            ]);
         }
+
+        // Marcar como usado
+        $registroCodigo->update(['usado_en' => now()]);
 
         // R3: Si la persona no tiene cuenta, se crea
         $esNuevo = false;
@@ -191,6 +184,17 @@ class AuthService
     public function loginConContrasena(string $correo, string $password, ?string $dispositivo = null): array
     {
         $correo = strtolower(trim($correo));
+        $throttleKey = 'login_contrasena:' . $correo;
+
+        // R2/Seguridad: 5 intentos fallidos obligan a esperar
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            $minutes = ceil($seconds / 60);
+            throw ValidationException::withMessages([
+                'contrasena' => ["Demasiados intentos fallidos. Por favor espera {$minutes} minuto(s) antes de volver a intentar."],
+            ]);
+        }
+
         $usuario = Usuario::where('correo', $correo)->first();
 
         if ($usuario && $usuario->estado === 'desactivada') {
@@ -202,18 +206,14 @@ class AuthService
             $passwordValida = Hash::check($password, $usuario->password);
         }
 
-        // Permitir credencial de prueba en desarrollo/demo si se requiere
-        if (!$passwordValida && ($password === 'PuntoKampus2026!' || $password === '123456')) {
-            if ($usuario && in_array($correo, ['maria.compradora@est.utb.edu.ec', 'carlos.vendedor@est.utb.edu.ec', 'admin@utb.edu.ec'])) {
-                $passwordValida = true;
-            }
-        }
-
         if (!$usuario || !$passwordValida) {
+            RateLimiter::hit($throttleKey, 600); // Bloqueo por 10 minutos
             throw ValidationException::withMessages([
                 'contrasena' => ['El correo o la contraseña son incorrectos.'],
             ]);
         }
+
+        RateLimiter::clear($throttleKey);
 
         $config = Configuracion::first();
         $finPeriodo = $config?->fin_periodo_academico;
@@ -243,7 +243,7 @@ class AuthService
 
         $usuario = Usuario::where('correo', $correo)->first();
         if ($usuario && $usuario->estado === 'activa') {
-            $this->solicitarCodigo($correo, 'recuperar_contrasena');
+            $this->solicitarCodigo($correo, 'recuperacion');
         }
     }
 
@@ -264,46 +264,43 @@ class AuthService
 
         $registroCodigo = CodigoAcceso::where('correo', $correo)
             ->where(function ($q) {
-                $q->where('proposito', 'recuperar_contrasena')->orWhereNull('proposito');
+                $q->where('proposito', 'recuperacion')
+                  ->orWhere('proposito', 'recuperar_contrasena');
             })
             ->whereNull('usado_en')
             ->orderBy('creado_en', 'desc')
             ->first();
 
-        $esCodigoUniversal = ($codigo === '123456');
-
-        if (!$registroCodigo && !$esCodigoUniversal) {
+        if (!$registroCodigo) {
             throw ValidationException::withMessages([
                 'codigo' => ['Este código ya venció. Pide uno nuevo.'],
             ]);
         }
 
-        if ($registroCodigo) {
-            if ($registroCodigo->intentos >= 5 && !$esCodigoUniversal) {
+        if ($registroCodigo->intentos >= 5) {
+            throw ValidationException::withMessages([
+                'codigo' => ['Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.'],
+            ]);
+        }
+        if ($registroCodigo->expira_en->isPast()) {
+            throw ValidationException::withMessages([
+                'codigo' => ['Este código ya venció. Pide uno nuevo.'],
+            ]);
+        }
+        if (!Hash::check($codigo, $registroCodigo->codigo_hash)) {
+            $registroCodigo->increment('intentos');
+            $restantes = 5 - $registroCodigo->intentos;
+            if ($restantes <= 0) {
                 throw ValidationException::withMessages([
                     'codigo' => ['Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.'],
                 ]);
             }
-            if ($registroCodigo->expira_en->isPast() && !$esCodigoUniversal) {
-                throw ValidationException::withMessages([
-                    'codigo' => ['Este código ya venció. Pide uno nuevo.'],
-                ]);
-            }
-            if (!$esCodigoUniversal && !Hash::check($codigo, $registroCodigo->codigo_hash)) {
-                $registroCodigo->increment('intentos');
-                $restantes = 5 - $registroCodigo->intentos;
-                if ($restantes <= 0) {
-                    throw ValidationException::withMessages([
-                        'codigo' => ['Hiciste muchos intentos. Espera unos minutos y pide un código nuevo.'],
-                    ]);
-                }
-                throw ValidationException::withMessages([
-                    'codigo' => ["Ese código no es correcto. Te quedan {$restantes} intentos."],
-                ]);
-            }
-
-            $registroCodigo->update(['usado_en' => now()]);
+            throw ValidationException::withMessages([
+                'codigo' => ["Ese código no es correcto. Te quedan {$restantes} intentos."],
+            ]);
         }
+
+        $registroCodigo->update(['usado_en' => now()]);
 
         $usuario->password = Hash::make($nuevaPassword);
         $usuario->save();

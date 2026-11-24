@@ -5,6 +5,7 @@ import '../../models/pedido.dart';
 import '../../services/pedido_service.dart';
 import '../../services/api_service.dart';
 import '../../widgets/pk_components.dart';
+import '../../widgets/calificar_bottom_sheet.dart';
 // ══════════════════════════════════════════════════════════════════════════════
 // MIS PEDIDOS — P12 Historial de Mis Pedidos (Comprador)
 // Cumple con docs/DISENO-VISUAL.md
@@ -135,9 +136,89 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
                                     const SizedBox(height: 2),
                                     Text('📍 Entrega: ${p.puntoEntrega}', style: PKTextStyles.etiqueta),
                                   ],
+                                  const SizedBox(height: 2),
+                                  Text('💳 Pago: ${p.formaPago}', style: PKTextStyles.etiqueta),
+                                  if (p.formaPago.toLowerCase() == 'deuna') ...[
+                                    const SizedBox(height: PKSpacing.xs),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(PKSpacing.sm),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF3F4F6),
+                                        borderRadius: PKRadii.botonAll,
+                                        border: Border.all(color: PKColors.borde),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          if (p.deunaQrUrl != null) ...[
+                                            const Text(
+                                              'Paga con Deuna escaneando este QR. PuntoKampus no recibe tu dinero.',
+                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: PKColors.titulo, fontFamily: 'DMSans'),
+                                            ),
+                                            const SizedBox(height: PKSpacing.sm),
+                                            Center(
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(8),
+                                                child: Image.network(
+                                                  p.deunaQrUrl!,
+                                                  height: 180,
+                                                  width: 180,
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (_, __, ___) => const Text(
+                                                    'No se pudo cargar la imagen del QR.',
+                                                    style: TextStyle(fontSize: 12, color: PKColors.error, fontFamily: 'DMSans'),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ] else ...[
+                                            const Text(
+                                              'Coordina el pago con el vendedor por WhatsApp.',
+                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: PKColors.secundario, fontFamily: 'DMSans'),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                   // R17: Mostrar código de entrega solo cuando está pendiente
                                   if (p.esPendiente && p.codigoEntrega != null)
                                     _buildCodigoEntrega(context, p),
+                                  // Fase 3: Calificaciones para pedidos entregados
+                                  if (p.esEntregado) ...[
+                                    const SizedBox(height: PKSpacing.xs),
+                                    if (p.calificacionDada != null)
+                                      Text(
+                                        '⭐ Calificaste con ${p.calificacionDada} estrellas',
+                                        style: PKTextStyles.etiqueta.copyWith(color: const Color(0xFFB45309), fontWeight: FontWeight.w600),
+                                      ),
+                                    if (p.calificacionRecibida != null)
+                                      Text(
+                                        '⭐ Calificación recibida: ${p.calificacionRecibida} estrellas',
+                                        style: PKTextStyles.etiqueta.copyWith(color: PKColors.primario, fontWeight: FontWeight.w600),
+                                      ),
+                                    if (p.puedeCalificar) ...[
+                                      const SizedBox(height: PKSpacing.xs),
+                                      OutlinedButton.icon(
+                                        onPressed: () async {
+                                          final calificado = await CalificarBottomSheet.mostrar(
+                                            context,
+                                            nombre: p.nombreTienda ?? 'la tienda',
+                                            onEnviar: (estrellas) => PedidoService.calificarTienda(p.codigo, estrellas),
+                                          );
+                                          if (calificado == true) _cargar();
+                                        },
+                                        icon: const Icon(Icons.star_outline_rounded, size: 18),
+                                        label: const Text('Calificar tienda'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(0xFFB45309),
+                                          side: const BorderSide(color: Color(0xFFB45309)),
+                                          minimumSize: const Size(120, 48),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                   const SizedBox(height: PKSpacing.sm),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

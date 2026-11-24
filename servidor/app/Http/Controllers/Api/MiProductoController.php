@@ -138,11 +138,15 @@ class MiProductoController extends Controller
 
         $url = $this->imagenService->procesarYGuardar($request->file('foto'), 'productos');
 
-        // Si se pide reemplazar o ya tiene 3 fotos, actualizamos la primera foto existente
         $primeraFoto = $producto->fotos()->orderBy('orden')->first();
-        if ($primeraFoto && ($request->boolean('reemplazar') || $producto->fotos()->count() >= 3)) {
+        if ($request->boolean('reemplazar') && $primeraFoto) {
             $primeraFoto->update(['url' => $url]);
             $foto = $primeraFoto;
+        } elseif ($producto->fotos()->count() >= 3) {
+            return response()->json([
+                'message' => 'Cada producto puede tener hasta 3 fotos.',
+                'errors' => ['foto' => ['Cada producto puede tener hasta 3 fotos.']],
+            ], 422);
         } else {
             $orden = ($producto->fotos()->max('orden') ?? 0) + 1;
             $foto = $producto->fotos()->create([

@@ -209,7 +209,7 @@ class ConfirmacionEntregaTest extends TestCase
         $pedido = $this->crearPedidoConCodigo($tienda, $comprador->id);
 
         // Otro vendedor con su propia tienda
-        [$, $, $tokenOtro] = $this->crearVendedor();
+        [, , $tokenOtro] = $this->crearVendedor();
 
         $this->withHeader('Authorization', 'Bearer ' . $tokenOtro)
             ->putJson("/api/v1/mi-tienda/pedidos/{$pedido->codigo}/confirmar-entrega", [
@@ -262,7 +262,7 @@ class ConfirmacionEntregaTest extends TestCase
     {
         [, $tienda,]          = $this->crearVendedor();
         [$comprador1,]        = $this->crearComprador();
-        [$, $tokenC2]         = $this->crearComprador();
+        [, $tokenC2]          = $this->crearComprador();
         $pedido = $this->crearPedidoConCodigo($tienda, $comprador1->id);
 
         $this->withHeader('Authorization', 'Bearer ' . $tokenC2)

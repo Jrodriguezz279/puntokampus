@@ -102,6 +102,7 @@ class YoController extends Controller
         CodigoAcceso::create([
             'correo'      => $correo,
             'codigo_hash' => Hash::make($codigoPlano),
+            'proposito'   => 'borrado',
             'expira_en'   => now()->addMinutes(15),
             'intentos'    => 0,
             'usado_en'    => null,
@@ -124,6 +125,9 @@ class YoController extends Controller
 
         // Verificar código
         $registroCodigo = CodigoAcceso::where('correo', $correo)
+            ->where(function ($q) {
+                $q->where('proposito', 'borrado')->orWhereNull('proposito');
+            })
             ->whereNull('usado_en')
             ->orderBy('creado_en', 'desc')
             ->first();
@@ -184,6 +188,10 @@ class YoController extends Controller
             if ($rutaPortada && Storage::disk('public')->exists($rutaPortada)) {
                 Storage::disk('public')->delete($rutaPortada);
             }
+            $rutaDeuna = $this->urlARutaPublica($tienda->deuna_qr_url);
+            if ($rutaDeuna && Storage::disk('public')->exists($rutaDeuna)) {
+                Storage::disk('public')->delete($rutaDeuna);
+            }
 
             // Si existen pedidos asociados a la tienda, no se puede hacer DELETE físico por la FK pedidos.tienda_id.
             // Se da de baja y se anonimiza. Si no hay pedidos, se elimina físicamente.
@@ -196,10 +204,26 @@ class YoController extends Controller
                     'descripcion'     => null,
                     'logo_url'        => null,
                     'portada_url'     => null,
+                    'deuna_qr_url'    => null,
                 ]);
             } else {
                 $tienda->delete();
             }
+        }
+
+        // Fase 3: Calificaciones en borrado de cuenta
+        // Las calificaciones que dio se conservan sin autor
+        \App\Models\Calificacion::where('autor_id', $usuario->id)->update(['autor_id' => null]);
+
+        // Las calificaciones que recibió se eliminan
+        \App\Models\Calificacion::where('direccion', 'a_comprador')
+            ->whereHas('pedido', fn($q) => $q->where('comprador_id', $usuario->id))
+            ->delete();
+
+        if ($tienda) {
+            \App\Models\Calificacion::where('direccion', 'a_tienda')
+                ->whereHas('pedido', fn($q) => $q->where('tienda_id', $tienda->id))
+                ->delete();
         }
 
         // R31: Anonimizar datos personales

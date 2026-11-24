@@ -62,6 +62,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/mi-tienda/toggle-pedidos', [MiTiendaController::class, 'togglePedidos']);
         Route::post('/mi-tienda/logo', [MiTiendaController::class, 'subirLogo']);
         Route::post('/mi-tienda/portada', [MiTiendaController::class, 'subirPortada']);
+        Route::post('/mi-tienda/deuna-qr', [MiTiendaController::class, 'subirDeunaQr']);
+        Route::delete('/mi-tienda/deuna-qr', [MiTiendaController::class, 'eliminarDeunaQr']);
 
         // Solicitudes Premium de Mi Tienda (H20, R21)
         Route::get('/mi-tienda/premium', [PremiumController::class, 'show']);
@@ -78,6 +80,10 @@ Route::prefix('v1')->group(function () {
         // Pedidos (H13, R11, R12, R14, R15)
         Route::post('/pedidos', [PedidoController::class, 'store']);
         Route::get('/pedidos/{codigo}/qr', [PedidoController::class, 'verQr']);
+
+        // Calificaciones bidireccionales (Fase 3: Estrellas)
+        Route::post('/mis-pedidos/{codigo}/calificacion', [\App\Http\Controllers\Api\CalificacionController::class, 'calificarTienda']);
+        Route::post('/mi-tienda/pedidos/{codigo}/calificacion', [\App\Http\Controllers\Api\CalificacionController::class, 'calificarComprador']);
 
         // Mis Pedidos como Comprador (H14, H15, R16)
         Route::get('/mis-pedidos', [MisPedidosController::class, 'index']);

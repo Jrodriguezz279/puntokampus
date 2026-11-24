@@ -53,6 +53,37 @@ class UsuarioResource extends Resource
                     ->label('Registrado')
                     ->dateTime()
                     ->sortable(),
+            ])
+            ->actions([
+                Tables\Actions\Action::make('suspender')
+                    ->label('Suspender')
+                    ->icon('heroicon-o-no-symbol')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (Usuario $record): bool => $record->estado === 'activa' && !$record->es_admin)
+                    ->action(function (Usuario $record): void {
+                        $record->update(['estado' => 'desactivada']);
+                        $record->tokens()->delete();
+                        \Filament\Notifications\Notification::make()
+                            ->title('Usuario suspendido')
+                            ->body("La cuenta de {$record->correo} ha sido suspendida y sus sesiones cerradas.")
+                            ->danger()
+                            ->send();
+                    }),
+                Tables\Actions\Action::make('activar')
+                    ->label('Activar')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (Usuario $record): bool => $record->estado === 'desactivada')
+                    ->action(function (Usuario $record): void {
+                        $record->update(['estado' => 'activa']);
+                        \Filament\Notifications\Notification::make()
+                            ->title('Usuario activado')
+                            ->body("La cuenta de {$record->correo} ha sido reactivada.")
+                            ->success()
+                            ->send();
+                    }),
             ]);
     }
 

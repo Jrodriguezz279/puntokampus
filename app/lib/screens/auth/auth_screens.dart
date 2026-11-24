@@ -533,7 +533,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                   ] else ...[
                     PKCampoEtiquetado(
                       etiqueta: 'Código de 6 dígitos',
-                      hint: '123456',
+                      hint: '000000',
                       controller: _codigoController,
                       keyboardType: TextInputType.number,
                       autofocus: true,
@@ -558,7 +558,7 @@ class _RegistroScreenState extends State<RegistroScreen> {
                     const SizedBox(height: PKSpacing.base),
                     PKCampoEtiquetado(
                       etiqueta: 'Crear Contraseña',
-                      hint: 'Mínimo 6 caracteres',
+                      hint: 'Mínimo 12 caracteres',
                       controller: _passwordController,
                       obscureText: _ocultarPassword,
                       textInputAction: TextInputAction.done,
@@ -573,8 +573,11 @@ class _RegistroScreenState extends State<RegistroScreen> {
                         onPressed: () => setState(() => _ocultarPassword = !_ocultarPassword),
                       ),
                       validator: (value) {
-                        if (value == null || value.length < 6) {
-                          return 'La contraseña debe tener al menos 6 caracteres.';
+                        if (value == null || value.length < 12) {
+                          return 'La contraseña debe tener al menos 12 caracteres.';
+                        }
+                        if (value.length > 128) {
+                          return 'La contraseña no puede superar los 128 caracteres.';
                         }
                         return null;
                       },
@@ -734,7 +737,7 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
                   ] else ...[
                     PKCampoEtiquetado(
                       etiqueta: 'Código de 6 dígitos',
-                      hint: '123456',
+                      hint: '000000',
                       controller: _codigoController,
                       keyboardType: TextInputType.number,
                       autofocus: true,
@@ -751,7 +754,7 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
                     const SizedBox(height: PKSpacing.base),
                     PKCampoEtiquetado(
                       etiqueta: 'Nueva Contraseña',
-                      hint: 'Mínimo 6 caracteres',
+                      hint: 'Mínimo 12 caracteres',
                       controller: _passwordController,
                       obscureText: _ocultarPassword,
                       textInputAction: TextInputAction.done,
@@ -766,8 +769,11 @@ class _OlvidePasswordScreenState extends State<OlvidePasswordScreen> {
                         onPressed: () => setState(() => _ocultarPassword = !_ocultarPassword),
                       ),
                       validator: (value) {
-                        if (value == null || value.length < 6) {
-                          return 'La contraseña debe tener al menos 6 caracteres.';
+                        if (value == null || value.length < 12) {
+                          return 'La contraseña debe tener al menos 12 caracteres.';
+                        }
+                        if (value.length > 128) {
+                          return 'La contraseña no puede superar los 128 caracteres.';
                         }
                         return null;
                       },
@@ -882,32 +888,6 @@ class _CodigoScreenState extends State<CodigoScreen> {
                 'Enviamos un código a:\n${widget.correo}',
                 textAlign: TextAlign.center,
                 style: PKTextStyles.cuerpoSecundario,
-              ),
-
-              const SizedBox(height: PKSpacing.lg),
-
-              // Banner demo
-              PKTarjeta(
-                padding: const EdgeInsets.symmetric(horizontal: PKSpacing.base, vertical: PKSpacing.sm),
-                child: Row(
-                  children: [
-                    const Icon(Icons.verified_user_outlined, color: PKColors.primario, size: 20),
-                    const SizedBox(width: PKSpacing.sm),
-                    Expanded(
-                      child: Text(
-                        'Código demo de evaluación: 123456',
-                        style: PKTextStyles.etiqueta.copyWith(
-                          color: PKColors.primarioSuaveTexto,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => setState(() => _codigoController.text = '123456'),
-                      child: const Text('Usar'),
-                    ),
-                  ],
-                ),
               ),
 
               const SizedBox(height: PKSpacing.lg),

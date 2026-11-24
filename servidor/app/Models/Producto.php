@@ -38,10 +38,10 @@ class Producto extends Model
      */
     public function getTieneDescuentoAttribute(): bool
     {
-        return $this->descuento_activo
+        return ($this->descuento_activo || ($this->precio_descuento !== null && (float) $this->precio_descuento > 0 && (float) $this->precio_descuento < (float) $this->precio))
             && $this->precio_descuento !== null
-            && $this->precio_descuento > 0
-            && $this->precio_descuento < $this->precio;
+            && (float) $this->precio_descuento > 0
+            && (float) $this->precio_descuento < (float) $this->precio;
     }
 
     /**
@@ -53,15 +53,26 @@ class Producto extends Model
     }
 
     /**
+     * Porcentaje de descuento (alias descuento_porcentaje).
+     */
+    public function getDescuentoPorcentajeAttribute(): int
+    {
+        return $this->porcentaje_descuento;
+    }
+
+    /**
      * Porcentaje de descuento.
      */
     public function getPorcentajeDescuentoAttribute(): int
     {
-        if (!$this->tiene_descuento || $this->precio <= 0) {
+        $precio = (float) $this->precio;
+        $precioDesc = (float) $this->precio_descuento;
+
+        if ($precio <= 0 || $precioDesc <= 0 || $precioDesc >= $precio) {
             return 0;
         }
 
-        return (int) round((1 - ((float) $this->precio_descuento / (float) $this->precio)) * 100);
+        return (int) round((1 - ($precioDesc / $precio)) * 100);
     }
 
     public function tienda()

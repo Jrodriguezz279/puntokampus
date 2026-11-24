@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PedidoResource\Pages;
 use App\Models\Pedido;
+use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -21,7 +22,46 @@ class PedidoResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form->schema([]);
+        return $form->schema([
+            Forms\Components\Section::make('Información del Pedido')->schema([
+                Forms\Components\TextInput::make('codigo')->label('Código')->disabled(),
+                Forms\Components\TextInput::make('tienda.nombre')->label('Tienda')->disabled(),
+                Forms\Components\TextInput::make('comprador.nombres')->label('Comprador')->disabled(),
+                Forms\Components\TextInput::make('total')->label('Total')->prefix('$')->disabled(),
+                Forms\Components\TextInput::make('estado')->label('Estado')->disabled(),
+                Forms\Components\DateTimePicker::make('hora_entrega')->label('Hora de Entrega')->disabled(),
+            ])->columns(2),
+
+            Forms\Components\Section::make('Calificaciones')->schema([
+                Forms\Components\Placeholder::make('calificacion_tienda')
+                    ->label('Calificación a la Tienda (por el comprador)')
+                    ->content(function (?Pedido $record): string {
+                        if (!$record) return '—';
+                        $cal = $record->calificacionATienda;
+                        if (!$cal) return 'Sin calificar';
+                        return str_repeat('⭐', $cal->estrellas) . " ({$cal->estrellas}/5) — " . ($cal->creada_en ? $cal->creada_en->format('d/m/Y H:i') : '');
+                    }),
+
+                Forms\Components\Placeholder::make('calificacion_comprador')
+                    ->label('Calificación al Comprador (por el vendedor)')
+                    ->content(function (?Pedido $record): string {
+                        if (!$record) return '—';
+                        $cal = $record->calificacionAComprador;
+                        if (!$cal) return 'Sin calificar';
+                        return str_repeat('⭐', $cal->estrellas) . " ({$cal->estrellas}/5) — " . ($cal->creada_en ? $cal->creada_en->format('d/m/Y H:i') : '');
+                    }),
+
+                Forms\Components\Placeholder::make('estado_visibilidad')
+                    ->label('Estado de Visibilidad para las partes')
+                    ->content(function (?Pedido $record): string {
+                        if (!$record) return '—';
+                        if ($record->calificacionesSonVisibles()) {
+                            return '✅ Visibles (ambas partes calificaron o pasaron 3 días)';
+                        }
+                        return '🔒 Ocultas (esperando calificación mutua o transcurso de 3 días)';
+                    }),
+            ])->columns(1),
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -67,6 +107,7 @@ class PedidoResource extends Resource
                     ->sortable(),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\Action::make('desbloquear')
                     ->label('Desbloquear')
                     ->icon('heroicon-o-lock-open')

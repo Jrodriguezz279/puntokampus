@@ -30,7 +30,6 @@ Route::prefix('app')->group(function () {
     Route::post('/login/codigo', [AppEstudianteController::class, 'solicitarCodigo']);
     Route::get('/login/verificar', [AppEstudianteController::class, 'verificarView']);
     Route::post('/login/verificar', [AppEstudianteController::class, 'verificarCodigo']);
-    Route::get('/login-rapido/{tipo}', [AppEstudianteController::class, 'loginRapido']);
 
     // Registro de Cuenta Nueva con Código y Creación de Contraseña
     Route::get('/registro', [AppEstudianteController::class, 'registroView']);
@@ -50,6 +49,8 @@ Route::prefix('app')->group(function () {
         // Modo Comprador
         Route::get('/mis-pedidos', [AppEstudianteController::class, 'misPedidos']);
         Route::get('/pedidos/{codigo}/qr', [AppEstudianteController::class, 'verQrWeb']);
+        Route::get('/app/pedidos/{codigo}/qr', [AppEstudianteController::class, 'verQrWeb']);
+        Route::post('/mis-pedidos/{codigo}/calificar', [AppEstudianteController::class, 'calificarTiendaWeb']);
         Route::post('/pedidos', [AppEstudianteController::class, 'crearPedido']);
         Route::post('/tienda/{slug}/reportar', [AppEstudianteController::class, 'reportarTienda']);
 
@@ -66,6 +67,7 @@ Route::prefix('app')->group(function () {
         Route::post('/mi-tienda/pedidos/{codigo}/confirmar-entrega', [AppEstudianteController::class, 'confirmarEntrega']);
         Route::post('/mi-tienda/pedidos/{codigo}/entregado', [AppEstudianteController::class, 'marcarEntregado']);
         Route::post('/mi-tienda/pedidos/{codigo}/cancelar', [AppEstudianteController::class, 'marcarCancelado']);
+        Route::post('/mi-tienda/pedidos/{codigo}/calificar', [AppEstudianteController::class, 'calificarCompradorWeb']);
 
         // Perfil y Sesión
         Route::get('/cuenta', [AppEstudianteController::class, 'cuenta']);
@@ -79,8 +81,17 @@ Route::get('/admin-login', function () {
     return redirect('/admin/login');
 });
 
+// Ruta protegida para fotos de comprobante (solo admin y la tienda dueña)
+Route::get('/comprobantes/{id}/foto', [\App\Http\Controllers\Api\PremiumController::class, 'verFotoComprobante'])->name('comprobantes.foto');
+Route::get('/pedidos/{codigo}/qr', [AppEstudianteController::class, 'verQrWeb'])->middleware('auth');
+
 // Entrega directa de archivos de storage (soporta cualquier entorno independientemente del symlink)
 Route::get('/storage/{path}', function (string $path) {
+    // Proteger comprobantes privados de pago para que nadie los acceda públicamente
+    if (str_starts_with($path, 'comprobantes/') || str_starts_with($path, 'public/comprobantes/')) {
+        abort(403, 'Acceso no autorizado.');
+    }
+
     // 1. Probar en storage/app/public/{path}
     if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
         return response()->file(\Illuminate\Support\Facades\Storage::disk('public')->path($path));

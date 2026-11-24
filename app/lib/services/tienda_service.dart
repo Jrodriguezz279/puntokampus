@@ -182,4 +182,23 @@ class TiendaService {
       'detalle': detalle,
     });
   }
+
+  // Fase 4: Subir imagen de QR de Deuna
+  static Future<String> subirDeunaQr({
+    required List<int> bytes,
+    required String fileName,
+  }) async {
+    final response = await ApiService.postMultipart(
+      '/mi-tienda/deuna-qr',
+      fileField: 'foto',
+      fileBytes: bytes,
+      fileName: fileName,
+    );
+    return response['deuna_qr_url']?.toString() ?? '';
+  }
+
+  // Fase 4: Eliminar QR de Deuna
+  static Future<void> eliminarDeunaQr() async {
+    await ApiService.delete('/mi-tienda/deuna-qr');
+  }
 }

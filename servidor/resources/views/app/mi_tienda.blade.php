@@ -546,7 +546,7 @@
                             <div style="position:absolute; top:8px; right:8px; display:flex; gap:0.25rem;">
                                 @if ($prod->tiene_descuento)
                                     <span style="background:#ba1a1a; color:white; font-size:0.75rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:6px;">
-                                        -{{ round($prod->descuento_porcentaje) }}%
+                                        -{{ $prod->descuento_porcentaje ?: $prod->porcentaje_descuento }}%
                                     </span>
                                     <span style="background:rgba(0,0,0,0.7); color:white; font-size:0.75rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:6px;">
                                         ${{ number_format($prod->precio_efectivo, 2) }}

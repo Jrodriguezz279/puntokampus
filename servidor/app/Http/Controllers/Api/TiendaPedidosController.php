@@ -101,6 +101,7 @@ class TiendaPedidosController extends Controller
             'estado_cambiado_en' => now(),
             'codigo_entrega'     => null,
             'intentos_codigo'    => 0,
+            'entregado_con'      => 'codigo',
         ]);
 
         $pedido->load(['comprador', 'puntoEntrega', 'items', 'tienda.usuario']);
@@ -141,6 +142,7 @@ class TiendaPedidosController extends Controller
         $pedido->update([
             'estado'             => 'entregado',
             'estado_cambiado_en' => now(),
+            'entregado_con'      => 'boton',
         ]);
 
         $pedido->load(['comprador', 'puntoEntrega', 'items', 'tienda.usuario']);

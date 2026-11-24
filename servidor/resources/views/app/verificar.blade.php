@@ -13,12 +13,6 @@
                 <strong style="color: var(--text);">{{ $correo }}</strong>
             </p>
 
-            @if ($codigoDemo)
-                <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 0.75rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #92400e;">
-                    💡 <strong>Código generado en entorno local:</strong> <code style="font-size: 1.2rem; font-weight: 800; letter-spacing: 2px;">{{ $codigoDemo }}</code>
-                </div>
-            @endif
-
             <form method="POST" action="/app/login/verificar">
                 @csrf
                 <div style="margin-bottom: 1.5rem;">
@@ -27,7 +21,7 @@
                     </label>
                     <input type="text" id="codigo" name="codigo" maxlength="6" inputmode="numeric" required
                            class="form-control" style="width: 200px; margin: 0 auto; text-align: center; font-size: 1.8rem; font-weight: 800; letter-spacing: 6px; padding: 0.5rem; border: 2px solid var(--primary); border-radius: 10px;"
-                           placeholder="000000" autofocus value="{{ $codigoDemo ?? '' }}">
+                           placeholder="000000" autofocus value="">
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="font-size: 1rem; min-height:46px;">

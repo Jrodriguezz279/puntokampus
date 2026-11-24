@@ -21,6 +21,7 @@ class Tienda extends Model
         'categoria_1_id',
         'categoria_2_id',
         'horario',
+        'deuna_qr_url',
         'recibiendo_pedidos',
         'dias_atencion',
         'hora_apertura',
@@ -125,6 +126,37 @@ class Tienda extends Model
         }
 
         return 'En su próximo horario habitual';
+    }
+
+    public function calificacionesVisiblesQuery()
+    {
+        return Calificacion::where('direccion', 'a_tienda')
+            ->whereHas('pedido', function ($q) {
+                $q->where('tienda_id', $this->id)
+                  ->where('estado', 'entregado')
+                  ->where(function ($sub) {
+                      $sub->where('estado_cambiado_en', '<=', now()->subDays(3))
+                          ->orWhereHas('calificaciones', function ($c) {
+                              $c->where('direccion', 'a_comprador');
+                          });
+                  });
+            });
+    }
+
+    public function estrellasTotal(): ?int
+    {
+        $total = $this->calificacionesVisiblesQuery()->count();
+        return $total >= 3 ? $total : null;
+    }
+
+    public function estrellasPromedio(): ?float
+    {
+        $total = $this->calificacionesVisiblesQuery()->count();
+        if ($total < 3) {
+            return null;
+        }
+        $avg = $this->calificacionesVisiblesQuery()->avg('estrellas');
+        return $avg !== null ? round((float) $avg, 1) : null;
     }
 
     public function usuario()

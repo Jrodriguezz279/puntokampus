@@ -41,6 +41,7 @@ class BorradoCuentaTest extends TestCase
         return CodigoAcceso::create([
             'correo'      => $usuario->correo,
             'codigo_hash' => Hash::make($codigo),
+            'proposito'   => 'borrado',
             'expira_en'   => now()->addMinutes($minutosExpira),
             'intentos'    => 0,
             'usado_en'    => null,

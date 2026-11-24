@@ -21,6 +21,8 @@ class UsuarioResource extends JsonResource
             'mostrar_whatsapp' => (bool) $this->mostrar_whatsapp,
             'es_admin' => (bool) $this->es_admin,
             'acepto_privacidad_en' => $this->acepto_privacidad_en?->toIso8601String(),
+            'estrellas_promedio' => ($request->user() && (int) $request->user()->id === (int) $this->id) ? $this->estrellasPromedioComprador() : null,
+            'estrellas_total'    => ($request->user() && (int) $request->user()->id === (int) $this->id) ? $this->estrellasTotalComprador() : null,
             'estado' => $this->estado,
             'creado_en' => $this->creado_en?->toIso8601String(),
         ];

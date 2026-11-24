@@ -70,26 +70,6 @@
                     Crear cuenta con código
                 </a>
             </div>
-
-            <hr style="margin: 1.75rem 0 1.25rem; border: none; border-top: 1px solid var(--border);">
-
-            <!-- Acceso Rápido de Prueba para Evaluadores -->
-            <div style="background: var(--surface-container-low, #fbf2ed); border-radius: 12px; padding: 1.15rem; text-align: left; border: 1px solid var(--outline-variant, #e1c0b3);">
-                <strong style="color: var(--primary); font-size: 0.88rem; display: block; margin-bottom: 0.3rem;">
-                    ⚡ Cuentas de Prueba Guardadas:
-                </strong>
-                <p style="font-size: 0.8rem; color: var(--on-surface-variant, #594238); margin-bottom: 0.65rem;">
-                    Puedes ingresar directamente con 1 clic o digitando sus credenciales:
-                </p>
-                <div style="display: flex; gap: 0.5rem; flex-direction: column;">
-                    <a href="/app/login-rapido/vendedor" class="btn" style="background: var(--primary); color: white; min-height: 38px; font-size: 0.82rem; border-radius: 8px;">
-                        🏪 Carlos Vendedor &nbsp;<code>Vendedor2026!</code>
-                    </a>
-                    <a href="/app/login-rapido/comprador" class="btn" style="background: var(--secondary, #6a5c52); color: white; min-height: 38px; font-size: 0.82rem; border-radius: 8px;">
-                        🛍️ María Compradora &nbsp;<code>Compradora2026!</code>
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
 

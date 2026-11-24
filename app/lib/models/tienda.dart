@@ -26,6 +26,11 @@ class Tienda {
   final String? horaCierre;
   final bool estaAbierto;
   final String? siguienteApertura;
+  // Fase 3: Calificaciones
+  final double? estrellasPromedio;
+  final int estrellasTotal;
+  // Fase 4: QR de Deuna
+  final String? deunaQrUrl;
 
   Tienda({
     required this.id,
@@ -49,11 +54,19 @@ class Tienda {
     this.horaCierre,
     this.estaAbierto = true,
     this.siguienteApertura,
+    this.estrellasPromedio,
+    this.estrellasTotal = 0,
+    this.deunaQrUrl,
   });
 
   bool get esPremium => plan.toLowerCase() == 'premium';
   bool get estaActiva => estado.toLowerCase() == 'activa';
   bool get puedeRecibirPedidos => estaActiva && recibiendoPedidos;
+
+  String get textoEstrellas =>
+      (estrellasPromedio != null && estrellasTotal >= 3)
+          ? '⭐ ${estrellasPromedio!.toStringAsFixed(1)} ($estrellasTotal)'
+          : '⭐ Nueva';
 
   factory Tienda.fromJson(Map<String, dynamic> json) {
     var rawProds = json['productos'] as List<dynamic>? ?? [];
@@ -117,6 +130,13 @@ class Tienda {
       horaCierre: json['hora_cierre']?.toString(),
       estaAbierto: json['esta_abierto'] == true || json['esta_abierto'] == 1 || json['esta_abierto']?.toString() == 'true',
       siguienteApertura: json['siguiente_apertura']?.toString(),
+      estrellasPromedio: json['estrellas_promedio'] != null
+          ? double.tryParse(json['estrellas_promedio'].toString())
+          : null,
+      estrellasTotal: json['estrellas_total'] is int
+          ? json['estrellas_total'] as int
+          : int.tryParse(json['estrellas_total']?.toString() ?? '0') ?? 0,
+      deunaQrUrl: ApiConstants.formatearUrlImagen(json['deuna_qr_url']?.toString()),
     );
   }
 }

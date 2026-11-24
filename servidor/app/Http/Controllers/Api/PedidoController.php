@@ -145,6 +145,12 @@ class PedidoController extends Controller
     public function verQr(\Illuminate\Http\Request $request, string $codigo)
     {
         $pedido = Pedido::where('codigo', $codigo)->firstOrFail();
+
+        // R17-a: Solo el comprador dueño del pedido puede ver el QR/código de entrega. Si es vendedor u otro usuario -> 403
+        if ($request->user()->id !== $pedido->comprador_id) {
+            return response()->json(['message' => 'No autorizado para ver este código QR.'], 403);
+        }
+
         $codigoEntrega = '0000';
         if (!empty($pedido->codigo_entrega)) {
             try {

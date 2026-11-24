@@ -12,6 +12,7 @@ import '../../providers/vitrina_provider.dart';
 import '../../services/pedido_service.dart';
 import '../../services/tienda_service.dart';
 import '../../widgets/pk_components.dart';
+import '../../widgets/calificar_bottom_sheet.dart';
 import 'premium_screen.dart';
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -529,6 +530,9 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
   int? _puntoId;
   Uint8List? _logoBytes;
   String? _logoNombre;
+  Uint8List? _deunaBytes;
+  String? _deunaNombre;
+  bool _eliminarDeuna = false;
   bool _guardando = false;
 
   @override
@@ -591,9 +595,20 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
       if (_logoBytes != null && _logoNombre != null) {
         try {
           await TiendaService.subirLogo(bytes: _logoBytes!, fileName: _logoNombre!);
-          await tiendaProv.cargarMiTienda();
         } catch (_) {}
       }
+      if (_deunaBytes != null && _deunaNombre != null) {
+        try {
+          await TiendaService.subirDeunaQr(bytes: _deunaBytes!, fileName: _deunaNombre!);
+        } catch (_) {}
+      } else if (_eliminarDeuna && widget.tienda?.deunaQrUrl != null) {
+        try {
+          await TiendaService.eliminarDeunaQr();
+        } catch (_) {}
+      }
+      try {
+        await tiendaProv.cargarMiTienda();
+      } catch (_) {}
       if (!mounted) return;
       setState(() => _guardando = false);
       Navigator.pop(context);
@@ -778,6 +793,56 @@ class _FormTiendaScreenState extends State<FormTiendaScreen> {
                     activeColor: PKColors.primario,
                     onChanged: (val) => setState(() => _recibiendoPedidos = val),
                   ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: PKSpacing.base),
+
+            PKTarjeta(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Cobro con Deuna', style: PKTextStyles.tituloTarjeta),
+                  const SizedBox(height: PKSpacing.xs),
+                  Text(
+                    'Solo lo verá quien te haga un pedido y elija pagar con Deuna. No aparece en tu tienda.',
+                    style: PKTextStyles.etiqueta.copyWith(color: PKColors.secundario),
+                  ),
+                  const SizedBox(height: PKSpacing.base),
+                  Center(
+                    child: PKSelectorImagen(
+                      etiqueta: 'Mi QR de Deuna (opcional)',
+                      urlActual: widget.tienda?.deunaQrUrl,
+                      bytesIniciales: _deunaBytes,
+                      nombreArchivoInicial: _deunaNombre,
+                      altura: 160,
+                      circular: false,
+                      onImagenSeleccionada: (bytes, nombre) {
+                        setState(() {
+                          _deunaBytes = bytes;
+                          _deunaNombre = nombre;
+                          _eliminarDeuna = false;
+                        });
+                      },
+                    ),
+                  ),
+                  if (widget.tienda?.deunaQrUrl != null || _deunaBytes != null) ...[
+                    const SizedBox(height: PKSpacing.xs),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _deunaBytes = null;
+                            _deunaNombre = null;
+                            _eliminarDeuna = true;
+                          });
+                        },
+                        icon: const Icon(Icons.delete_outline, size: 18, color: PKColors.error),
+                        label: const Text('Eliminar QR de Deuna', style: TextStyle(color: PKColors.error)),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1017,21 +1082,24 @@ class _FormProductoScreenState extends State<FormProductoScreen> {
                   borderRadius: PKRadii.botonAll,
                   border: Border.all(color: PKColors.borde),
                 ),
-                child: SwitchListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: PKSpacing.md, vertical: 2),
-                  title: const Text(
-                    'Disponible para venta',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontFamily: 'DMSans'),
+                child: Material(
+                  color: Colors.transparent,
+                  child: SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: PKSpacing.md, vertical: 2),
+                    title: const Text(
+                      'Disponible para venta',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontFamily: 'DMSans'),
+                    ),
+                    subtitle: Text(
+                      _disponible
+                          ? 'Los estudiantes podrán ver y ordenar este producto'
+                          : 'Marcado temporalmente como agotado',
+                      style: PKTextStyles.etiqueta,
+                    ),
+                    value: _disponible,
+                    activeColor: PKColors.primario,
+                    onChanged: (val) => setState(() => _disponible = val),
                   ),
-                  subtitle: Text(
-                    _disponible
-                        ? 'Los estudiantes podrán ver y ordenar este producto'
-                        : 'Marcado temporalmente como agotado',
-                    style: PKTextStyles.etiqueta,
-                  ),
-                  value: _disponible,
-                  activeColor: PKColors.primario,
-                  onChanged: (val) => setState(() => _disponible = val),
                 ),
               ),
             ],
@@ -1275,6 +1343,19 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
                               ),
                               const SizedBox(height: PKSpacing.xs),
                               Text('Comprador: ${p.nombreComprador ?? "Estudiante"}', style: PKTextStyles.etiqueta),
+                              if (p.compradorEstrellas != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  '⭐ Comprador: ${(p.compradorEstrellas!['promedio'] as num).toStringAsFixed(1)} (${p.compradorEstrellas!['total']} pedidos)',
+                                  style: PKTextStyles.etiqueta.copyWith(color: const Color(0xFFB45309), fontWeight: FontWeight.w600),
+                                ),
+                              ] else ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  '⭐ Comprador nuevo',
+                                  style: PKTextStyles.etiqueta.copyWith(color: PKColors.secundario),
+                                ),
+                              ],
                               Text('Total: \$${p.total.toStringAsFixed(2)} • Pago: ${p.formaPago}', style: PKTextStyles.cuerpo.copyWith(fontWeight: FontWeight.w600)),
                               if (p.puntoEntrega != null) ...[
                                 const SizedBox(height: 2),
@@ -1437,10 +1518,43 @@ class _PedidosTiendaScreenState extends State<PedidosTiendaScreen> {
                                   ),
                                 ),
                               ],
+                              if (p.esEntregado) ...[
+                              const SizedBox(height: PKSpacing.sm),
+                              if (p.calificacionDada != null)
+                                Text(
+                                  '⭐ Calificaste al comprador con ${p.calificacionDada} estrellas',
+                                  style: PKTextStyles.etiqueta.copyWith(color: const Color(0xFFB45309), fontWeight: FontWeight.w600),
+                                ),
+                              if (p.calificacionRecibida != null)
+                                Text(
+                                  '⭐ Calificación recibida: ${p.calificacionRecibida} estrellas',
+                                  style: PKTextStyles.etiqueta.copyWith(color: PKColors.primario, fontWeight: FontWeight.w600),
+                                ),
+                              if (p.puedeCalificar) ...[
+                                const SizedBox(height: PKSpacing.xs),
+                                OutlinedButton.icon(
+                                  onPressed: () async {
+                                    final calificado = await CalificarBottomSheet.mostrar(
+                                      context,
+                                      nombre: p.nombreComprador ?? 'el comprador',
+                                      onEnviar: (estrellas) => PedidoService.calificarComprador(p.codigo, estrellas),
+                                    );
+                                    if (calificado == true) _cargar();
+                                  },
+                                  icon: const Icon(Icons.star_outline_rounded, size: 18),
+                                  label: const Text('Calificar al comprador'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFFB45309),
+                                    side: const BorderSide(color: Color(0xFFB45309)),
+                                    minimumSize: const Size(140, 48),
+                                  ),
+                                ),
+                              ],
                             ],
-                          ),
+                          ],
                         ),
-                      );
+                      ),
+                    );
                     },
                   ),
       ),

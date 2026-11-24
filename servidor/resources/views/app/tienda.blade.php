@@ -379,7 +379,7 @@
                             @endif
                             @if ($producto->tiene_descuento)
                                 <span class="badge" style="background:#ba1a1a; color:white; font-size:0.75rem; font-weight:700; position:absolute; top:10px; left:10px; padding:3px 7px; border-radius:6px;">
-                                    🔥 {{ round($producto->descuento_porcentaje) }}% OFF
+                                    🔥 {{ $producto->descuento_porcentaje ?: $producto->porcentaje_descuento }}% OFF
                                 </span>
                                 <span class="product-price-badge" style="background:rgba(186,26,26,0.9);">
                                     ${{ number_format($producto->precio_efectivo, 2) }}

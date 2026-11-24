@@ -8,6 +8,8 @@ use App\Http\Resources\SolicitudPremiumResource;
 use App\Models\Configuracion;
 use App\Models\SolicitudPremium;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PremiumController extends Controller
 {
@@ -78,6 +80,33 @@ class PremiumController extends Controller
         return (new SolicitudPremiumResource($solicitud))
             ->response()
             ->setStatusCode(201);
+    }
+
+    /**
+     * Ver foto de comprobante protegida (solo admin o la tienda dueña)
+     */
+    public function verFotoComprobante(Request $request, int|string $id)
+    {
+        $user = $request->user() ?? Auth::user();
+        if (!$user) {
+            abort(401, 'No autenticado.');
+        }
+
+        $solicitud = SolicitudPremium::findOrFail($id);
+
+        $esDuenio = $solicitud->tienda && $solicitud->tienda->usuario_id === $user->id;
+        $esAdmin = (bool) $user->es_admin;
+
+        if (!$esAdmin && !$esDuenio) {
+            abort(403, 'No autorizado para ver este comprobante.');
+        }
+
+        $rawPath = $solicitud->getRawOriginal('foto_comprobante');
+        if (!$rawPath || !Storage::disk('local')->exists($rawPath)) {
+            abort(404, 'Comprobante no encontrado.');
+        }
+
+        return response()->file(Storage::disk('local')->path($rawPath));
     }
 }
 

@@ -10,6 +10,7 @@ use App\Models\Tienda;
 use App\Services\ImagenService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class MiTiendaController extends Controller
@@ -236,6 +237,71 @@ class MiTiendaController extends Controller
             'recibiendo_pedidos' => $tienda->recibiendo_pedidos,
             'tienda' => new TiendaResource($tienda->fresh()),
         ]);
+    }
+
+    /**
+     * POST /api/v1/mi-tienda/deuna-qr (Fase 4: sube imagen QR Deuna)
+     */
+    public function subirDeunaQr(SubirFotoRequest $request): JsonResponse
+    {
+        $tienda = $request->user()->tienda;
+        if (!$tienda) {
+            abort(404, 'No tienes una tienda creada.');
+        }
+
+        // Si ya tenía un QR local previo, eliminar el archivo anterior
+        if ($tienda->deuna_qr_url) {
+            $rutaAntigua = $this->urlARutaPublica($tienda->deuna_qr_url);
+            if ($rutaAntigua && Storage::disk('public')->exists($rutaAntigua)) {
+                Storage::disk('public')->delete($rutaAntigua);
+            }
+        }
+
+        $url = $this->imagenService->procesarYGuardar($request->file('foto'), 'deuna_qrs');
+        $tienda->update(['deuna_qr_url' => $url]);
+
+        return response()->json([
+            'mensaje'      => 'QR de Deuna subido correctamente.',
+            'deuna_qr_url' => $url,
+            'tienda'       => new TiendaResource($tienda),
+        ]);
+    }
+
+    /**
+     * DELETE /api/v1/mi-tienda/deuna-qr (Fase 4: 204 No Content)
+     */
+    public function eliminarDeunaQr(Request $request): \Illuminate\Http\Response
+    {
+        $tienda = $request->user()->tienda;
+        if (!$tienda) {
+            abort(404, 'No tienes una tienda creada.');
+        }
+
+        if ($tienda->deuna_qr_url) {
+            $ruta = $this->urlARutaPublica($tienda->deuna_qr_url);
+            if ($ruta && Storage::disk('public')->exists($ruta)) {
+                Storage::disk('public')->delete($ruta);
+            }
+            $tienda->update(['deuna_qr_url' => null]);
+        }
+
+        return response()->noContent(); // 204
+    }
+
+    private function urlARutaPublica(?string $url): ?string
+    {
+        if (!$url) {
+            return null;
+        }
+        $prefijo = '/storage/';
+        if (str_starts_with($url, $prefijo)) {
+            return substr($url, strlen($prefijo));
+        }
+        $prefijoAbsoluto = config('app.url') . '/storage/';
+        if (str_starts_with($url, $prefijoAbsoluto)) {
+            return substr($url, strlen($prefijoAbsoluto));
+        }
+        return null;
     }
 }
 

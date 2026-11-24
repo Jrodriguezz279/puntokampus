@@ -184,7 +184,7 @@
 @section('scripts')
 <script>
     function mostrarModalQr(codigo, pin) {
-        document.getElementById('imgQrModal').src = '/app/pedidos/' + codigo + '/qr';
+        document.getElementById('imgQrModal').src = '/app/pedidos/' + codigo + '/qr?formato=svg';
         document.getElementById('pinQrModal').innerText = pin;
         document.getElementById('modalQrPedido').style.display = 'flex';
     }

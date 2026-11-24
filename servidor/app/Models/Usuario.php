@@ -73,5 +73,36 @@ class Usuario extends Authenticatable implements FilamentUser, HasName
     {
         return $this->hasMany(Reporte::class, 'reportado_por');
     }
+
+    public function calificacionesVisiblesCompradorQuery()
+    {
+        return Calificacion::where('direccion', 'a_comprador')
+            ->whereHas('pedido', function ($q) {
+                $q->where('comprador_id', $this->id)
+                  ->where('estado', 'entregado')
+                  ->where(function ($sub) {
+                      $sub->where('estado_cambiado_en', '<=', now()->subDays(3))
+                          ->orWhereHas('calificaciones', function ($c) {
+                              $c->where('direccion', 'a_tienda');
+                          });
+                  });
+            });
+    }
+
+    public function estrellasTotalComprador(): ?int
+    {
+        $total = $this->calificacionesVisiblesCompradorQuery()->count();
+        return $total >= 3 ? $total : null;
+    }
+
+    public function estrellasPromedioComprador(): ?float
+    {
+        $total = $this->calificacionesVisiblesCompradorQuery()->count();
+        if ($total < 3) {
+            return null;
+        }
+        $avg = $this->calificacionesVisiblesCompradorQuery()->avg('estrellas');
+        return $avg !== null ? round((float) $avg, 1) : null;
+    }
 }
 

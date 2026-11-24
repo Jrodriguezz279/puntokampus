@@ -164,7 +164,7 @@ class _VitrinaScreenState extends State<VitrinaScreen> {
             const SliverToBoxAdapter(child: SizedBox(height: PKSpacing.base)),
 
             // --- Tramo 2: Carrusel de Destacados ---
-            if (!vitrina.cargando && vitrina.tiendas.any((t) => t.esPremium || t.puedeRecibirPedidos))
+            if (!vitrina.cargando && vitrina.tiendas.any((t) => t.esPremium && t.estaActiva && t.recibiendoPedidos && t.estaAbierto))
               SliverToBoxAdapter(
                 child: _CarruselDestacados(tiendas: vitrina.tiendas),
               ),
@@ -243,8 +243,8 @@ class _CarruselDestacados extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Prioridad: premium primero, luego abiertas
-    final destacadas = [...tiendas.where((t) => t.esPremium), ...tiendas.where((t) => !t.esPremium && t.puedeRecibirPedidos)];
+    // Carrusel de la vitrina: tiendas Premium activas, recibiendo pedidos y abiertas en ese momento
+    final destacadas = tiendas.where((t) => t.esPremium && t.estaActiva && t.recibiendoPedidos && t.estaAbierto).toList();
     if (destacadas.isEmpty) return const SizedBox.shrink();
 
     return Column(
@@ -528,10 +528,24 @@ class _TiendaScreenState extends State<TiendaScreen> {
                           children: [
                             Text(t.nombre, style: PKTextStyles.tituloTarjeta),
                             const SizedBox(height: PKSpacing.xs),
-                            if (t.esPremium)
-                              const PKInsigniaSaco10()
-                            else
-                              const PKInsigniaMatriculado(),
+                            Row(
+                              children: [
+                                Text(
+                                  t.textoEstrellas,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFB45309),
+                                    fontFamily: 'DMSans',
+                                  ),
+                                ),
+                                const SizedBox(width: PKSpacing.sm),
+                                if (t.esPremium)
+                                  const PKInsigniaSaco10()
+                                else
+                                  const PKInsigniaMatriculado(),
+                              ],
+                            ),
                             if (t.puntoEntrega != null) ...[
                               const SizedBox(height: PKSpacing.xs),
                               Text('📍 ${t.puntoEntrega!.nombre}', style: PKTextStyles.etiqueta),

@@ -27,8 +27,9 @@ class PurgarComprobantesCommand extends Command
 
         $contador = 0;
         foreach ($solicitudes as $solicitud) {
-            if ($solicitud->foto_comprobante && Storage::disk('local')->exists($solicitud->foto_comprobante)) {
-                Storage::disk('local')->delete($solicitud->foto_comprobante);
+            $rawFoto = $solicitud->getRawOriginal('foto_comprobante');
+            if ($rawFoto && Storage::disk('local')->exists($rawFoto)) {
+                Storage::disk('local')->delete($rawFoto);
             }
             $solicitud->update(['foto_borrada_en' => now()]);
             $contador++;
